@@ -1,23 +1,27 @@
 import Link from "next/link";
 
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
+
 export default function ForbiddenPage() {
   return (
-    <main className="page-shell">
+    <main className="page-shell relative">
+      <div className="absolute right-6 top-6">
+        <ThemeToggle />
+      </div>
+
       <section className="surface max-w-md space-y-4 p-8">
         <p className="eyebrow">403</p>
-        <h1 className="text-2xl font-semibold text-slate-950">
+        <h1 className="text-2xl font-semibold text-foreground">
           You do not have access to this area.
         </h1>
-        <p className="text-sm leading-6 text-slate-600">
-          Your access is controlled by the ORDURA backend. Contact your
+        <p className="text-sm leading-6 text-muted-foreground">
+          Your access is controlled by the StoreOps backend. Contact your
           workspace administrator if you believe this is incorrect.
         </p>
-        <Link
-          className="inline-flex rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-slate-900"
-          href="/"
-        >
+        <Button nativeButton={false} render={<Link href="/" />}>
           Return home
-        </Link>
+        </Button>
       </section>
     </main>
   );

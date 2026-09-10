@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
+
+import { Button } from "@/components/ui/button";
 
 import { isUnauthenticatedError, useCurrentSession } from "./use-current-session";
 
@@ -12,15 +15,17 @@ type ProtectedRouteProps = {
 function UnauthenticatedState() {
   return (
     <main className="page-shell">
-      <section className="surface max-w-md space-y-3 p-8" role="status">
+      <section className="surface max-w-md space-y-4 p-8" role="status">
         <p className="eyebrow">Authentication required</p>
-        <h1 className="text-2xl font-semibold text-slate-950">
+        <h1 className="text-2xl font-semibold text-foreground">
           Your session has ended.
         </h1>
-        <p className="text-sm leading-6 text-slate-600">
-          Sign-in will be available in a later phase. This state does not
-          redirect automatically, which prevents route-protection loops.
+        <p className="text-sm leading-6 text-muted-foreground">
+          Please sign in to access your StoreOps workspace.
         </p>
+        <Button nativeButton={false} render={<Link href="/login" />}>
+          Sign in
+        </Button>
       </section>
     </main>
   );
@@ -31,16 +36,12 @@ function SessionCheckFailed({ onRetry }: { onRetry: () => void }) {
     <main className="page-shell">
       <section className="surface max-w-md space-y-4 p-8" role="alert">
         <p className="eyebrow">Session unavailable</p>
-        <h1 className="text-2xl font-semibold text-slate-950">
+        <h1 className="text-2xl font-semibold text-foreground">
           We could not confirm your session.
         </h1>
-        <button
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-slate-900"
-          onClick={onRetry}
-          type="button"
-        >
+        <Button onClick={onRetry} type="button">
           Try again
-        </button>
+        </Button>
       </section>
     </main>
   );

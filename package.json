@@ -1,5 +1,5 @@
 {
-  "name": "ordura_frontend",
+  "name": "storeops_frontend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,6 +17,7 @@
     "cn": "^0.2.6",
     "lucide-react": "^1.43.0",
     "next": "16.3.4",
+    "next-themes": "^0.4.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.87.0",

@@ -18,3 +18,18 @@ export type ApiSuccess<TData> = {
 };
 
 export type CurrentSessionResponse = ApiSuccess<CurrentSession>;
+
+export type LoginInput = {
+  email: string;
+  password: string;
+};
+
+export type RegisterInput = {
+  email: string;
+  name?: string;
+  password: string;
+};
+
+export type AuthResponse = ApiSuccess<{
+  user: CurrentUser;
+}>;

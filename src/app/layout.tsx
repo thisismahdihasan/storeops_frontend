@@ -6,8 +6,8 @@ import { Providers } from "@/app/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ORDURA",
-  description: "ORDURA production workflow platform.",
+  title: "StoreOps",
+  description: "StoreOps production workflow platform.",
 };
 
 type RootLayoutProps = {
@@ -16,7 +16,7 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
       </body>

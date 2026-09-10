@@ -9,11 +9,11 @@ type StatusBadgeProps = {
 };
 
 const toneClasses: Record<StatusBadgeTone, string> = {
-  danger: "bg-red-50 text-red-700 hover:bg-red-50",
-  info: "bg-blue-50 text-blue-700 hover:bg-blue-50",
-  neutral: "bg-slate-100 text-slate-700 hover:bg-slate-100",
-  success: "bg-emerald-50 text-emerald-700 hover:bg-emerald-50",
-  warning: "bg-amber-50 text-amber-800 hover:bg-amber-50",
+  danger: "bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-500/15",
+  info: "bg-blue-500/10 text-blue-700 dark:text-blue-400 hover:bg-blue-500/15",
+  neutral: "bg-muted text-muted-foreground hover:bg-muted/80",
+  success: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15",
+  warning: "bg-amber-500/10 text-amber-800 dark:text-amber-400 hover:bg-amber-500/15",
 };
 
 export function StatusBadge({ label, tone = "neutral" }: StatusBadgeProps) {
