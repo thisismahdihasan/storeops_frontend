@@ -1,18 +1,36 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { FeaturePlaceholder } from "@/components/layout/feature-placeholder";
+import { DashboardOverviewSkeleton } from "@/features/dashboard/dashboard-skeleton";
+import { DashboardView } from "@/features/dashboard/dashboard-view";
 
 export const metadata: Metadata = {
   description: "StoreOps Workspace Executive Dashboard",
   title: "Dashboard — StoreOps",
 };
 
-export default function DashboardPage() {
+type DashboardPageProps = {
+  params: Promise<{
+    workspaceId: string;
+  }>;
+};
+
+export default async function DashboardPage({ params }: DashboardPageProps) {
+  const { workspaceId } = await params;
+
   return (
-    <FeaturePlaceholder
-      description="StoreOps operations analytics, real-time throughput metrics, and pipeline status will be displayed here."
-      moduleName="Dashboard"
-      title="Executive Dashboard"
-    />
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+          <div className="space-y-1">
+            <div className="h-6 w-48 rounded-md bg-muted animate-pulse" />
+            <div className="h-4 w-72 rounded-md bg-muted/60 animate-pulse" />
+          </div>
+          <DashboardOverviewSkeleton />
+        </div>
+      }
+    >
+      <DashboardView workspaceId={workspaceId} />
+    </Suspense>
   );
 }
