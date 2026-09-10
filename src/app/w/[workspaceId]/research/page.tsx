@@ -1,18 +1,26 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { FeaturePlaceholder } from "@/components/layout/feature-placeholder";
+import { ResearchSkeleton } from "@/features/research/research-skeleton";
+import { ResearchView } from "@/features/research/research-view";
 
 export const metadata: Metadata = {
-  description: "Etsy research queue and product discovery",
+  description: "Etsy research queue, reference assets, and product discovery",
   title: "Research — StoreOps",
 };
 
-export default function ResearchPage() {
+type ResearchPageProps = {
+  params: Promise<{
+    workspaceId: string;
+  }>;
+};
+
+export default async function ResearchPage({ params }: ResearchPageProps) {
+  const { workspaceId } = await params;
+
   return (
-    <FeaturePlaceholder
-      description="Market analysis, Etsy trend exploration, and product research workflow items will be managed here."
-      moduleName="Research"
-      title="Research Operations"
-    />
+    <Suspense fallback={<ResearchSkeleton />}>
+      <ResearchView workspaceId={workspaceId} />
+    </Suspense>
   );
 }

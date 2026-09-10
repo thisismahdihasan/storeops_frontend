@@ -2,6 +2,7 @@ export type HttpMethod = "DELETE" | "GET" | "PATCH" | "POST";
 export type ApiResponseType = "auto" | "blob" | "json" | "text";
 
 export type ApiRequestOptions = {
+  body?: BodyInit;
   headers?: HeadersInit;
   json?: unknown;
   method?: HttpMethod;
@@ -10,16 +11,19 @@ export type ApiRequestOptions = {
 };
 
 type ApiErrorPayload = {
+  data?: unknown;
   message?: unknown;
 };
 
 export class ApiError extends Error {
+  public readonly data?: unknown;
   public readonly status: number;
 
-  public constructor(status: number, message: string) {
+  public constructor(status: number, message: string, data?: unknown) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.data = data;
   }
 }
 
@@ -104,11 +108,13 @@ export async function apiRequest<T>(
   options: ApiRequestOptions = {},
 ): Promise<T | undefined> {
   const headers = new Headers(options.headers);
-  let body: string | undefined;
+  let body: BodyInit | undefined;
 
   if (options.json !== undefined) {
     headers.set("content-type", "application/json");
     body = JSON.stringify(options.json);
+  } else if (options.body !== undefined) {
+    body = options.body;
   }
 
   let response: Response;
@@ -127,7 +133,11 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const payload = await readErrorPayload(response);
-    throw new ApiError(response.status, toSafeErrorMessage(response.status, payload));
+    throw new ApiError(
+      response.status,
+      toSafeErrorMessage(response.status, payload),
+      payload?.data,
+    );
   }
 
   return readResponse<T>(response, options.responseType ?? "auto");
