@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 
-import { FeaturePlaceholder } from "@/components/layout/feature-placeholder";
+import { ReviewsView } from "@/features/reviews/reviews-view";
 
 export const metadata: Metadata = {
-  description: "Design review submissions and quality assurance",
+  description: "Review submitted designer artwork and quality assurance",
   title: "Design Reviews — StoreOps",
 };
 
-export default function ReviewsPage() {
-  return (
-    <FeaturePlaceholder
-      description="Review submitted designer artwork, approve assets for listing, or request revisions with detailed comments."
-      moduleName="Design Reviews"
-      title="Design Reviews"
-    />
-  );
+type ReviewsPageProps = {
+  params: Promise<{ workspaceId: string }>;
+};
+
+export default async function ReviewsPage({ params }: ReviewsPageProps) {
+  const { workspaceId } = await params;
+
+  return <ReviewsView workspaceId={workspaceId} />;
 }
