@@ -1,0 +1,320 @@
+"use client";
+
+import { MessageSquare, MessageSquareText, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { formatWorkDate } from "@/features/designer-work/designer-work.types";
+import { ReviewImageCanvas } from "@/features/reviews/review-image-canvas";
+import { ApiError } from "@/lib/api";
+
+import type { DesignDetail } from "./design-workspace.types";
+import { useDesignerAnnotationReply } from "./use-design-workspace";
+
+type DesignerCorrectionFeedbackProps = {
+  canReply: boolean;
+  detail: DesignDetail;
+  onSelectAnnotation: (annotationId: string | null) => void;
+  selectedAnnotationId: string | null;
+  workspaceId: string;
+};
+
+export function DesignerCorrectionFeedback({
+  canReply,
+  detail,
+  onSelectAnnotation,
+  selectedAnnotationId,
+  workspaceId,
+}: DesignerCorrectionFeedbackProps) {
+  const { latestReview, researchItem } = detail;
+  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+  const [replyTextByAnnotationId, setReplyTextByAnnotationId] = useState<
+    Record<string, string>
+  >({});
+
+  const replyMutation = useDesignerAnnotationReply(
+    workspaceId,
+    researchItem.id,
+    latestReview?.id,
+  );
+
+  useEffect(() => {
+    if (selectedAnnotationId) {
+      const element = document.getElementById(
+        `annotation-thread-${selectedAnnotationId}`,
+      );
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }, [selectedAnnotationId]);
+
+  if (!latestReview) return null;
+
+  const reviewImageUrl =
+    latestReview.imageDeletedAt === null ? latestReview.imageUrl : null;
+  const annotations = latestReview.annotations;
+
+  async function handleSendReply(annotationId: string) {
+    const text = (replyTextByAnnotationId[annotationId] ?? "").trim();
+    if (!text) {
+      toast.error("Please enter a reply message.");
+      return;
+    }
+
+    try {
+      await replyMutation.mutateAsync({
+        annotationId,
+        message: text,
+      });
+      toast.success("Reply added.");
+      setReplyTextByAnnotationId((prev) => ({ ...prev, [annotationId]: "" }));
+      setActiveReplyId(null);
+    } catch (error) {
+      const message =
+        error instanceof ApiError ? error.message : "Failed to post reply.";
+      toast.error(message);
+    }
+  }
+
+  return (
+    <section
+      aria-label="Correction feedback"
+      className="rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-xs"
+    >
+      {/* Header with Round Context */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              Correction Feedback — Round {latestReview.roundNumber}
+            </h2>
+            <Badge variant="secondary">Round {latestReview.roundNumber}</Badge>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Submitted {formatWorkDate(latestReview.submittedAt)} · Review notes
+            and annotations from Admin
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+            <MessageSquare className="size-3.5 text-primary" />
+            {annotations.length}{" "}
+            {annotations.length === 1 ? "annotation" : "annotations"}
+          </span>
+        </div>
+      </div>
+
+      {/* Designer Submission Note if present */}
+      {latestReview.note && (
+        <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3.5 text-xs text-foreground">
+          <div className="flex items-center gap-1.5 font-semibold text-muted-foreground">
+            <MessageSquareText className="size-3.5 text-primary" />
+            Your Submission Note
+          </div>
+          <p className="mt-1.5 whitespace-pre-wrap leading-relaxed">
+            {latestReview.note}
+          </p>
+        </div>
+      )}
+
+      {/* Main Feedback Grid: Image Canvas on Left, Threads on Right */}
+      <div className="mt-5 grid gap-6 lg:grid-cols-12">
+        {/* Left Column: Review Image with Numbered Pins */}
+        <div className="min-w-0 lg:col-span-7 xl:col-span-8">
+          <div className="flex flex-col items-center">
+            <ReviewImageCanvas
+              annotations={annotations}
+              imageDeletedAt={latestReview.imageDeletedAt}
+              imageUrl={reviewImageUrl}
+              isActionable={false}
+              onSelectAnnotation={(id) =>
+                onSelectAnnotation(id === selectedAnnotationId ? null : id)
+              }
+              researchItemId={researchItem.id}
+              reviewId={latestReview.id}
+              roundNumber={latestReview.roundNumber}
+              selectedAnnotationId={selectedAnnotationId}
+              workspaceId={workspaceId}
+            />
+          </div>
+        </div>
+
+        {/* Right Column: Numbered Annotation Threads */}
+        <div className="min-w-0 lg:col-span-5 xl:col-span-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Correction Threads
+              </h3>
+              <span className="text-xs text-muted-foreground">
+                Click a pin or thread to focus
+              </span>
+            </div>
+
+            {annotations.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center text-xs text-muted-foreground">
+                No visual annotations on this submission.
+              </div>
+            ) : (
+              <div className="max-h-[640px] space-y-3 overflow-y-auto pr-1">
+                {annotations.map((annotation, index) => {
+                  const isSelected = selectedAnnotationId === annotation.id;
+                  const markerNumber = index + 1;
+                  const isReplying = activeReplyId === annotation.id;
+                  const currentReplyText =
+                    replyTextByAnnotationId[annotation.id] ?? "";
+
+                  return (
+                    <article
+                      className={`rounded-xl border p-3.5 transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/20 shadow-xs"
+                          : "border-border bg-muted/20 hover:border-border/80"
+                      }`}
+                      id={`annotation-thread-${annotation.id}`}
+                      key={annotation.id}
+                      onClick={() =>
+                        onSelectAnnotation(
+                          isSelected ? null : annotation.id,
+                        )
+                      }
+                    >
+                      {/* Thread Header */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-500 text-[11px] font-bold text-white shadow-xs">
+                            {markerNumber}
+                          </span>
+                          <p className="text-xs font-semibold text-foreground">
+                            {annotation.createdBy.name || "Admin"}
+                          </p>
+                        </div>
+                        <time className="text-[11px] text-muted-foreground">
+                          {formatWorkDate(annotation.createdAt)}
+                        </time>
+                      </div>
+
+                      {/* Comment Body */}
+                      <p className="mt-2 text-xs leading-relaxed text-foreground whitespace-pre-wrap">
+                        {annotation.comment}
+                      </p>
+
+                      {/* Nested Threaded Replies */}
+                      {annotation.replies.length > 0 && (
+                        <div className="mt-3 space-y-2 border-l-2 border-border/80 pl-3">
+                          {annotation.replies.map((reply) => (
+                            <div
+                              className="rounded-lg bg-background/80 p-2 text-xs"
+                              key={reply.id}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-medium text-foreground">
+                                  {reply.createdBy.name || "Team member"}
+                                </span>
+                                <time className="text-[10px] text-muted-foreground">
+                                  {formatWorkDate(reply.createdAt)}
+                                </time>
+                              </div>
+                              <p className="mt-1 text-muted-foreground whitespace-pre-wrap">
+                                {reply.message}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Designer Reply Action & Inline Composer */}
+                      {canReply && (
+                        <div className="mt-3 pt-2">
+                          {isReplying ? (
+                            <div
+                              className="space-y-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <textarea
+                                aria-label={`Reply to annotation ${markerNumber}`}
+                                autoFocus
+                                className="w-full resize-none rounded-lg border border-border bg-background p-2 text-xs text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none"
+                                disabled={replyMutation.isPending}
+                                maxLength={2000}
+                                onChange={(e) =>
+                                  setReplyTextByAnnotationId((prev) => ({
+                                    ...prev,
+                                    [annotation.id]: e.target.value,
+                                  }))
+                                }
+                                onKeyDown={(e) => {
+                                  if (
+                                    e.key === "Enter" &&
+                                    (e.metaKey || e.ctrlKey)
+                                  ) {
+                                    e.preventDefault();
+                                    void handleSendReply(annotation.id);
+                                  }
+                                }}
+                                placeholder="Write a reply to Admin…"
+                                rows={2}
+                                value={currentReplyText}
+                              />
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-muted-foreground">
+                                  Ctrl+Enter to send
+                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <Button
+                                    disabled={replyMutation.isPending}
+                                    onClick={() => setActiveReplyId(null)}
+                                    size="xs"
+                                    type="button"
+                                    variant="ghost"
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    disabled={
+                                      replyMutation.isPending ||
+                                      currentReplyText.trim().length === 0
+                                    }
+                                    onClick={() =>
+                                      void handleSendReply(annotation.id)
+                                    }
+                                    size="xs"
+                                    type="button"
+                                  >
+                                    <Send className="size-3" />
+                                    {replyMutation.isPending
+                                      ? "Sending…"
+                                      : "Reply"}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              className="text-[11px] font-medium text-primary hover:underline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveReplyId(annotation.id);
+                              }}
+                              type="button"
+                            >
+                              Reply to thread
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

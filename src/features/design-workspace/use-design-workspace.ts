@@ -14,6 +14,8 @@ import {
   uploadFinalAssets,
   uploadReview,
 } from "./design-workspace.api";
+import { createAnnotationReply } from "@/features/reviews/reviews.api";
+import { reviewsKeys } from "@/features/reviews/reviews.keys";
 
 export const designWorkspaceKeys = {
   all: ["design-workspace"] as const,
@@ -73,4 +75,36 @@ export function useDesignActions(workspaceId: string, researchItemId: string) {
   });
 
   return { completeWork, reportIssue, startCorrection, startWork, submitFinalAssets, submitReview };
+}
+
+export function useDesignerAnnotationReply(
+  workspaceId: string,
+  researchItemId: string,
+  reviewId?: string,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      annotationId,
+      message,
+    }: {
+      annotationId: string;
+      message: string;
+    }) => createAnnotationReply(workspaceId, annotationId, { message }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: designWorkspaceKeys.detail(workspaceId, researchItemId),
+      });
+      if (reviewId) {
+        void queryClient.invalidateQueries({
+          queryKey: reviewsKeys.detail(workspaceId, reviewId),
+        });
+      } else {
+        void queryClient.invalidateQueries({
+          queryKey: reviewsKeys.details(workspaceId),
+        });
+      }
+    },
+  });
 }

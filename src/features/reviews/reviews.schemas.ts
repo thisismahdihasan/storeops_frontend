@@ -65,7 +65,6 @@ export const reviewQueueResponseSchema = z.object({
     pagination: reviewQueuePaginationSchema,
   }),
   message: z.string(),
-  statusCode: z.number(),
   success: z.boolean(),
 });
 
@@ -128,7 +127,6 @@ export const reviewDetailResponseSchema = z.object({
     selectedReview: reviewHistoryItemSchema,
   }),
   message: z.string(),
-  statusCode: z.number(),
   success: z.boolean(),
 });
 
@@ -149,7 +147,6 @@ export const createAnnotationResponseSchema = z.object({
     }),
   }),
   message: z.string(),
-  statusCode: z.number(),
   success: z.boolean(),
 });
 
@@ -167,7 +164,6 @@ export const createReplyResponseSchema = z.object({
     }),
   }),
   message: z.string(),
-  statusCode: z.number(),
   success: z.boolean(),
 });
 
@@ -179,7 +175,6 @@ export const requestCorrectionResponseSchema = z.object({
     }),
   }),
   message: z.string(),
-  statusCode: z.number(),
   success: z.boolean(),
 });
 
@@ -197,6 +192,5 @@ export const approveReviewResponseSchema = z.object({
     }),
   }),
   message: z.string(),
-  statusCode: z.number(),
   success: z.boolean(),
 });

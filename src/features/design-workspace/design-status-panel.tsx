@@ -12,6 +12,7 @@ import type { DesignDetail } from "./design-workspace.types";
 
 type DesignStatusPanelProps = {
   detail: DesignDetail;
+  hasDedicatedFeedback?: boolean;
   isCompleting: boolean;
   isStartingCorrection: boolean;
   isStartingWork: boolean;
@@ -25,12 +26,26 @@ type DesignStatusPanelProps = {
   onSubmitReview: (file: File, note: string) => void;
 };
 
-export function DesignStatusPanel({ detail, isCompleting, isStartingCorrection, isStartingWork, isSubmittingFinalAssets, isSubmittingReview, onComplete, onOpenIssueDialog, onStartCorrection, onStartWork, onSubmitFinalAssets, onSubmitReview }: DesignStatusPanelProps) {
+export function DesignStatusPanel({
+  detail,
+  hasDedicatedFeedback = false,
+  isCompleting,
+  isStartingCorrection,
+  isStartingWork,
+  isSubmittingFinalAssets,
+  isSubmittingReview,
+  onComplete,
+  onOpenIssueDialog,
+  onStartCorrection,
+  onStartWork,
+  onSubmitFinalAssets,
+  onSubmitReview,
+}: DesignStatusPanelProps) {
   const { assignment, finalAssets, latestIssue, latestReview, researchItem } = detail;
   const status = researchItem.status;
   const canStartWork = status === "ASSIGNED" || (status === "DESIGN_IN_PROGRESS" && assignment.startedAt === null);
   const canReportIssue = status === "ASSIGNED" || status === "DESIGN_IN_PROGRESS";
-  const showsReview = status === "DESIGN_REVIEW" || status === "CORRECTION_NEEDED";
+  const showsReview = !hasDedicatedFeedback && (status === "DESIGN_REVIEW" || status === "CORRECTION_NEEDED");
   const isPostDesignState = status === "READY_FOR_LISTING" || status === "LISTING_IN_PROGRESS" || status === "LISTED";
 
   return <div className="space-y-4">

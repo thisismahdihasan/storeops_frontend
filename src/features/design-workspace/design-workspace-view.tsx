@@ -13,8 +13,11 @@ import type { ReportIssueFormValues } from "@/features/designer-work/designer-wo
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
 
+import { canUserReplyToAnnotation } from "@/features/reviews/reviews.constants";
+
 import { DesignReferencePanel } from "./design-reference-panel";
 import { DesignStatusPanel } from "./design-status-panel";
+import { DesignerCorrectionFeedback } from "./designer-correction-feedback";
 import type { DesignDetail } from "./design-workspace.types";
 import { useDesignActions, useDesignDetail } from "./use-design-workspace";
 
@@ -27,6 +30,7 @@ export function DesignWorkspaceView({ researchItemId, workspaceId }: DesignWorks
   const detailQuery = useDesignDetail(workspaceId, researchItemId, hasDesignerRole);
   const actions = useDesignActions(workspaceId, researchItemId);
   const [isIssueDialogOpen, setIsIssueDialogOpen] = useState(false);
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
 
   if (workspacesQuery.isLoading || (hasDesignerRole && detailQuery.isLoading)) return <LoadingState />;
   if (!hasDesignerRole) return <AccessDeniedState workspaceId={workspaceId} />;
@@ -36,12 +40,82 @@ export function DesignWorkspaceView({ researchItemId, workspaceId }: DesignWorks
   const detail = detailQuery.data.data;
   const statusMeta = getDesignerWorkStatusMeta(detail.researchItem.status);
   const title = detail.researchItem.title || `Etsy Listing #${detail.researchItem.etsyListingId}`;
+
+  const hasCorrectionFeedback = Boolean(
+    detail.latestReview &&
+      (detail.latestReview.annotations.length > 0 || detail.latestReview.note) &&
+      (detail.researchItem.status === "CORRECTION_NEEDED" ||
+        detail.researchItem.status === "DESIGN_IN_PROGRESS" ||
+        detail.researchItem.status === "DESIGN_REVIEW"),
+  );
+
+  const canReply = canUserReplyToAnnotation({
+    hasDesignerRole,
+    isAssignedDesigner: detail.assignment.isCurrent,
+    itemStatus: detail.researchItem.status,
+    isLatestReviewRound: true,
+  });
+
   const runAction = async (action: () => Promise<unknown>, successMessage: string) => {
     try { await action(); toast.success(successMessage); }
     catch (error) { toast.error(actionErrorMessage(error)); if (error instanceof ApiError && error.status === 409) void detailQuery.refetch(); }
   };
 
-  return <main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8"><header className="space-y-4 border-b border-border pb-5"><Button nativeButton={false} render={<Link href={`/w/${workspaceId}/my-work`} />} size="sm" variant="ghost"><ArrowLeft />Back to My Work</Button><div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"><div className="min-w-0"><p className="font-mono text-xs text-muted-foreground">Etsy #{detail.researchItem.etsyListingId}</p><h1 className="mt-1 break-words text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1></div><StatusBadge label={statusMeta.label} tone={statusMeta.tone} /></div></header><div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)]"><DesignReferencePanel detail={detail} workspaceId={workspaceId} /><aside className="min-w-0 space-y-4"><AssignmentSummary detail={detail} /><DesignStatusPanel detail={detail} isCompleting={actions.completeWork.isPending} isStartingCorrection={actions.startCorrection.isPending} isStartingWork={actions.startWork.isPending} isSubmittingFinalAssets={actions.submitFinalAssets.isPending} isSubmittingReview={actions.submitReview.isPending} onComplete={() => void runAction(() => actions.completeWork.mutateAsync(), "Design work completed.")} onOpenIssueDialog={() => setIsIssueDialogOpen(true)} onStartCorrection={() => void runAction(() => actions.startCorrection.mutateAsync(), "Correction work started.")} onStartWork={() => void runAction(() => actions.startWork.mutateAsync(), "Design work started.")} onSubmitFinalAssets={(files) => void runAction(() => actions.submitFinalAssets.mutateAsync(files), "Final files uploaded.")} onSubmitReview={(image, note) => void runAction(() => actions.submitReview.mutateAsync({ image, note }), "Design uploaded for review.")} /></aside></div><ReportIssueDialog isSubmitting={actions.reportIssue.isPending} onOpenChange={setIsIssueDialogOpen} onSubmit={(values) => void handleReportIssue(actions, values, detailQuery, () => setIsIssueDialogOpen(false))} open={isIssueDialogOpen} workTitle={title} /></main>;
+  return (
+    <main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8">
+      <header className="space-y-4 border-b border-border pb-5">
+        <Button nativeButton={false} render={<Link href={`/w/${workspaceId}/my-work`} />} size="sm" variant="ghost">
+          <ArrowLeft />Back to My Work
+        </Button>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <p className="font-mono text-xs text-muted-foreground">Etsy #{detail.researchItem.etsyListingId}</p>
+            <h1 className="mt-1 break-words text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+          </div>
+          <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
+        </div>
+      </header>
+
+      {hasCorrectionFeedback && (
+        <DesignerCorrectionFeedback
+          canReply={canReply}
+          detail={detail}
+          onSelectAnnotation={setSelectedAnnotationId}
+          selectedAnnotationId={selectedAnnotationId}
+          workspaceId={workspaceId}
+        />
+      )}
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)]">
+        <DesignReferencePanel detail={detail} workspaceId={workspaceId} />
+        <aside className="min-w-0 space-y-4">
+          <AssignmentSummary detail={detail} />
+          <DesignStatusPanel
+            detail={detail}
+            hasDedicatedFeedback={hasCorrectionFeedback}
+            isCompleting={actions.completeWork.isPending}
+            isStartingCorrection={actions.startCorrection.isPending}
+            isStartingWork={actions.startWork.isPending}
+            isSubmittingFinalAssets={actions.submitFinalAssets.isPending}
+            isSubmittingReview={actions.submitReview.isPending}
+            onComplete={() => void runAction(() => actions.completeWork.mutateAsync(), "Design work completed.")}
+            onOpenIssueDialog={() => setIsIssueDialogOpen(true)}
+            onStartCorrection={() => void runAction(() => actions.startCorrection.mutateAsync(), "Correction work started.")}
+            onStartWork={() => void runAction(() => actions.startWork.mutateAsync(), "Design work started.")}
+            onSubmitFinalAssets={(files) => void runAction(() => actions.submitFinalAssets.mutateAsync(files), "Final files uploaded.")}
+            onSubmitReview={(image, note) => void runAction(() => actions.submitReview.mutateAsync({ image, note }), "Design uploaded for review.")}
+          />
+        </aside>
+      </div>
+      <ReportIssueDialog
+        isSubmitting={actions.reportIssue.isPending}
+        onOpenChange={setIsIssueDialogOpen}
+        onSubmit={(values) => void handleReportIssue(actions, values, detailQuery, () => setIsIssueDialogOpen(false))}
+        open={isIssueDialogOpen}
+        workTitle={title}
+      />
+    </main>
+  );
 }
 
 function AssignmentSummary({ detail }: { detail: DesignDetail }) {

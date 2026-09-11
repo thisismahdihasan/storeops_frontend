@@ -11,6 +11,7 @@ import type { ReviewHistoryItem } from "./reviews.types";
 import { useCreateAnnotationReply } from "./use-reviews";
 
 type AnnotationPanelProps = {
+  canReply?: boolean;
   isActionable: boolean;
   onSelectAnnotation: (annotationId: string) => void;
   researchItemId?: string;
@@ -36,6 +37,7 @@ function formatDateTime(value: string | null): string {
 }
 
 export function AnnotationPanel({
+  canReply,
   isActionable,
   onSelectAnnotation,
   researchItemId,
@@ -44,6 +46,7 @@ export function AnnotationPanel({
   selectedReview,
   workspaceId,
 }: AnnotationPanelProps) {
+  const allowReply = canReply ?? isActionable;
   const [replyTextByAnnotationId, setReplyTextByAnnotationId] = useState<
     Record<string, string>
   >({});
@@ -215,7 +218,7 @@ export function AnnotationPanel({
                   )}
 
                   {/* Reply Action for Admin */}
-                  {isActionable && (
+                  {allowReply && (
                     <div className="mt-3 pt-2">
                       {isReplying ? (
                         <div

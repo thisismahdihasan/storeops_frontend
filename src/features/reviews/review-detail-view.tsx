@@ -21,6 +21,7 @@ import { useWorkspaces } from "@/features/workspace/use-workspaces";
 
 import { AnnotationPanel } from "./annotation-panel";
 import { ReviewActions } from "./review-actions";
+import { canUserReplyToAnnotation } from "./reviews.constants";
 import { ReviewImageCanvas } from "./review-image-canvas";
 import { useReviewDetail } from "./use-reviews";
 
@@ -165,6 +166,11 @@ export function ReviewDetailView({
   const isLatestReview = selectedReview.id === latestReviewId;
   const isActionable =
     researchItem.status === "DESIGN_REVIEW" && isLatestReview;
+  const canReply = canUserReplyToAnnotation({
+    hasAdminRole: isAdmin,
+    itemStatus: researchItem.status,
+    isLatestReviewRound: isLatestReview,
+  });
 
   const designerDisplayName =
     currentDesigner?.name || currentDesigner?.email || "Unassigned";
@@ -318,6 +324,7 @@ export function ReviewDetailView({
 
         <aside className="lg:col-span-5 xl:col-span-4">
           <AnnotationPanel
+            canReply={canReply}
             isActionable={isActionable}
             onSelectAnnotation={setSelectedAnnotationId}
             researchItemId={researchItem.id}

@@ -1,9 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   Clock,
   Download,
@@ -11,6 +13,7 @@ import {
   Eye,
   ImageIcon,
   Loader2,
+  MessageSquare,
   Paintbrush,
   Pencil,
   Trash2,
@@ -198,19 +201,37 @@ export function ResearchItemDetailModal({
                     {item.title || `Etsy Listing #${item.etsyListingId}`}
                   </DialogTitle>
 
-                  {isAdmin && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="xs"
-                      onClick={() => setIsEditTitleOpen(true)}
-                      className="mt-1 shrink-0 gap-1 text-xs self-start"
-                      title="Edit title"
-                    >
-                      <Pencil className="size-3" />
-                      <span>Edit Title</span>
-                    </Button>
-                  )}
+                  <div className="mt-1 flex flex-wrap items-center gap-2 self-start">
+                    {isAdmin && item.latestReview?.id && (
+                      <Button
+                        className="gap-1 text-xs"
+                        nativeButton={false}
+                        render={
+                          <Link
+                            href={`/w/${workspaceId}/reviews/${item.latestReview.id}`}
+                          />
+                        }
+                        size="xs"
+                        variant="secondary"
+                      >
+                        <MessageSquare className="size-3" />
+                        <span>View Review Feedback</span>
+                      </Button>
+                    )}
+                    {isAdmin && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="xs"
+                        onClick={() => setIsEditTitleOpen(true)}
+                        className="gap-1 text-xs"
+                        title="Edit title"
+                      >
+                        <Pencil className="size-3" />
+                        <span>Edit Title</span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 <DialogDescription className="text-xs text-muted-foreground">
@@ -339,22 +360,51 @@ export function ResearchItemDetailModal({
               {/* Latest Review Submission Card (if present) */}
               {item.latestReview && (
                 <div className="rounded-lg border border-border bg-card p-4 shadow-xs">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                       <Eye className="size-3.5 text-primary" />
                       Latest Review (Round {item.latestReview.roundNumber})
                     </span>
-                    {item.latestReview.approvedAt ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                        <CheckCircle2 className="size-3" />
-                        Approved
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                        <Clock className="size-3" />
-                        In Review
-                      </span>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {item.latestReview.approvedAt ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="size-3" />
+                          Approved
+                        </span>
+                      ) : item.status === "CORRECTION_NEEDED" ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                          <AlertTriangle className="size-3" />
+                          Correction Needed
+                        </span>
+                      ) : item.status === "DESIGN_IN_PROGRESS" ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 dark:text-blue-400">
+                          <Clock className="size-3" />
+                          Correction In Progress
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                          <Clock className="size-3" />
+                          In Review
+                        </span>
+                      )}
+
+                      {isAdmin && item.latestReview.id && (
+                        <Button
+                          className="gap-1 text-xs"
+                          nativeButton={false}
+                          render={
+                            <Link
+                              href={`/w/${workspaceId}/reviews/${item.latestReview.id}`}
+                            />
+                          }
+                          size="xs"
+                          variant="outline"
+                        >
+                          <MessageSquare className="size-3" />
+                          <span>View Review Feedback</span>
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   {item.latestReview.note && (
@@ -378,6 +428,28 @@ export function ResearchItemDetailModal({
                       </div>
                     ) : null}
                   </div>
+
+                  {isAdmin && item.latestReview.id && (
+                    <div className="mt-3.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-border/80 pt-3">
+                      <p className="text-[11px] text-muted-foreground">
+                        Inspect submission proof, annotated revision notes, and Designer replies.
+                      </p>
+                      <Button
+                        className="gap-1.5 text-xs shrink-0 self-start sm:self-auto"
+                        nativeButton={false}
+                        render={
+                          <Link
+                            href={`/w/${workspaceId}/reviews/${item.latestReview.id}`}
+                          />
+                        }
+                        size="xs"
+                        variant="default"
+                      >
+                        <MessageSquare className="size-3" />
+                        <span>View Review Feedback</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -54,7 +54,6 @@ export type ReviewQueueResult = {
 export type ReviewQueueResponse = {
   data: ReviewQueueResult;
   message: string;
-  statusCode: number;
   success: boolean;
 };
 
@@ -119,7 +118,6 @@ export type ReviewDetailResult = {
 export type ReviewDetailResponse = {
   data: ReviewDetailResult;
   message: string;
-  statusCode: number;
   success: boolean;
 };
 
@@ -148,7 +146,6 @@ export type CreateAnnotationResult = {
 export type CreateAnnotationResponse = {
   data: CreateAnnotationResult;
   message: string;
-  statusCode: number;
   success: boolean;
 };
 
@@ -172,7 +169,6 @@ export type CreateReplyResult = {
 export type CreateReplyResponse = {
   data: CreateReplyResult;
   message: string;
-  statusCode: number;
   success: boolean;
 };
 
@@ -186,7 +182,6 @@ export type RequestCorrectionResult = {
 export type RequestCorrectionResponse = {
   data: RequestCorrectionResult;
   message: string;
-  statusCode: number;
   success: boolean;
 };
 
@@ -206,6 +201,5 @@ export type ApproveReviewResult = {
 export type ApproveReviewResponse = {
   data: ApproveReviewResult;
   message: string;
-  statusCode: number;
   success: boolean;
 };
