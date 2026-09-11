@@ -69,6 +69,12 @@ export const safeResearchItemSchema = z.object({
   workspaceId: z.string(),
 });
 
+export const researchReviewActivitySchema = z.object({
+  designerReplyCount: z.number().int().nonnegative(),
+  latestDesignerReplyAt: z.string().nullable(),
+  latestReviewId: z.string().nullable(),
+});
+
 export const researchItemListItemSchema = z.object({
   createdAt: z.string(),
   createdBy: userSummarySchema,
@@ -80,6 +86,7 @@ export const researchItemListItemSchema = z.object({
   normalizedUrl: z.string(),
   originalUrl: z.string(),
   referenceImageUrl: z.string().nullable(),
+  reviewActivity: researchReviewActivitySchema,
   status: researchStatusSchema,
   title: z.string().nullable(),
   updatedAt: z.string(),

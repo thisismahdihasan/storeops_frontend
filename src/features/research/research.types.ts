@@ -65,6 +65,12 @@ export type SafeResearchItem = {
   workspaceId: string;
 };
 
+export type ResearchReviewActivity = {
+  designerReplyCount: number;
+  latestDesignerReplyAt: string | null;
+  latestReviewId: string | null;
+};
+
 export type ResearchItemListItem = {
   createdAt: string;
   createdBy: UserSummary;
@@ -76,6 +82,7 @@ export type ResearchItemListItem = {
   normalizedUrl: string;
   originalUrl: string;
   referenceImageUrl: string | null;
+  reviewActivity: ResearchReviewActivity;
   status: ResearchStatus;
   title: string | null;
   updatedAt: string;

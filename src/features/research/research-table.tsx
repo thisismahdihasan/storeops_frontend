@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   AlertCircle,
@@ -10,6 +11,7 @@ import {
   ExternalLink,
   Eye,
   Loader2,
+  MessageSquare,
   Plus,
   RefreshCw,
   Search,
@@ -190,6 +192,7 @@ export function ResearchTable({
                   item={item}
                   onOpenDetail={onOpenDetail}
                   userCanUpload={canCreate}
+                  userRoles={userRoles}
                   workspaceId={workspaceId}
                 />
               ))}
@@ -242,14 +245,26 @@ function ResearchTableRow({
   item,
   onOpenDetail,
   userCanUpload,
+  userRoles,
   workspaceId,
 }: {
   item: ResearchItemListItem;
   onOpenDetail: (id: string) => void;
   userCanUpload: boolean;
+  userRoles: WorkspaceRole[];
   workspaceId: string;
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const { designerReplyCount, latestReviewId } = item.reviewActivity ?? {
+    designerReplyCount: 0,
+    latestDesignerReplyAt: null,
+    latestReviewId: null,
+  };
+  const isAdmin = userRoles.includes("ADMIN");
+  const canClickReview = isAdmin && Boolean(latestReviewId);
+  const replyCountLabel = `${designerReplyCount} Designer ${designerReplyCount === 1 ? "reply" : "replies"}`;
+  const replyCountTooltip = `${replyCountLabel} on review annotations`;
 
   const handleDownload = async () => {
     if (!item.referenceImageUrl) return;
@@ -348,9 +363,34 @@ function ResearchTableRow({
       <td className="px-4 py-3">
         {item.currentDesigner ? (
           <div className="flex flex-col">
-            <span className="font-medium text-foreground">
-              {item.currentDesigner.name || "Unnamed"}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-medium text-foreground">
+                {item.currentDesigner.name || "Unnamed"}
+              </span>
+              {designerReplyCount > 0 && (
+                canClickReview ? (
+                  <Link
+                    aria-label={replyCountLabel}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary transition-colors hover:bg-primary/20 hover:underline"
+                    href={`/w/${workspaceId}/reviews/${latestReviewId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    title={replyCountTooltip}
+                  >
+                    <MessageSquare className="size-2.5" />
+                    <span>{designerReplyCount}</span>
+                  </Link>
+                ) : (
+                  <span
+                    aria-label={replyCountLabel}
+                    className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                    title={replyCountTooltip}
+                  >
+                    <MessageSquare className="size-2.5" />
+                    <span>{designerReplyCount}</span>
+                  </span>
+                )
+              )}
+            </div>
             <span className="text-[11px] text-muted-foreground">
               {item.currentDesigner.email}
             </span>
