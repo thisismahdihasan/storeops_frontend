@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { ResearchStatus } from "@/features/research/research.types";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { ApiError } from "@/lib/api";
 
 import { AnnotationPanel } from "./annotation-panel";
 import { ReviewActions } from "./review-actions";
@@ -66,7 +67,13 @@ function getStatusTone(
   }
 }
 
-function AccessDenied() {
+function AccessDenied({
+  message = "Only workspace Admins and assigned Designers can access review submissions.",
+  title = "Review access required",
+}: {
+  message?: string;
+  title?: string;
+}) {
   return (
     <main className="mx-auto max-w-lg p-6">
       <section
@@ -77,10 +84,10 @@ function AccessDenied() {
           <ShieldAlert className="size-6" />
         </div>
         <h1 className="mt-4 text-xl font-semibold text-foreground">
-          Admin access required
+          {title}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Only workspace Admins can access and review designer submissions.
+          {message}
         </p>
       </section>
     </main>
@@ -133,8 +140,11 @@ export function ReviewDetailView({
   );
   const isAdmin =
     activeWorkspace?.membership.roles.includes("ADMIN") ?? false;
+  const isDesigner =
+    activeWorkspace?.membership.roles.includes("DESIGNER") ?? false;
+  const canAccess = isAdmin || isDesigner;
 
-  const detailQuery = useReviewDetail(workspaceId, reviewId, isAdmin);
+  const detailQuery = useReviewDetail(workspaceId, reviewId, canAccess);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<
     string | null
   >(null);
@@ -143,7 +153,7 @@ export function ReviewDetailView({
     return <DetailLoadingState />;
   }
 
-  if (!isAdmin) {
+  if (!canAccess) {
     return <AccessDenied />;
   }
 
@@ -151,7 +161,21 @@ export function ReviewDetailView({
     return <DetailLoadingState />;
   }
 
-  if (detailQuery.isError || !detailQuery.data) {
+  if (detailQuery.isError) {
+    const isForbidden =
+      detailQuery.error instanceof ApiError && detailQuery.error.status === 403;
+    if (isForbidden) {
+      return (
+        <AccessDenied
+          message="You are not assigned to this research item or do not have permission to view this review."
+          title="Access denied"
+        />
+      );
+    }
+    return <DetailErrorState onRetry={() => void detailQuery.refetch()} />;
+  }
+
+  if (!detailQuery.data) {
     return <DetailErrorState onRetry={() => void detailQuery.refetch()} />;
   }
 
@@ -165,9 +189,11 @@ export function ReviewDetailView({
 
   const isLatestReview = selectedReview.id === latestReviewId;
   const isActionable =
-    researchItem.status === "DESIGN_REVIEW" && isLatestReview;
+    isAdmin && researchItem.status === "DESIGN_REVIEW" && isLatestReview;
   const canReply = canUserReplyToAnnotation({
     hasAdminRole: isAdmin,
+    hasDesignerRole: isDesigner,
+    isAssignedDesigner: isDesigner,
     itemStatus: researchItem.status,
     isLatestReviewRound: isLatestReview,
   });
@@ -181,12 +207,20 @@ export function ReviewDetailView({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Button
           nativeButton={false}
-          render={<Link href={`/w/${workspaceId}/reviews`} />}
+          render={
+            <Link
+              href={
+                isAdmin
+                  ? `/w/${workspaceId}/reviews`
+                  : `/w/${workspaceId}/design/${researchItem.id}`
+              }
+            />
+          }
           size="sm"
           variant="ghost"
         >
           <ArrowLeft className="size-4" />
-          <span>Back to Reviews</span>
+          <span>{isAdmin ? "Back to Reviews" : "Back to Design"}</span>
         </Button>
 
         {/* Round History Selector */}
@@ -294,7 +328,9 @@ export function ReviewDetailView({
             <div className="rounded-lg border border-border/80 bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
               {!isLatestReview
                 ? "Viewing historical round (read-only)"
-                : `Item status is ${researchItem.status} (read-only)`}
+                : isAdmin
+                  ? `Item status is ${researchItem.status} (read-only)`
+                  : "Viewing review feedback (read-only)"}
             </div>
           )}
         </div>

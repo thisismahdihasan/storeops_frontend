@@ -1,18 +1,33 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { FeaturePlaceholder } from "@/components/layout/feature-placeholder";
+import { CorrectionsView } from "@/features/corrections/corrections-view";
 
 export const metadata: Metadata = {
-  description: "Designer correction requests and revisions",
+  description: "Review requested changes and continue your design revisions",
   title: "Corrections — StoreOps",
 };
 
-export default function CorrectionsPage() {
+type CorrectionsPageProps = {
+  params: Promise<{
+    workspaceId: string;
+  }>;
+};
+
+export default async function CorrectionsPage({
+  params,
+}: CorrectionsPageProps) {
+  const { workspaceId } = await params;
+
   return (
-    <FeaturePlaceholder
-      description="Track and resolve design feedback, revisions requested by admins, and quality corrections."
-      moduleName="Corrections"
-      title="Corrections & Revisions"
-    />
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-6xl p-6 text-sm text-muted-foreground">
+          Loading corrections…
+        </div>
+      }
+    >
+      <CorrectionsView workspaceId={workspaceId} />
+    </Suspense>
   );
 }
