@@ -10,6 +10,11 @@ export type DesignerWorkFilters = z.infer<typeof designerWorkFiltersSchema>;
 export type DesignerQueueResponse = z.infer<typeof designerQueueResponseSchema>;
 export type DesignerWorkItem = DesignerQueueResponse["data"]["items"][number];
 export type DesignerWorkStatus = DesignerWorkItem["researchItem"]["status"];
+export type DesignerWorkflowStatus =
+  | DesignerWorkStatus
+  | "READY_FOR_LISTING"
+  | "LISTING_IN_PROGRESS"
+  | "LISTED";
 export type ReportIssueFormValues = z.infer<typeof reportIssueFormSchema>;
 
 export type StatusTone =
@@ -33,7 +38,7 @@ export const DESIGNER_WORK_TABS: Array<{
 ];
 
 const STATUS_METADATA: Record<
-  DesignerWorkStatus,
+  DesignerWorkflowStatus,
   { label: string; tone: StatusTone }
 > = {
   ASSIGNED: { label: "Assigned", tone: "neutral" },
@@ -42,9 +47,12 @@ const STATUS_METADATA: Record<
   DESIGN_IN_PROGRESS: { label: "In Progress", tone: "info" },
   DESIGN_REVIEW: { label: "Waiting Review", tone: "info" },
   ISSUE_REPORTED: { label: "Issue Reported", tone: "danger" },
+  READY_FOR_LISTING: { label: "Ready for Listing", tone: "success" },
+  LISTING_IN_PROGRESS: { label: "Listing in Progress", tone: "info" },
+  LISTED: { label: "Listed", tone: "success" },
 };
 
-export function getDesignerWorkStatusMeta(status: DesignerWorkStatus) {
+export function getDesignerWorkStatusMeta(status: DesignerWorkflowStatus) {
   return STATUS_METADATA[status];
 }
 
