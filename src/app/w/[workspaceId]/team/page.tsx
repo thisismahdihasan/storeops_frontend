@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
 
-import { FeaturePlaceholder } from "@/components/layout/feature-placeholder";
+import { TeamView } from "@/features/team/team-view";
 
 export const metadata: Metadata = {
   description: "Workspace team members and role assignments",
   title: "Team — StoreOps",
 };
 
-export default function TeamPage() {
-  return (
-    <FeaturePlaceholder
-      description="Manage team memberships, invite new collaborators with specific roles, and review access levels."
-      moduleName="Team"
-      title="Team Management"
-    />
-  );
+type TeamPageProps = { params: Promise<{ workspaceId: string }> };
+
+export default async function TeamPage({ params }: TeamPageProps) {
+  const { workspaceId } = await params;
+
+  return <TeamView workspaceId={workspaceId} />;
 }
