@@ -8,17 +8,10 @@ import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { ISSUE_REASON_OPTIONS } from "@/features/research/issue-reasons";
 
 import { reportIssueFormSchema } from "./designer-work.schemas";
 import type { ReportIssueFormValues } from "./designer-work.types";
-
-const ISSUE_REASONS: Array<{ label: string; value: ReportIssueFormValues["reason"] }> = [
-  { label: "Reference unclear", value: "REFERENCE_UNCLEAR" },
-  { label: "Copyright concern", value: "COPYRIGHT_CONCERN" },
-  { label: "Too complex", value: "TOO_COMPLEX" },
-  { label: "Image quality", value: "IMAGE_QUALITY" },
-  { label: "Other", value: "OTHER" },
-];
 
 type ReportIssueDialogProps = {
   isSubmitting: boolean;
@@ -50,7 +43,7 @@ export function ReportIssueDialog({ isSubmitting, onOpenChange, onSubmit, open, 
           <div className="space-y-2">
             <Label htmlFor="designer-issue-reason">Reason</Label>
             <select aria-invalid={Boolean(form.formState.errors.reason)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring aria-invalid:border-destructive" id="designer-issue-reason" {...form.register("reason")}>
-              {ISSUE_REASONS.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}
+              {ISSUE_REASON_OPTIONS.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}
             </select>
             {form.formState.errors.reason && <p className="text-xs text-destructive">{form.formState.errors.reason.message}</p>}
           </div>

@@ -102,6 +102,23 @@ export const researchListResponseSchema = z.object({
   success: z.literal(true),
 });
 
+export const reassignResearchResponseSchema = z.object({
+  data: z.object({
+    assignment: z.object({
+      assignedAt: z.string(),
+      designerId: z.string(),
+      id: z.string(),
+      isCurrent: z.boolean(),
+    }),
+    researchItem: z.object({
+      id: z.string(),
+      status: researchStatusSchema,
+    }),
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});
+
 export const researchDetailResponseSchema = z.object({
   data: z.object({
     researchItem: z.object({

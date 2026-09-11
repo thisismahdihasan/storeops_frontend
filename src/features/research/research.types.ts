@@ -117,6 +117,23 @@ export type ResearchListResponse = {
   success: true;
 };
 
+export type ReassignResearchResponse = {
+  data: {
+    assignment: {
+      assignedAt: string;
+      designerId: string;
+      id: string;
+      isCurrent: boolean;
+    };
+    researchItem: {
+      id: string;
+      status: ResearchStatus;
+    };
+  };
+  message: string;
+  success: true;
+};
+
 export type CreateResearchInput = {
   etsyUrl: string;
 };

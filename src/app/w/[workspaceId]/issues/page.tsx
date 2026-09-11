@@ -1,18 +1,25 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
-import { FeaturePlaceholder } from "@/components/layout/feature-placeholder";
+import { IssuesView } from "@/features/issues/issues-view";
 
 export const metadata: Metadata = {
-  description: "Operations issues and QA exception tracking",
+  description: "Designer-reported items waiting for Admin action",
   title: "Issues — StoreOps",
 };
 
-export default function IssuesPage() {
+type IssuesPageProps = {
+  params: Promise<{
+    workspaceId: string;
+  }>;
+};
+
+export default async function IssuesPage({ params }: IssuesPageProps) {
+  const { workspaceId } = await params;
+
   return (
-    <FeaturePlaceholder
-      description="Monitor reported operational issues, rejected design tickets, and listing sync exceptions."
-      moduleName="Issues"
-      title="Operational Issues"
-    />
+    <Suspense fallback={null}>
+      <IssuesView workspaceId={workspaceId} />
+    </Suspense>
   );
 }

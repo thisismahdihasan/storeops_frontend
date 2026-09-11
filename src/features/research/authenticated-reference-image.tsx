@@ -15,6 +15,7 @@ type AuthenticatedReferenceImageProps = {
   enabled?: boolean;
   hasImage: boolean;
   isActive?: boolean;
+  minHeightClassName?: string;
   onOpenUpload?: () => void;
   researchItemId: string;
   userCanUpload?: boolean;
@@ -28,6 +29,7 @@ export function AuthenticatedReferenceImage({
   enabled = true,
   hasImage,
   isActive = true,
+  minHeightClassName = "min-h-[200px]",
   onOpenUpload,
   researchItemId,
   userCanUpload = false,
@@ -70,7 +72,8 @@ export function AuthenticatedReferenceImage({
     return (
       <div
         className={cn(
-          "flex min-h-[200px] w-full flex-col items-center justify-center gap-2 p-4 text-center text-muted-foreground",
+          "flex w-full flex-col items-center justify-center gap-2 p-4 text-center text-muted-foreground",
+          minHeightClassName,
           containerClassName,
         )}
       >
@@ -104,7 +107,8 @@ export function AuthenticatedReferenceImage({
     return (
       <div
         className={cn(
-          "flex min-h-[200px] w-full flex-col items-center justify-center gap-2 p-4 text-center text-destructive",
+          "flex w-full flex-col items-center justify-center gap-2 p-4 text-center text-destructive",
+          minHeightClassName,
           containerClassName,
         )}
       >
@@ -139,7 +143,8 @@ export function AuthenticatedReferenceImage({
     return (
       <div
         className={cn(
-          "flex min-h-[200px] w-full flex-col items-center justify-center gap-2.5 p-4 text-center text-muted-foreground",
+          "flex w-full flex-col items-center justify-center gap-2.5 p-4 text-center text-muted-foreground",
+          minHeightClassName,
           containerClassName,
         )}
       >

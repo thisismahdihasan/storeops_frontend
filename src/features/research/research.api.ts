@@ -5,6 +5,7 @@ import {
   deleteResearchItemResponseSchema,
   duplicateResearchDataSchema,
   previewResearchResponseSchema,
+  reassignResearchResponseSchema,
   researchDetailResponseSchema,
   researchListResponseSchema,
   syncAssignmentsResponseSchema,
@@ -17,6 +18,7 @@ import type {
   DeleteResearchItemResponse,
   DuplicateResearchData,
   PreviewResearchResponse,
+  ReassignResearchResponse,
   ResearchDetailResponse,
   ResearchListFilterParams,
   ResearchListResponse,
@@ -146,6 +148,27 @@ export async function getResearchItemById(
   const parsed = researchDetailResponseSchema.safeParse(response);
   if (!parsed.success) {
     throw new ApiError(502, "Unexpected research detail response format.");
+  }
+
+  return parsed.data;
+}
+
+export async function reassignResearchDesigner(
+  workspaceId: string,
+  researchItemId: string,
+  designerId: string,
+): Promise<ReassignResearchResponse> {
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${workspaceId}/research-items/${researchItemId}/designer`,
+    {
+      json: { designerId },
+      method: "PATCH",
+    },
+  );
+
+  const parsed = reassignResearchResponseSchema.safeParse(response);
+  if (!parsed.success) {
+    throw new ApiError(502, "Unexpected designer reassignment response format.");
   }
 
   return parsed.data;
