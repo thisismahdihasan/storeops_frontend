@@ -4,6 +4,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Calendar,
+  CheckCircle2,
   ExternalLink,
   History,
   ShieldAlert,
@@ -311,6 +312,15 @@ export function ReviewDetailView({
               <Calendar className="size-3.5" />
               Submitted {formatDetailTime(selectedReview.submittedAt)}
             </span>
+            {selectedReview.approvedAt ? (
+              <>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="size-3.5" />
+                  Approved {formatDetailTime(selectedReview.approvedAt)}
+                </span>
+              </>
+            ) : null}
           </div>
         </div>
 

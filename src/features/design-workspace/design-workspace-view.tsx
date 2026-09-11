@@ -120,7 +120,41 @@ export function DesignWorkspaceView({ researchItemId, workspaceId }: DesignWorks
 
 function AssignmentSummary({ detail }: { detail: DesignDetail }) {
   const reviewRound = detail.latestReview?.roundNumber;
-  return <section className="rounded-xl border border-border bg-card p-4 shadow-xs"><h2 className="font-semibold">Assignment</h2><dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2"><SummaryCell icon={<User className="size-3.5" />} label="Researcher" value={detail.researcher.name || detail.researcher.email} /><SummaryCell icon={<User className="size-3.5" />} label="Assigned Designer" value={detail.currentDesigner.name || detail.currentDesigner.email} /><SummaryCell label="Assigned at" value={formatWorkDate(detail.assignment.assignedAt)} /><SummaryCell label="Started at" value={formatWorkDate(detail.assignment.startedAt)} /><SummaryCell label="Current review round" value={reviewRound ? `Round ${reviewRound}` : "No review submitted yet."} /></dl></section>;
+  return (
+    <section className="rounded-xl border border-border bg-card p-4 shadow-xs">
+      <h2 className="font-semibold">Assignment</h2>
+      <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+        <SummaryCell
+          icon={<User className="size-3.5" />}
+          label="Researcher"
+          value={detail.researcher.name || detail.researcher.email}
+        />
+        <SummaryCell
+          icon={<User className="size-3.5" />}
+          label="Assigned Designer"
+          value={detail.currentDesigner.name || detail.currentDesigner.email}
+        />
+        <SummaryCell
+          label="Assigned at"
+          value={formatWorkDate(detail.assignment.assignedAt)}
+        />
+        <SummaryCell
+          label="Started at"
+          value={formatWorkDate(detail.assignment.startedAt)}
+        />
+        <SummaryCell
+          label="Current review round"
+          value={reviewRound ? `Round ${reviewRound}` : "No review submitted yet."}
+        />
+        {detail.latestReview?.approvedAt ? (
+          <SummaryCell
+            label="Approved at"
+            value={formatWorkDate(detail.latestReview.approvedAt)}
+          />
+        ) : null}
+      </dl>
+    </section>
+  );
 }
 
 function SummaryCell({ icon, label, value }: { icon?: React.ReactNode; label: string; value: string }) { return <div className="min-w-0"><dt className="flex items-center gap-1 text-xs font-medium text-muted-foreground">{icon}{label}</dt><dd className="mt-1 break-words font-medium">{value}</dd></div>; }
