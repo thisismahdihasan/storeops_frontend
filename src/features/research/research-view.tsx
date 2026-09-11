@@ -8,6 +8,7 @@ import { AddResearchModal } from "./add-research-modal";
 import { parseResearchFiltersFromParams, ResearchFilters } from "./research-filters";
 import { ResearchItemDetailModal } from "./research-item-detail-modal";
 import { ResearchTable } from "./research-table";
+import { SyncUnassignedButton } from "./sync-unassigned-button";
 import { useResearchItems } from "./use-research";
 
 type ResearchViewProps = {
@@ -32,6 +33,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
 
   const canCreate =
     userRoles.includes("ADMIN") || userRoles.includes("RESEARCHER");
+  const isAdmin = userRoles.includes("ADMIN");
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -68,12 +70,15 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
           </p>
         </div>
 
-        {canCreate && (
-          <div className="flex items-center gap-2">
-            <AddResearchModal
-              workspaceId={workspaceId}
-              onOpenExistingDetail={(id) => setSelectedItemId(id)}
-            />
+        {(canCreate || isAdmin) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {isAdmin && <SyncUnassignedButton workspaceId={workspaceId} />}
+            {canCreate && (
+              <AddResearchModal
+                workspaceId={workspaceId}
+                onOpenExistingDetail={(id) => setSelectedItemId(id)}
+              />
+            )}
           </div>
         )}
       </div>

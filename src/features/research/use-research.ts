@@ -11,6 +11,7 @@ import {
   getResearchItems,
   getResearchReferenceImageBlob,
   previewResearchItem,
+  syncResearchAssignments,
   updateResearchItemTitle,
   uploadResearchReferenceImage,
 } from "./research.api";
@@ -172,6 +173,25 @@ export function useResearchReferenceImage(
     queryKey: researchKeys.referenceImage(workspaceId, researchItemId ?? ""),
     retry: (failureCount, error) => !isAuthError(error) && failureCount < 1,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useSyncResearchAssignments(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => syncResearchAssignments(workspaceId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.workspace(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboard", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["designer-work", workspaceId],
+      });
+    },
   });
 }
 

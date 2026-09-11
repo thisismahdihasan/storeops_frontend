@@ -7,6 +7,7 @@ import {
   previewResearchResponseSchema,
   researchDetailResponseSchema,
   researchListResponseSchema,
+  syncAssignmentsResponseSchema,
   updateResearchItemResponseSchema,
   uploadReferenceImageResponseSchema,
 } from "./research.schemas";
@@ -19,6 +20,7 @@ import type {
   ResearchDetailResponse,
   ResearchListFilterParams,
   ResearchListResponse,
+  SyncAssignmentsResponse,
   UpdateResearchItemResponse,
   UploadReferenceImageResponse,
 } from "./research.types";
@@ -299,4 +301,18 @@ export async function downloadResearchReferenceImage(
   URL.revokeObjectURL(url);
 }
 
+export async function syncResearchAssignments(
+  workspaceId: string,
+): Promise<SyncAssignmentsResponse> {
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${workspaceId}/research-items/sync-assignments`,
+    { method: "POST" },
+  );
 
+  const parsed = syncAssignmentsResponseSchema.safeParse(response);
+  if (!parsed.success) {
+    throw new ApiError(502, "Unexpected sync assignments response format.");
+  }
+
+  return parsed.data;
+}

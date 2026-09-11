@@ -220,3 +220,13 @@ export const deleteResearchItemResponseSchema = z.object({
 export const updateTitleFormSchema = z.object({
   title: z.string().trim().max(300, "Title cannot exceed 300 characters"),
 });
+
+export const syncAssignmentsResponseSchema = z.object({
+  data: z.object({
+    assignedCount: z.number().int().nonnegative(),
+    designerCount: z.number().int().nonnegative(),
+    remainingUnassignedCount: z.number().int().nonnegative(),
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});

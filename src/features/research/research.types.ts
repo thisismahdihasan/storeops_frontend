@@ -204,3 +204,15 @@ export type DeleteResearchItemResponse = {
   message: string;
   success: true;
 };
+
+export type BacklogSyncResult = {
+  assignedCount: number;
+  designerCount: number;
+  remainingUnassignedCount: number;
+};
+
+export type SyncAssignmentsResponse = {
+  data: BacklogSyncResult;
+  message: string;
+  success: true;
+};
