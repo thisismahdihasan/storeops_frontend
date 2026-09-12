@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { SyncListingsButton } from "@/features/listing/sync-listings-button";
 import { AddResearchModal } from "./add-research-modal";
 import { parseResearchFiltersFromParams, ResearchFilters } from "./research-filters";
 import { ResearchItemDetailModal } from "./research-item-detail-modal";
@@ -73,6 +74,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
         {(canCreate || isAdmin) && (
           <div className="flex flex-wrap items-center gap-2">
             {isAdmin && <SyncUnassignedButton workspaceId={workspaceId} />}
+            {isAdmin && <SyncListingsButton workspaceId={workspaceId} />}
             {canCreate && (
               <AddResearchModal
                 workspaceId={workspaceId}

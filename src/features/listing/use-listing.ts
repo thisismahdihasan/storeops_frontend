@@ -6,6 +6,7 @@ import { researchKeys } from "@/features/research/use-research";
 import { ApiError } from "@/lib/api";
 
 import {
+  backfillListingAssignments,
   completeListing,
   getListingDetail,
   getListingQueue,
@@ -13,6 +14,28 @@ import {
 } from "./listing.api";
 import { listingKeys } from "./listing.keys";
 import type { CompleteListingFormValues, ListingFilters } from "./listing.types";
+
+export function useBackfillListingAssignments(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => backfillListingAssignments(workspaceId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: listingKeys.queues(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.lists(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.details(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboard", workspaceId],
+      });
+    },
+  });
+}
 
 function shouldRetry(failureCount: number, error: unknown): boolean {
   return !(

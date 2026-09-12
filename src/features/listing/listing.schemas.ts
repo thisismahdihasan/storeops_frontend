@@ -172,6 +172,19 @@ export const completeListingResponseSchema = z
   })
   .strict();
 
+export const listingBackfillResponseSchema = z
+  .object({
+    data: z
+      .object({
+        assignedItemIds: z.array(z.string()),
+        backfilledCount: z.number().int().nonnegative(),
+      })
+      .strict(),
+    message: z.string(),
+    success: z.literal(true),
+  })
+  .strict();
+
 export const completeListingFormSchema = z
   .object({
     etsyListingUrl: z

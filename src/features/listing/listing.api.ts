@@ -2,16 +2,34 @@ import { ApiError, apiRequest } from "@/lib/api";
 
 import {
   completeListingResponseSchema,
+  listingBackfillResponseSchema,
   listingDetailResponseSchema,
   listingQueueResponseSchema,
   startListingResponseSchema,
 } from "./listing.schemas";
 import type {
   CompleteListingFormValues,
+  ListingBackfillResponse,
   ListingDetailResponse,
   ListingFilters,
   ListingQueueResponse,
 } from "./listing.types";
+
+export async function backfillListingAssignments(
+  workspaceId: string,
+): Promise<ListingBackfillResponse> {
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${workspaceId}/listing/backfill-assignments`,
+    { method: "POST" },
+  );
+  const parsed = listingBackfillResponseSchema.safeParse(response);
+
+  if (!parsed.success) {
+    throw new ApiError(502, "Unexpected listing assignment sync response format.");
+  }
+
+  return parsed.data;
+}
 
 function buildQueueQuery(filters: ListingFilters): string {
   const searchParams = new URLSearchParams({

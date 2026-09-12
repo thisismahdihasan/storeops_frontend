@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type {
   completeListingFormSchema,
+  listingBackfillResponseSchema,
   listingDetailResponseSchema,
   listingFiltersSchema,
   listingQueueResponseSchema,
@@ -13,6 +14,9 @@ export type CompleteListingFormValues = z.infer<
 >;
 export type ListingDetailResponse = z.infer<
   typeof listingDetailResponseSchema
+>;
+export type ListingBackfillResponse = z.infer<
+  typeof listingBackfillResponseSchema
 >;
 export type ListingDetail = ListingDetailResponse["data"];
 export type ListingApprovedPreview = ListingDetail["approvedPreview"];
