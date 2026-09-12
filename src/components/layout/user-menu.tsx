@@ -20,7 +20,7 @@ export type UserMenuProps = {
   user: CurrentUser;
 };
 
-function getInitials(name: string | null | undefined, email: string): string {
+export function getInitials(name: string | null | undefined, email: string): string {
   const cleanName = (name ?? "").trim();
   if (cleanName.length > 0) {
     const parts = cleanName.split(/\s+/);

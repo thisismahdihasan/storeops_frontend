@@ -125,6 +125,7 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
       <Sidebar
         activeWorkspaceId={activeWorkspaceId}
         unreadNotificationsCount={unreadNotificationsCount}
+        user={user}
         workspaces={workspaces}
       />
 
@@ -179,6 +180,7 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
         onOpenChange={setIsMobileNavOpen}
         open={isMobileNavOpen}
         unreadNotificationsCount={unreadNotificationsCount}
+        user={user}
         workspaces={workspaces}
       />
     </div>

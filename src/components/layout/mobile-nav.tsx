@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
-import { Layers, X } from "lucide-react";
+import { Layers, Loader2, LogOut, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { CurrentUser } from "@/features/auth/auth.types";
+import { useLogout } from "@/features/auth/use-logout";
 import type { WorkspaceWithMembership } from "@/features/workspace/workspace.types";
 import { cn } from "cn";
 import { resolveNavigationForRoles } from "./navigation.config";
+import { getInitials } from "./user-menu";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 
 export type MobileNavProps = {
@@ -17,6 +20,7 @@ export type MobileNavProps = {
   onOpenChange: (open: boolean) => void;
   open: boolean;
   unreadNotificationsCount?: number;
+  user: CurrentUser;
   workspaces: WorkspaceWithMembership[];
 };
 
@@ -25,9 +29,16 @@ export function MobileNav({
   onOpenChange,
   open,
   unreadNotificationsCount = 0,
+  user,
   workspaces,
 }: MobileNavProps) {
   const pathname = usePathname();
+  const logoutMutation = useLogout();
+
+  const handleLogout = () => {
+    onOpenChange(false);
+    logoutMutation.mutate();
+  };
 
   const activeWorkspace = workspaces.find((ws) => ws.id === activeWorkspaceId);
   const roles = activeWorkspace?.membership.roles ?? [];
@@ -117,17 +128,53 @@ export function MobileNav({
             ))}
           </nav>
 
-          {/* Footer */}
-          {roles.length > 0 && (
-            <div className="p-3 border-t border-border/60 bg-muted/20">
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground px-2 py-1">
+          {/* Account & Active Roles Footer */}
+          <div className="p-3 border-t border-border/60 bg-muted/20 space-y-2.5">
+            <div className="flex items-center gap-2.5 min-w-0 px-1">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-primary/10 text-xs font-semibold text-primary">
+                {getInitials(user.name, user.email)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-foreground leading-tight" title={user.name ?? user.email}>
+                  {user.name || user.email}
+                </p>
+                {user.name && (
+                  <p className="truncate text-[11px] text-muted-foreground leading-tight" title={user.email}>
+                    {user.email}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+              className="w-full justify-center text-xs text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/5"
+            >
+              {logoutMutation.isPending ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                  <span>Signing out...</span>
+                </>
+              ) : (
+                <>
+                  <LogOut className="size-3.5 mr-1.5" />
+                  <span>Sign out</span>
+                </>
+              )}
+            </Button>
+
+            {roles.length > 0 && (
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1 pt-1 border-t border-border/40">
                 <span>Active Roles</span>
                 <span className="font-mono font-medium text-foreground">
                   {roles.join(", ")}
                 </span>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
