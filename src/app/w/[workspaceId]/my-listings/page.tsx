@@ -1,18 +1,10 @@
-import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { FeaturePlaceholder } from "@/components/layout/feature-placeholder";
-
-export const metadata: Metadata = {
-  description: "Lister personal queue and drafts",
-  title: "My Listings — StoreOps",
+type MyListingsPageProps = {
+  params: Promise<{ workspaceId: string }>;
 };
 
-export default function MyListingsPage() {
-  return (
-    <FeaturePlaceholder
-      description="View and publish products assigned to you, prepare tags, titles, and manage listing submissions."
-      moduleName="My Listings"
-      title="Lister Workbench"
-    />
-  );
+export default async function MyListingsPage({ params }: MyListingsPageProps) {
+  const { workspaceId } = await params;
+  redirect(`/w/${workspaceId}/listing`);
 }

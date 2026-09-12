@@ -4,7 +4,6 @@ import {
   Bell,
   CheckSquare,
   FileSearch,
-  Layers,
   LayoutDashboard,
   Palette,
   RotateCcw,
@@ -99,17 +98,9 @@ const NAVIGATION_DEFINITIONS: NavigationDefinition[] = [
     group: "LISTING",
     icon: Tag,
     id: "listing",
-    roles: ["ADMIN"],
-    segment: "listing",
-    title: "Listing Overview",
-  },
-  {
-    group: "LISTING",
-    icon: Layers,
-    id: "my-listings",
     roles: ["LISTER"],
-    segment: "my-listings",
-    title: "My Listings",
+    segment: "listing",
+    title: "Listing",
   },
   {
     group: "MANAGEMENT",
@@ -183,7 +174,7 @@ export function resolveDefaultRouteForRoles(
     return `/w/${workspaceId}/my-work`;
   }
   if (roles.includes("LISTER")) {
-    return `/w/${workspaceId}/my-listings`;
+    return `/w/${workspaceId}/listing`;
   }
   return `/w/${workspaceId}/notifications`;
 }

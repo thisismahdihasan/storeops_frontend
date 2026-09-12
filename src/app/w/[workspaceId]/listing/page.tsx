@@ -1,18 +1,31 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
-import { FeaturePlaceholder } from "@/components/layout/feature-placeholder";
+import { ListingQueueSkeleton } from "@/features/listing/listing-list";
+import { ListingView } from "@/features/listing/listing-view";
 
 export const metadata: Metadata = {
-  description: "Etsy listing overview and publication pipeline",
-  title: "Listing Overview — StoreOps",
+  description: "Lister-owned active StoreOps listing queue",
+  title: "Listing — StoreOps",
 };
 
-export default function ListingPage() {
+type ListingPageProps = {
+  params: Promise<{ workspaceId: string }>;
+};
+
+export default async function ListingPage({ params }: ListingPageProps) {
+  const { workspaceId } = await params;
   return (
-    <FeaturePlaceholder
-      description="Monitor active listing assignments, sync status to Etsy shops, and listing throughput."
-      moduleName="Listing Overview"
-      title="Listing Management"
-    />
+    <Suspense
+      fallback={
+        <main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8">
+          <div className="h-24 animate-pulse rounded-xl bg-muted" />
+          <div className="h-28 animate-pulse rounded-xl bg-muted" />
+          <ListingQueueSkeleton />
+        </main>
+      }
+    >
+      <ListingView workspaceId={workspaceId} />
+    </Suspense>
   );
 }
