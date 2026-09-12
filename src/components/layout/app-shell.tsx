@@ -7,6 +7,7 @@ import { AlertCircle, ShieldAlert, Store } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useCurrentSession } from "@/features/auth/use-current-session";
+import { NOTIFICATIONS_PAGE_LIMIT } from "@/features/notifications/notifications.constants";
 import { useNotifications } from "@/features/notifications/use-notifications";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { MobileNav } from "./mobile-nav";
@@ -28,7 +29,12 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
 
   const sessionQuery = useCurrentSession();
   const workspacesQuery = useWorkspaces(sessionQuery.isSuccess);
-  const notificationsQuery = useNotifications(sessionQuery.isSuccess);
+  const notificationsQuery = useNotifications(
+    activeWorkspaceId,
+    1,
+    NOTIFICATIONS_PAGE_LIMIT,
+    sessionQuery.isSuccess,
+  );
 
   const user = sessionQuery.data?.data.user;
   const workspaces = workspacesQuery.data?.data.workspaces ?? [];

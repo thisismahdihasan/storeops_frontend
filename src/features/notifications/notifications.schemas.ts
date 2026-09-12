@@ -17,7 +17,7 @@ export const notificationSchema = z.object({
   researchItemId: z.string().nullable(),
   title: z.string(),
   type: notificationTypeSchema,
-  workspaceId: z.string().nullable(),
+  workspaceId: z.string().min(1),
 });
 
 export const notificationsPaginationSchema = z.object({
@@ -32,6 +32,23 @@ export const notificationsResponseSchema = z.object({
     items: z.array(notificationSchema),
     pagination: notificationsPaginationSchema,
     unreadCount: z.number(),
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});
+
+export const markNotificationReadResponseSchema = z.object({
+  data: z.object({
+    id: z.string().min(1),
+    isRead: z.literal(true),
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});
+
+export const markAllNotificationsReadResponseSchema = z.object({
+  data: z.object({
+    updatedCount: z.number().int().nonnegative(),
   }),
   message: z.string(),
   success: z.literal(true),
