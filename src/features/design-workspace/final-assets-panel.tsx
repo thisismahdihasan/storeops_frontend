@@ -13,6 +13,20 @@ const MAX_FINAL_ASSET_FILES = 10;
 const ACCEPTED_FINAL_ASSET_TYPES = new Set([
   "application/octet-stream", "application/pdf", "application/x-zip-compressed", "application/zip", "image/jpeg", "image/png", "image/webp",
 ]);
+const ACCEPTED_FINAL_ASSET_EXTENSIONS = new Set([
+  ".zip", ".png", ".jpg", ".jpeg", ".webp", ".pdf",
+]);
+
+function isValidFinalAsset(file: File): boolean {
+  if (file.size > MAX_FINAL_ASSET_BYTES) return false;
+  if (file.type.length > 0) {
+    return ACCEPTED_FINAL_ASSET_TYPES.has(file.type);
+  }
+  const dotIndex = file.name.lastIndexOf(".");
+  if (dotIndex === -1) return false;
+  const ext = file.name.slice(dotIndex).toLowerCase();
+  return ACCEPTED_FINAL_ASSET_EXTENSIONS.has(ext);
+}
 
 type FinalAssetsPanelProps = {
   assets: DesignFinalAsset[];
@@ -31,7 +45,7 @@ export function FinalAssetsPanel({ assets, count, isPending, onUpload, showUploa
     const files = incoming ? Array.from(incoming) : [];
     if (files.length === 0) return;
     if (files.length > MAX_FINAL_ASSET_FILES) { setValidationError("Choose no more than 10 files."); return; }
-    const invalid = files.find((file) => !ACCEPTED_FINAL_ASSET_TYPES.has(file.type) || file.size > MAX_FINAL_ASSET_BYTES);
+    const invalid = files.find((file) => !isValidFinalAsset(file));
     if (invalid) { setValidationError(`${invalid.name} must be ZIP, PNG, JPG/JPEG, WebP, or PDF and no larger than 100 MB.`); return; }
     setSelectedFiles(files); setValidationError(null);
   };

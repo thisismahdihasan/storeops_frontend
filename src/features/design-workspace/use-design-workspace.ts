@@ -59,7 +59,7 @@ export function useDesignActions(workspaceId: string, researchItemId: string) {
   });
   const completeWork = useMutation({
     mutationFn: () => postDesignAction(workspaceId, researchItemId, "complete"),
-    onSuccess: () => { invalidate(); },
+    onSuccess: () => invalidate(true),
   });
   const submitReview = useMutation({
     mutationFn: ({ image, note }: { image: File; note: string }) => uploadReview(workspaceId, researchItemId, image, note),
