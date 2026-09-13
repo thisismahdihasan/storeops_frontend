@@ -416,18 +416,18 @@ function CorrectionCard({
         </div>
       </div>
 
-      {/* Primary CTA Button: Review Feedback & Start */}
+      {/* Primary CTA Button: Fix Correction */}
       <div className="mt-5 pt-3 border-t border-border/60">
         <Button
-          className="w-full justify-center gap-1.5"
+          className="w-full justify-center gap-1.5 bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:text-neutral-950 dark:hover:bg-amber-400 border-transparent shadow-xs font-semibold"
           nativeButton={false}
           render={
             <Link href={`/w/${workspaceId}/design/${researchItem.id}`} />
           }
           size="sm"
         >
-          <span>Review Feedback & Start</span>
-          <ArrowRight className="size-3.5" />
+          <RotateCcw className="size-3.5" />
+          <span>Fix Correction</span>
         </Button>
       </div>
     </article>

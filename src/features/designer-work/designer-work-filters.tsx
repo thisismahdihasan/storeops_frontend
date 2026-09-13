@@ -6,6 +6,8 @@ import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+import { cn } from "@/lib/utils";
+
 import { DESIGNER_WORK_TABS } from "./designer-work.types";
 import type { DesignerWorkFilters, DesignerWorkStatus } from "./designer-work.types";
 
@@ -31,11 +33,28 @@ export function DesignerWorkFilters({ filters, onChange }: DesignerWorkFiltersPr
 
   return (
     <div className="space-y-3 rounded-xl border border-border bg-card p-3 shadow-xs sm:p-4">
-      <div aria-label="Filter work by status" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" role="tablist">
+      <div
+        aria-label="Filter work by status"
+        className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none"
+        role="group"
+      >
         {DESIGNER_WORK_TABS.map((tab) => {
           const isSelected = tab.status === filters.status;
           return (
-            <Button key={tab.label} aria-selected={isSelected} onClick={() => selectStatus(tab.status)} role="tab" size="sm" type="button" variant={isSelected ? "secondary" : "ghost"} className="shrink-0">
+            <Button
+              key={tab.label}
+              aria-pressed={isSelected}
+              className={cn(
+                "shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                isSelected
+                  ? "bg-secondary text-secondary-foreground font-semibold shadow-xs"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+              )}
+              onClick={() => selectStatus(tab.status)}
+              size="sm"
+              type="button"
+              variant={isSelected ? "secondary" : "ghost"}
+            >
               {tab.label}
             </Button>
           );

@@ -58,8 +58,14 @@ export function DesignerWorkView({ workspaceId }: DesignerWorkViewProps) {
     router.push(`/w/${workspaceId}/design/${work.researchItem.id}`);
   };
   const handleStartWork = async (work: DesignerWorkItem) => {
-    try { await startWorkMutation.mutateAsync(work.researchItem.id); toast.success("Design work started."); }
-    catch (error) { toast.error(getActionErrorMessage(error, "Unable to start work.")); if (error instanceof ApiError && error.status === 409) refreshQueueAfterConflict(); }
+    try {
+      await startWorkMutation.mutateAsync(work.researchItem.id);
+      toast.success("Design work started.");
+      router.push(`/w/${workspaceId}/design/${work.researchItem.id}`);
+    } catch (error) {
+      toast.error(getActionErrorMessage(error, "Unable to start work."));
+      if (error instanceof ApiError && error.status === 409) refreshQueueAfterConflict();
+    }
   };
   const handleStartCorrection = async (work: DesignerWorkItem) => {
     try { await startCorrectionMutation.mutateAsync(work.researchItem.id); toast.success("Correction work started."); }
