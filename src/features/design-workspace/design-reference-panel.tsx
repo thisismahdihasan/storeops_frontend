@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 import { downloadResearchReferenceImage } from "@/features/research/research.api";
-import { formatWorkDate } from "@/features/designer-work/designer-work.types";
 
 import type { DesignDetail } from "./design-workspace.types";
 
@@ -33,26 +32,54 @@ export function DesignReferencePanel({ detail, workspaceId }: DesignReferencePan
 
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
-        <div><h2 className="font-semibold">Reference</h2><p className="text-xs text-muted-foreground">Protected source material for this design.</p></div>
-        <div className="flex flex-wrap gap-2">
-          <Button disabled={isDownloading} onClick={() => void handleDownload()} size="xs" type="button" variant="outline">
-            {isDownloading ? <Loader2 className="animate-spin" /> : <Download />}Download
-          </Button>
-          <a className="inline-flex h-7 items-center gap-1 rounded-md border border-input px-2.5 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href={researchItem.originalUrl} rel="noopener noreferrer" target="_blank"><ExternalLink className="size-3.5" />Open Etsy</a>
-        </div>
+      <div className="border-b border-border px-4 py-3 sm:px-5">
+        <h2 className="text-base font-semibold text-foreground">Reference</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Protected source material for this design.
+        </p>
       </div>
-      <AuthenticatedReferenceImage alt={`${researchItem.title || `Etsy listing ${researchItem.etsyListingId}`} reference`} className="max-h-[520px] w-full rounded-none" containerClassName="min-h-[260px] bg-muted/20 p-3 sm:min-h-[360px]" hasImage researchItemId={researchItem.id} workspaceId={workspaceId} />
-      <dl className="grid gap-3 border-t border-border p-4 text-sm sm:grid-cols-2">
-        <ReferenceCell label="Title" value={researchItem.title || "Untitled Etsy listing"} />
-        <ReferenceCell label="Etsy listing" value={`#${researchItem.etsyListingId}`} />
-        <ReferenceCell label="Researched" value={formatWorkDate(researchItem.createdAt)} />
-        <ReferenceCell label="Last updated" value={formatWorkDate(researchItem.updatedAt)} />
-      </dl>
+      <div className="bg-muted/15 p-3 sm:p-4">
+        <AuthenticatedReferenceImage
+          alt={`${researchItem.title || `Etsy listing ${researchItem.etsyListingId}`} reference`}
+          className="max-h-[600px] w-full rounded-lg object-contain"
+          containerClassName="min-h-[280px] bg-transparent p-0 sm:min-h-[400px]"
+          hasImage
+          researchItemId={researchItem.id}
+          workspaceId={workspaceId}
+        />
+      </div>
+      <div className="flex flex-col gap-2.5 border-t border-border px-4 py-3.5 sm:flex-row sm:px-5">
+        <Button
+          className="flex-1 gap-2 font-semibold"
+          disabled={isDownloading}
+          onClick={() => void handleDownload()}
+          size="lg"
+          type="button"
+        >
+          {isDownloading ? (
+            <Loader2 className="size-4.5 animate-spin" />
+          ) : (
+            <Download className="size-4.5" />
+          )}
+          <span>Download Reference</span>
+        </Button>
+        <Button
+          className="flex-1 gap-2 font-semibold border-emerald-600/30 text-emerald-700 hover:bg-emerald-500/10 hover:text-emerald-800 dark:border-emerald-500/30 dark:text-emerald-400 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-300"
+          nativeButton={false}
+          render={
+            <a
+              href={researchItem.originalUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            />
+          }
+          size="lg"
+          variant="outline"
+        >
+          <ExternalLink className="size-4.5" />
+          <span>View on Etsy</span>
+        </Button>
+      </div>
     </section>
   );
-}
-
-function ReferenceCell({ label, value }: { label: string; value: string }) {
-  return <div className="min-w-0"><dt className="text-xs font-medium text-muted-foreground">{label}</dt><dd className="mt-1 break-words font-medium text-foreground">{value}</dd></div>;
 }

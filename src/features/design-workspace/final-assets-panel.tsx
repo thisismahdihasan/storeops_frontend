@@ -51,5 +51,64 @@ export function FinalAssetsPanel({ assets, count, isPending, onUpload, showUploa
     setSelectedFiles(files); setValidationError(null);
   };
 
-  return <section className="rounded-xl border border-border bg-card p-4 shadow-xs"><div><h2 className="font-semibold">Final files</h2><p className="mt-1 text-sm text-muted-foreground">{count === 0 ? "No final files uploaded yet." : `${count} final file${count === 1 ? "" : "s"} uploaded.`}</p></div>{assets.length > 0 && <ul className="mt-4 divide-y divide-border rounded-lg border border-border">{assets.map((asset) => <li className="flex min-w-0 flex-col gap-1 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between" key={asset.id}><div className="min-w-0"><p className="truncate text-sm font-medium" title={asset.fileName}>{asset.fileName}</p><p className="text-xs text-muted-foreground">{asset.mimeType} · {formatFileSize(asset.fileSize)}</p></div><p className="shrink-0 text-xs text-muted-foreground">Uploaded {formatWorkDate(asset.uploadedAt)}</p></li>)}</ul>}{showUploader && count === 0 && <div className="mt-4 space-y-3 border-t border-border pt-4"><input accept=".zip,.png,.jpg,.jpeg,.webp,.pdf" className="sr-only" multiple onChange={(event) => selectFiles(event.target.files)} ref={inputRef} type="file" /><div className="flex flex-wrap gap-2"><Button onClick={() => inputRef.current?.click()} size="sm" type="button" variant="outline"><FileUp />Choose final files</Button><p className="self-center text-xs text-muted-foreground">1–10 files · 100 MB each</p></div>{selectedFiles.length > 0 && <ul className="space-y-2 rounded-lg bg-muted/40 p-3">{selectedFiles.map((file) => <li className="flex min-w-0 items-center justify-between gap-2 text-sm" key={`${file.name}-${file.lastModified}`}><span className="truncate">{file.name} <span className="text-muted-foreground">({formatFileSize(file.size.toString())})</span></span><Button aria-label={`Remove ${file.name}`} onClick={() => setSelectedFiles((files) => files.filter((item) => item !== file))} size="icon-xs" type="button" variant="ghost"><X /></Button></li>)}</ul>}{validationError && <p className="text-xs text-destructive">{validationError}</p>}<Button disabled={isPending || selectedFiles.length === 0} onClick={() => onUpload(selectedFiles)} type="button">{isPending && <Loader2 className="animate-spin" />}Upload Final Files</Button></div>}</section>;
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">Final Files</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {count === 0 ? "No final files uploaded yet." : `${count} final file${count === 1 ? "" : "s"} uploaded.`}
+        </p>
+      </div>
+      {assets.length > 0 && (
+        <ul className="divide-y divide-border rounded-lg border border-border bg-muted/10">
+          {assets.map((asset) => (
+            <li className="flex min-w-0 flex-col gap-1 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between text-xs" key={asset.id}>
+              <div className="min-w-0">
+                <p className="truncate font-medium text-foreground" title={asset.fileName}>{asset.fileName}</p>
+                <p className="text-muted-foreground">{asset.mimeType} · {formatFileSize(asset.fileSize)}</p>
+              </div>
+              <p className="shrink-0 text-muted-foreground">Uploaded {formatWorkDate(asset.uploadedAt)}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+      {showUploader && count === 0 && (
+        <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/15 p-4">
+          <input accept=".zip,.png,.jpg,.jpeg,.webp,.pdf" className="sr-only" multiple onChange={(event) => selectFiles(event.target.files)} ref={inputRef} type="file" />
+          <div className="flex flex-wrap items-center gap-3">
+            <Button onClick={() => inputRef.current?.click()} size="sm" type="button" variant="outline">
+              <FileUp className="size-3.5" />
+              <span>Choose final files</span>
+            </Button>
+            <p className="text-xs text-muted-foreground">1–10 files · 100 MB max each · ZIP, PNG, JPG, WebP, PDF</p>
+          </div>
+          {selectedFiles.length > 0 && (
+            <ul className="space-y-2 rounded-lg bg-background p-3 border border-border">
+              {selectedFiles.map((file) => (
+                <li className="flex min-w-0 items-center justify-between gap-2 text-xs" key={`${file.name}-${file.lastModified}`}>
+                  <span className="truncate font-medium">
+                    {file.name} <span className="text-muted-foreground">({formatFileSize(file.size.toString())})</span>
+                  </span>
+                  <Button aria-label={`Remove ${file.name}`} onClick={() => setSelectedFiles((files) => files.filter((item) => item !== file))} size="icon-xs" type="button" variant="ghost">
+                    <X className="size-3" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {validationError && <p className="text-xs font-medium text-destructive">{validationError}</p>}
+          <Button
+            className="w-full sm:w-auto font-semibold gap-1.5"
+            disabled={isPending || selectedFiles.length === 0}
+            onClick={() => onUpload(selectedFiles)}
+            size="sm"
+            type="button"
+          >
+            {isPending && <Loader2 className="size-3.5 animate-spin" />}
+            <span>Upload Final Files</span>
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 }
