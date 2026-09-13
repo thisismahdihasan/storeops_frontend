@@ -68,3 +68,23 @@ export type RevokeWorkspaceInviteResponse = {
   message: string;
   success: true;
 };
+
+export type UpdateMemberRolesInput = {
+  roles: WorkspaceRole[];
+};
+
+export type UpdateMemberRolesResponse = {
+  data: {
+    member: TeamMember;
+  };
+  message: string;
+  success: true;
+};
+
+export type RemoveMemberResponse = {
+  data: {
+    userId: string;
+  };
+  message: string;
+  success: true;
+};

@@ -287,7 +287,9 @@ export function TeamMemberActivityView({
             {recentItems.map((item) => (
               <li className="space-y-3 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:space-y-0" key={item.id}>
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">{item.title}</p>
+                  <p className="truncate font-medium text-foreground">
+                    {item.title ?? "Untitled research item"}
+                  </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {item.activityRole.charAt(0) + item.activityRole.slice(1).toLowerCase()} role · Updated {formatUpdatedAt(item.updatedAt)}
                   </p>

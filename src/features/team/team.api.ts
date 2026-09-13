@@ -3,15 +3,20 @@ import { ApiError, apiRequest } from "@/lib/api";
 import {
   createWorkspaceInviteResponseSchema,
   pendingWorkspaceInvitesResponseSchema,
+  removeMemberResponseSchema,
   revokeWorkspaceInviteResponseSchema,
   teamMembersResponseSchema,
+  updateMemberRolesResponseSchema,
 } from "./team.schemas";
 import type {
   CreateWorkspaceInviteInput,
   CreateWorkspaceInviteResponse,
   PendingWorkspaceInvitesResponse,
+  RemoveMemberResponse,
   RevokeWorkspaceInviteResponse,
   TeamMembersResponse,
+  UpdateMemberRolesInput,
+  UpdateMemberRolesResponse,
 } from "./team.types";
 
 export function teamMembersQueryKey(workspaceId: string) {
@@ -104,6 +109,44 @@ export async function revokeWorkspaceInvite(
 
   if (!parsedResponse.success) {
     throw new ApiError(502, "The service returned an unexpected revoke response.");
+  }
+
+  return parsedResponse.data;
+}
+
+export async function updateMemberRoles(
+  workspaceId: string,
+  userId: string,
+  input: UpdateMemberRolesInput,
+): Promise<UpdateMemberRolesResponse> {
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/members/${encodeURIComponent(userId)}/roles`,
+    {
+      json: { roles: input.roles },
+      method: "PATCH",
+    },
+  );
+  const parsedResponse = updateMemberRolesResponseSchema.safeParse(response);
+
+  if (!parsedResponse.success) {
+    throw new ApiError(502, "The service returned an unexpected member update response.");
+  }
+
+  return parsedResponse.data;
+}
+
+export async function removeMember(
+  workspaceId: string,
+  userId: string,
+): Promise<RemoveMemberResponse> {
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/members/${encodeURIComponent(userId)}`,
+    { method: "DELETE" },
+  );
+  const parsedResponse = removeMemberResponseSchema.safeParse(response);
+
+  if (!parsedResponse.success) {
+    throw new ApiError(502, "The service returned an unexpected member removal response.");
   }
 
   return parsedResponse.data;

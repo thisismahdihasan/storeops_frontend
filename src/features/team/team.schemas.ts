@@ -82,3 +82,19 @@ export const revokeWorkspaceInviteResponseSchema = z.object({
   message: z.string(),
   success: z.literal(true),
 });
+
+export const updateMemberRolesResponseSchema = z.object({
+  data: z.object({
+    member: teamMemberSchema,
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});
+
+export const removeMemberResponseSchema = z.object({
+  data: z.object({
+    userId: z.string(),
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});

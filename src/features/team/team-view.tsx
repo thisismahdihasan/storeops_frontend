@@ -1,23 +1,32 @@
 "use client";
 
 import { Plus, UsersRound } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { resolveDefaultRouteForRoles } from "@/components/layout/navigation.config";
+import { useCurrentSession } from "@/features/auth/use-current-session";
 import { ApiError } from "@/lib/api";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 
+import { EditMemberRolesDialog } from "./edit-member-roles-dialog";
 import { InviteMemberDialog } from "./invite-member-dialog";
+import { getMemberMutationErrorMessage } from "./member-mutation-errors";
+import { RemoveMemberDialog } from "./remove-member-dialog";
 import { TeamMembersList } from "./team-members-list";
 import { PendingInvitesList } from "./pending-invites-list";
-import type { PendingWorkspaceInvite } from "./team.types";
+import type { PendingWorkspaceInvite, TeamMember } from "./team.types";
 import {
   usePendingWorkspaceInvites,
+  useRemoveMember,
   useResendWorkspaceInvite,
   useRevokeWorkspaceInvite,
   useTeamMembers,
+  useUpdateMemberRoles,
 } from "./use-team";
+import type { WorkspaceRole } from "@/features/workspace/workspace.types";
 
 type TeamViewProps = { workspaceId: string };
 
@@ -51,8 +60,12 @@ function formatRemainingDuration(remainingSeconds: number) {
 }
 
 export function TeamView({ workspaceId }: TeamViewProps) {
+  const router = useRouter();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [removingMember, setRemovingMember] = useState<TeamMember | null>(null);
   const [cooldownEndsAtByInviteId, setCooldownEndsAtByInviteId] = useState<Record<string, number>>({});
+  const currentSessionQuery = useCurrentSession();
   const workspacesQuery = useWorkspaces();
   const activeWorkspace = workspacesQuery.data?.data.workspaces.find((workspace) => workspace.id === workspaceId);
   const hasAdminRole = activeWorkspace?.membership.roles.includes("ADMIN") ?? false;
@@ -60,6 +73,87 @@ export function TeamView({ workspaceId }: TeamViewProps) {
   const pendingInvitesQuery = usePendingWorkspaceInvites(workspaceId, hasAdminRole);
   const resendInviteMutation = useResendWorkspaceInvite(workspaceId);
   const revokeInviteMutation = useRevokeWorkspaceInvite(workspaceId);
+  const updateMemberRolesMutation = useUpdateMemberRoles(workspaceId);
+  const removeMemberMutation = useRemoveMember(workspaceId);
+  const currentUserId = currentSessionQuery.data?.data.user.id;
+
+  const getCurrentUserId = async () => {
+    if (currentUserId) {
+      return currentUserId;
+    }
+
+    try {
+      const refreshedSession = await currentSessionQuery.refetch();
+      return refreshedSession.data?.data.user.id;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const refreshWorkspaceAccess = async () => {
+    const refreshedWorkspaces = await workspacesQuery.refetch();
+    const refreshedWorkspace = refreshedWorkspaces.data?.data.workspaces.find(
+      (workspace) => workspace.id === workspaceId,
+    );
+
+    if (!refreshedWorkspace) {
+      router.replace("/");
+      return;
+    }
+
+    if (!refreshedWorkspace.membership.roles.includes("ADMIN")) {
+      router.replace(
+        resolveDefaultRouteForRoles(refreshedWorkspace.membership.roles, workspaceId),
+      );
+    }
+  };
+
+  const handleMemberMutationError = (error: unknown) => {
+    if (error instanceof ApiError && error.status === 403) {
+      void refreshWorkspaceAccess();
+    }
+  };
+
+  const handleRoleUpdate = async (roles: WorkspaceRole[]) => {
+    if (!editingMember) {
+      return;
+    }
+
+    try {
+      await updateMemberRolesMutation.mutateAsync({
+        input: { roles },
+        userId: editingMember.userId,
+      });
+    } catch (error) {
+      handleMemberMutationError(error);
+      toast.error(getMemberMutationErrorMessage(error, "roles"));
+      throw error;
+    }
+
+    toast.success("Member roles updated successfully.");
+    if (editingMember.userId === await getCurrentUserId()) {
+      void refreshWorkspaceAccess();
+    }
+  };
+
+  const handleMemberRemoval = async () => {
+    if (!removingMember) {
+      return;
+    }
+
+    try {
+      await removeMemberMutation.mutateAsync(removingMember.userId);
+    } catch (error) {
+      handleMemberMutationError(error);
+      toast.error(getMemberMutationErrorMessage(error, "remove"));
+      throw error;
+    }
+
+    toast.success("Member removed successfully.");
+    if (removingMember.userId === await getCurrentUserId()) {
+      void refreshWorkspaceAccess();
+    }
+  };
 
   const handleResend = async (invite: PendingWorkspaceInvite) => {
     try {
@@ -115,13 +209,15 @@ export function TeamView({ workspaceId }: TeamViewProps) {
           <div><h2 className="text-lg font-semibold" id="workspace-members-heading">Members</h2><p className="text-sm text-muted-foreground">Current accepted workspace memberships.</p></div>
           {membersQuery.data && <p className="shrink-0 text-sm text-muted-foreground">{membersQuery.data.data.members.length} member{membersQuery.data.data.members.length === 1 ? "" : "s"}</p>}
         </div>
-        <TeamMembersList errorMessage={getRequestErrorMessage(membersQuery.error)} isError={membersQuery.isError} isLoading={workspacesQuery.isLoading || membersQuery.isLoading} members={membersQuery.data?.data.members ?? []} onRetry={() => void membersQuery.refetch()} workspaceId={workspaceId} />
+        <TeamMembersList canManageMembers={hasAdminRole} errorMessage={getRequestErrorMessage(membersQuery.error)} isError={membersQuery.isError} isLoading={workspacesQuery.isLoading || membersQuery.isLoading} members={membersQuery.data?.data.members ?? []} onEditRoles={setEditingMember} onRemove={setRemovingMember} onRetry={() => void membersQuery.refetch()} workspaceId={workspaceId} />
       </section>
       <section aria-labelledby="pending-invites-heading" className="space-y-3">
         <div><h2 className="text-lg font-semibold" id="pending-invites-heading">Pending Invites</h2><p className="text-sm text-muted-foreground">Resend or revoke unaccepted workspace invitations.</p></div>
         <PendingInvitesList cooldownEndsAtByInviteId={cooldownEndsAtByInviteId} errorMessage={getRequestErrorMessage(pendingInvitesQuery.error)} invites={pendingInvitesQuery.data?.data.invites ?? []} isError={pendingInvitesQuery.isError} isLoading={workspacesQuery.isLoading || pendingInvitesQuery.isLoading} isResendingInviteId={resendInviteMutation.isPending ? resendInviteMutation.variables : undefined} onResend={(invite) => void handleResend(invite)} onRetry={() => void pendingInvitesQuery.refetch()} onRevoke={handleRevoke} />
       </section>
       <InviteMemberDialog onOpenChange={setIsInviteDialogOpen} open={isInviteDialogOpen} workspaceId={workspaceId} />
+      <EditMemberRolesDialog key={editingMember?.membershipId ?? "edit-member-roles-closed"} member={editingMember} onOpenChange={(open) => { if (!open) setEditingMember(null); }} onSubmit={handleRoleUpdate} open={editingMember !== null} submitting={updateMemberRolesMutation.isPending} />
+      <RemoveMemberDialog key={removingMember?.membershipId ?? "remove-member-closed"} member={removingMember} onOpenChange={(open) => { if (!open) setRemovingMember(null); }} onRemove={handleMemberRemoval} open={removingMember !== null} submitting={removeMemberMutation.isPending} />
     </div>
   );
 }

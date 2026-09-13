@@ -120,7 +120,7 @@ export const userActivityResponseSchema = z.object({
         activityRole: z.enum(["RESEARCHER", "DESIGNER", "LISTER"]),
         id: z.string(),
         status: researchStatusSchema,
-        title: z.string(),
+        title: z.string().nullable(),
         updatedAt: z.string(),
       }),
     ),
