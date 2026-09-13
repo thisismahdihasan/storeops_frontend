@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { AlertCircle, ShieldAlert, Store } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,11 @@ import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { MobileNav } from "./mobile-nav";
 import {
   isRouteAllowedForRoles,
+  resolveDefaultNavigationMode,
+  resolveDefaultRouteForNavigationMode,
   resolveDefaultRouteForRoles,
+  resolveNavigationModeForRouteSegments,
+  type NavigationMode,
 } from "./navigation.config";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
@@ -23,9 +27,17 @@ export type AppShellProps = {
   children: React.ReactNode;
 };
 
+type SelectedNavigationMode = {
+  mode: NavigationMode;
+  workspaceId: string;
+};
+
 export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [selectedNavigationMode, setSelectedNavigationMode] =
+    useState<SelectedNavigationMode | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
 
   const sessionQuery = useCurrentSession();
   const workspacesQuery = useWorkspaces(sessionQuery.isSuccess);
@@ -38,8 +50,42 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
 
   const user = sessionQuery.data?.data.user;
   const workspaces = workspacesQuery.data?.data.workspaces ?? [];
+  const activeWorkspace = workspaces.find((ws) => ws.id === activeWorkspaceId);
+  const roles = activeWorkspace?.membership.roles ?? [];
+  const routeSegments = pathname.split("/").slice(3);
+  const routeNavigationMode = resolveNavigationModeForRouteSegments(
+    roles,
+    routeSegments,
+  );
   const unreadNotificationsCount =
     notificationsQuery.data?.data.unreadCount ?? 0;
+
+  const selectedModeForWorkspace =
+    selectedNavigationMode?.workspaceId === activeWorkspaceId
+      ? selectedNavigationMode.mode
+      : null;
+  const navigationMode =
+    routeNavigationMode ??
+    selectedModeForWorkspace ??
+    resolveDefaultNavigationMode(roles);
+
+  const handleNavigationModeChange = (nextMode: NavigationMode) => {
+    if (nextMode === navigationMode) {
+      return;
+    }
+
+    setSelectedNavigationMode({ mode: nextMode, workspaceId: activeWorkspaceId });
+
+    if (routeNavigationMode !== null && routeNavigationMode !== nextMode) {
+      router.push(
+        resolveDefaultRouteForNavigationMode(
+          roles,
+          activeWorkspaceId,
+          nextMode,
+        ),
+      );
+    }
+  };
 
   // Handle loading states
   if (sessionQuery.isLoading || workspacesQuery.isLoading) {
@@ -82,7 +128,6 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
   }
 
   // Handle workspace not found or no membership
-  const activeWorkspace = workspaces.find((ws) => ws.id === activeWorkspaceId);
   if (!activeWorkspace) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
@@ -119,8 +164,6 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
   }
 
   // Check role-based route access for current sub-path
-  const pathParts = pathname.split("/");
-  const routeSegments = pathParts.slice(3); // /w/[workspaceId]/[segment]/...
   const isAllowed =
     routeSegments.length === 0 ||
     isRouteAllowedForRoles(routeSegments, activeWorkspace.membership.roles);
@@ -130,6 +173,8 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
       {/* Desktop Sidebar */}
       <Sidebar
         activeWorkspaceId={activeWorkspaceId}
+        navigationMode={navigationMode}
+        onNavigationModeChange={handleNavigationModeChange}
         unreadNotificationsCount={unreadNotificationsCount}
         user={user}
         workspaces={workspaces}
@@ -185,6 +230,8 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
         activeWorkspaceId={activeWorkspaceId}
         onOpenChange={setIsMobileNavOpen}
         open={isMobileNavOpen}
+        navigationMode={navigationMode}
+        onNavigationModeChange={handleNavigationModeChange}
         unreadNotificationsCount={unreadNotificationsCount}
         user={user}
         workspaces={workspaces}

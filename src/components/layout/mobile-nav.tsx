@@ -11,8 +11,14 @@ import type { CurrentUser } from "@/features/auth/auth.types";
 import { useLogout } from "@/features/auth/use-logout";
 import type { WorkspaceWithMembership } from "@/features/workspace/workspace.types";
 import { cn } from "cn";
-import { resolveNavigationForRoles } from "./navigation.config";
+import { NavigationModeSwitch } from "./navigation-mode-switch";
+import {
+  resolveNavigationForRoles,
+  shouldShowNavigationModeSwitch,
+  type NavigationMode,
+} from "./navigation.config";
 import { getInitials } from "./user-menu";
+import { WorkspaceRoleSummary } from "./workspace-role-summary";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 
 export type MobileNavProps = {
@@ -21,6 +27,8 @@ export type MobileNavProps = {
   open: boolean;
   unreadNotificationsCount?: number;
   user: CurrentUser;
+  navigationMode: NavigationMode;
+  onNavigationModeChange: (mode: NavigationMode) => void;
   workspaces: WorkspaceWithMembership[];
 };
 
@@ -30,6 +38,8 @@ export function MobileNav({
   open,
   unreadNotificationsCount = 0,
   user,
+  navigationMode,
+  onNavigationModeChange,
   workspaces,
 }: MobileNavProps) {
   const pathname = usePathname();
@@ -42,15 +52,19 @@ export function MobileNav({
 
   const activeWorkspace = workspaces.find((ws) => ws.id === activeWorkspaceId);
   const roles = activeWorkspace?.membership.roles ?? [];
-  const navigationGroups = resolveNavigationForRoles(roles, activeWorkspaceId);
+  const navigationGroups = resolveNavigationForRoles(
+    roles,
+    activeWorkspaceId,
+    navigationMode,
+  );
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className="fixed inset-0 isolate z-50 bg-black/40 backdrop-blur-xs duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
-        <DialogPrimitive.Popup className="fixed inset-y-0 left-0 z-50 flex flex-col w-72 max-w-[85vw] bg-card border-r border-border shadow-xl duration-200 outline-none data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left">
+        <DialogPrimitive.Popup className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] min-h-0 flex-col border-r border-border bg-card shadow-xl outline-none duration-200 data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left">
           {/* Header */}
-          <div className="flex h-16 items-center justify-between px-4 border-b border-border">
+          <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
             <div className="flex items-center gap-2">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
                 <Layers className="size-4.5" />
@@ -73,15 +87,24 @@ export function MobileNav({
           </div>
 
           {/* Workspace Switcher */}
-          <div className="p-3 border-b border-border/60">
+          <div className="shrink-0 border-b border-border/60 p-3">
             <WorkspaceSwitcher
               activeWorkspaceId={activeWorkspaceId}
               workspaces={workspaces}
             />
           </div>
 
+          {shouldShowNavigationModeSwitch(roles) ? (
+            <div className="shrink-0 px-3 pt-3">
+              <NavigationModeSwitch
+                mode={navigationMode}
+                onModeChange={onNavigationModeChange}
+              />
+            </div>
+          ) : null}
+
           {/* Navigation Groups */}
-          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+          <nav className="min-h-0 flex-1 space-y-6 overflow-y-auto px-3 py-4">
             {navigationGroups.map((group) => (
               <div key={group.title} className="space-y-1">
                 <h3 className="px-3 pt-2 pb-1.5 text-xs font-bold uppercase tracking-wider text-foreground/70 select-none">
@@ -137,7 +160,7 @@ export function MobileNav({
           </nav>
 
           {/* Account & Active Roles Footer */}
-          <div className="p-3 border-t border-border/60 bg-muted/20 space-y-2.5">
+          <div className="shrink-0 space-y-2.5 border-t border-border/60 bg-muted/20 p-3">
             <div className="flex items-center gap-2.5 min-w-0 px-1">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-primary/10 text-xs font-semibold text-primary">
                 {getInitials(user.name, user.email)}
@@ -175,11 +198,9 @@ export function MobileNav({
             </Button>
 
             {roles.length > 0 && (
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1 pt-1 border-t border-border/40">
+              <div className="flex items-center justify-between gap-2 border-t border-border/40 px-1 pt-1 text-[11px] text-muted-foreground">
                 <span>Active Roles</span>
-                <span className="font-mono font-medium text-foreground">
-                  {roles.join(", ")}
-                </span>
+                <WorkspaceRoleSummary roles={roles} />
               </div>
             )}
           </div>

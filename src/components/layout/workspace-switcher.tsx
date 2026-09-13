@@ -12,7 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { WorkspaceWithMembership } from "@/features/workspace/workspace.types";
+
 import { resolveDefaultRouteForRoles } from "./navigation.config";
+import { summarizeWorkspaceRoles } from "./workspace-role-summary";
 
 export type WorkspaceSwitcherProps = {
   activeWorkspaceId: string;
@@ -61,7 +63,7 @@ export function WorkspaceSwitcher({
             </span>
             <span className="block truncate text-[10px] text-muted-foreground">
               {activeWorkspace
-                ? `${activeWorkspace.membership.roles.join(", ")}`
+                ? summarizeWorkspaceRoles(activeWorkspace.membership.roles)
                 : "No workspace"}
             </span>
           </div>
@@ -88,7 +90,7 @@ export function WorkspaceSwitcher({
                     {ws.name}
                   </p>
                   <p className="truncate text-[10px] text-muted-foreground">
-                    {ws.membership.roles.join(", ")}
+                    {summarizeWorkspaceRoles(ws.membership.roles)}
                   </p>
                 </div>
                 {isSelected && (
