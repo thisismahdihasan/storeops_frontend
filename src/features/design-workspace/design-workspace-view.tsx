@@ -137,6 +137,27 @@ export function DesignWorkspaceView({
     setSelectedAnnotationId(null);
   };
 
+  const handleFinalAssetsSubmission = async (files: File[]) => {
+    try {
+      await actions.submitFinalAssets.mutateAsync(files);
+    } catch (error) {
+      toast.error(actionErrorMessage(error));
+      return;
+    }
+
+    try {
+      await actions.completeWork.mutateAsync();
+      toast.success("Final files uploaded and design handed off to listing.");
+    } catch (error) {
+      toast.error(
+        "Final files were uploaded, but work could not be completed. Retry completion to finish the handoff.",
+      );
+      if (error instanceof ApiError && error.status === 409) {
+        void detailQuery.refetch();
+      }
+    }
+  };
+
   const handleReviewSubmission = async (image: File, note: string) => {
     try {
       await actions.submitReview.mutateAsync({ image, note });
@@ -176,12 +197,7 @@ export function DesignWorkspaceView({
           "Design work started.",
         )
       }
-      onSubmitFinalAssets={(files) =>
-        void runAction(
-          () => actions.submitFinalAssets.mutateAsync(files),
-          "Final files uploaded.",
-        )
-      }
+      onSubmitFinalAssets={(files) => void handleFinalAssetsSubmission(files)}
       onSubmitReview={(image, note) => void handleReviewSubmission(image, note)}
       workspaceId={workspaceId}
     />

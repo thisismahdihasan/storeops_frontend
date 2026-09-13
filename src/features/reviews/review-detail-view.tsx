@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import {
@@ -7,6 +8,7 @@ import {
   CheckCircle2,
   ExternalLink,
   History,
+  ImageIcon,
   ShieldAlert,
   User,
 } from "lucide-react";
@@ -225,7 +227,7 @@ export function ReviewDetailView({
   return (
     <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Top Back Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Button
           nativeButton={false}
           render={
@@ -244,51 +246,72 @@ export function ReviewDetailView({
           <span>{isAdmin ? "Back to Reviews" : "Back to Design"}</span>
         </Button>
 
-        {/* Round History Selector */}
-        {reviews.length > 1 && (
-          <div
-            aria-label="Previous rounds"
-            className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-1.5 shadow-xs"
-          >
-            <span className="flex items-center gap-1.5 px-2 text-xs font-semibold text-muted-foreground">
-              <History className="size-3.5" />
-              Rounds:
-            </span>
-            {reviews.map((r) => {
-              const isCurrentRound = r.id === selectedReview.id;
-              const isLatestRound = r.id === latestReviewId;
-
-              return (
-                <Button
-                  className={isCurrentRound ? "shadow-xs" : ""}
-                  key={r.id}
-                  onClick={() => {
-                    if (!isCurrentRound) {
-                      router.push(`/w/${workspaceId}/reviews/${r.id}`);
-                    }
-                  }}
-                  size="xs"
-                  type="button"
-                  variant={isCurrentRound ? "default" : "outline"}
-                >
-                  <span>Round {r.roundNumber}</span>
-                  {isLatestRound && (
-                    <span
-                      className={`ml-1 text-[10px] uppercase font-bold tracking-wider ${
-                        isCurrentRound
-                          ? "text-primary-foreground/80"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      (Latest)
-                    </span>
-                  )}
-                </Button>
-              );
-            })}
-          </div>
-        )}
       </div>
+
+      {isAdmin && (
+        <section aria-label="Review history" className="space-y-2">
+          <div className="flex items-center gap-2">
+            <History className="size-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">
+              Review History
+            </h2>
+          </div>
+          <div className="overflow-x-auto pb-1">
+            <div className="flex w-max gap-3">
+              {reviews.map((review) => {
+                const isSelected = review.id === selectedReview.id;
+                const isLatest = review.id === latestReviewId;
+                const isImageUnavailable =
+                  review.imageDeletedAt !== null || !review.imageUrl;
+
+                return (
+                  <button
+                    aria-current={isSelected ? "page" : undefined}
+                    aria-label={`Open Round ${review.roundNumber}${
+                      isLatest ? ", latest" : ""
+                    }`}
+                    className={`w-32 rounded-xl border bg-card p-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                      isSelected
+                        ? "border-primary ring-2 ring-primary/30"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    key={review.id}
+                    onClick={() => {
+                      if (!isSelected) {
+                        router.push(`/w/${workspaceId}/reviews/${review.id}`);
+                      }
+                    }}
+                    type="button"
+                  >
+                    <div className="flex h-20 items-center justify-center overflow-hidden rounded-lg bg-muted/30">
+                      {isImageUnavailable ? (
+                        <ImageIcon className="size-6 text-muted-foreground" />
+                      ) : (
+                        <img
+                          alt={`Submitted proof for Round ${review.roundNumber}`}
+                          className="h-full w-full object-cover"
+                          src={review.imageUrl ?? undefined}
+                        />
+                      )}
+                    </div>
+                    <span className="mt-1.5 block px-1 text-xs font-semibold text-foreground">
+                      Round {review.roundNumber}
+                    </span>
+                    <span className="flex min-h-4 items-center gap-1 px-1 text-[10px] text-muted-foreground">
+                      {isLatest && (
+                        <span className="rounded bg-primary/10 px-1 text-primary">
+                          Latest
+                        </span>
+                      )}
+                      {isSelected && <span className="text-primary">Selected</span>}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Header Banner */}
       <header className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-xs lg:flex-row lg:items-center lg:justify-between">

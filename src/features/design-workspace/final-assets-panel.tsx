@@ -32,12 +32,13 @@ function isValidFinalAsset(file: File): boolean {
 type FinalAssetsPanelProps = {
   assets: DesignFinalAsset[];
   count: number;
+  isCompleting: boolean;
   isPending: boolean;
   onUpload: (files: File[]) => void;
   showUploader: boolean;
 };
 
-export function FinalAssetsPanel({ assets, count, isPending, onUpload, showUploader }: FinalAssetsPanelProps) {
+export function FinalAssetsPanel({ assets, count, isCompleting, isPending, onUpload, showUploader }: FinalAssetsPanelProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -76,7 +77,7 @@ export function FinalAssetsPanel({ assets, count, isPending, onUpload, showUploa
         <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/15 p-4">
           <input accept=".zip,.png,.jpg,.jpeg,.webp,.pdf" className="sr-only" multiple onChange={(event) => selectFiles(event.target.files)} ref={inputRef} type="file" />
           <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={() => inputRef.current?.click()} size="sm" type="button" variant="outline">
+            <Button disabled={isPending || isCompleting} onClick={() => inputRef.current?.click()} size="sm" type="button" variant="outline">
               <FileUp className="size-3.5" />
               <span>Choose final files</span>
             </Button>
@@ -89,7 +90,7 @@ export function FinalAssetsPanel({ assets, count, isPending, onUpload, showUploa
                   <span className="truncate font-medium">
                     {file.name} <span className="text-muted-foreground">({formatFileSize(file.size.toString())})</span>
                   </span>
-                  <Button aria-label={`Remove ${file.name}`} onClick={() => setSelectedFiles((files) => files.filter((item) => item !== file))} size="icon-xs" type="button" variant="ghost">
+                  <Button aria-label={`Remove ${file.name}`} disabled={isPending || isCompleting} onClick={() => setSelectedFiles((files) => files.filter((item) => item !== file))} size="icon-xs" type="button" variant="ghost">
                     <X className="size-3" />
                   </Button>
                 </li>
@@ -99,13 +100,13 @@ export function FinalAssetsPanel({ assets, count, isPending, onUpload, showUploa
           {validationError && <p className="text-xs font-medium text-destructive">{validationError}</p>}
           <Button
             className="w-full sm:w-auto font-semibold gap-1.5"
-            disabled={isPending || selectedFiles.length === 0}
+            disabled={isPending || isCompleting || selectedFiles.length === 0}
             onClick={() => onUpload(selectedFiles)}
             size="sm"
             type="button"
           >
-            {isPending && <Loader2 className="size-3.5 animate-spin" />}
-            <span>Upload Final Files</span>
+            {(isPending || isCompleting) && <Loader2 className="size-3.5 animate-spin" />}
+            <span>{isCompleting ? "Completing work..." : isPending ? "Uploading final files..." : "Upload Final Files"}</span>
           </Button>
         </div>
       )}

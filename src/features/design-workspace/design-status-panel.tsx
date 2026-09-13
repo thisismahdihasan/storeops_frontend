@@ -338,12 +338,16 @@ export function DesignStatusPanel({
             <FinalAssetsPanel
               assets={finalAssets.items}
               count={finalAssets.count}
+              isCompleting={isCompleting}
               isPending={isSubmittingFinalAssets}
               onUpload={onSubmitFinalAssets}
               showUploader
             />
             {finalAssets.count > 0 && (
               <div className="pt-3 border-t border-border">
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Final files are uploaded. Retry completion only if the handoff did not finish.
+                </p>
                 <Button
                   className="w-full sm:w-auto font-semibold gap-1.5"
                   disabled={isCompleting}
@@ -352,7 +356,7 @@ export function DesignStatusPanel({
                   type="button"
                 >
                   {isCompleting && <Loader2 className="size-4 animate-spin" />}
-                  <span>Complete Work</span>
+                  <span>{isCompleting ? "Completing work..." : "Retry completion"}</span>
                 </Button>
               </div>
             )}
@@ -376,9 +380,10 @@ export function DesignStatusPanel({
             </div>
             {finalAssets.count > 0 && (
               <FinalAssetsPanel
-                assets={finalAssets.items}
-                count={finalAssets.count}
-                isPending={false}
+              assets={finalAssets.items}
+              count={finalAssets.count}
+              isCompleting={false}
+              isPending={false}
                 onUpload={() => undefined}
                 showUploader={false}
               />
