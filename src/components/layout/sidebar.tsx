@@ -70,10 +70,10 @@ export function Sidebar({
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
         {navigationGroups.map((group) => (
           <div key={group.title} className="space-y-1">
-            <h3 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="px-3 pt-2 pb-1.5 text-xs font-bold uppercase tracking-wider text-foreground/70 select-none">
               {group.title}
             </h3>
-            <div className="mt-1 space-y-0.5">
+            <div className="space-y-1">
               {group.items.map((item) => {
                 const isActive =
                   pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -85,14 +85,22 @@ export function Sidebar({
                   <Link
                     key={item.id}
                     href={item.href}
+                    aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
                       isActive
-                        ? "bg-primary/10 text-primary font-semibold"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        ? "bg-primary/15 text-primary font-semibold shadow-xs"
+                        : "text-foreground/80 hover:bg-muted/80 hover:text-foreground",
                     )}
                   >
-                    <item.icon className="size-4 shrink-0" />
+                    <item.icon
+                      className={cn(
+                        "size-4.5 shrink-0 transition-colors",
+                        isActive
+                          ? "text-primary"
+                          : "text-muted-foreground group-hover:text-foreground",
+                      )}
+                    />
                     <span className="truncate flex-1">{item.title}</span>
                     {showUnread && (
                       <Badge

@@ -449,7 +449,7 @@ function ResearchTableRow({
               variant="outline"
               onClick={() => onOpenDetail(item.id)}
               title="Edit Research Item"
-              className="h-7 gap-1 px-2.5 text-xs font-medium"
+              className="h-7 gap-1 px-2.5 text-xs font-medium "
             >
               <Pencil className="size-3" />
               <span>Edit</span>
