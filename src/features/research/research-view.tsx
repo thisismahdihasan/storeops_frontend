@@ -32,8 +32,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
 
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
-  const canCreate =
-    userRoles.includes("ADMIN") || userRoles.includes("RESEARCHER");
+  const canCreate = userRoles.includes("RESEARCHER");
   const isAdmin = userRoles.includes("ADMIN");
   const isResearcherOnly = userRoles.includes("RESEARCHER") && !isAdmin;
 

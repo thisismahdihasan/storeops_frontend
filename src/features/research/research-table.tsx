@@ -86,7 +86,7 @@ export function ResearchTable({
   workspaceId,
 }: ResearchTableProps) {
   const isAdmin = userRoles.includes("ADMIN");
-  const canCreate = isAdmin || userRoles.includes("RESEARCHER");
+  const canCreate = userRoles.includes("RESEARCHER");
 
   if (isLoading) {
     return <TableSkeleton isAdmin={isAdmin} />;
