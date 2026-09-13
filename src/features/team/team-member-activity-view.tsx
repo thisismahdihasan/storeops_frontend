@@ -260,6 +260,7 @@ export function TeamMemberActivityView({
 
   const { dateRange, recentItems, summary, user } = activityQuery.data.data;
   const displayName = user.name || user.email;
+  const isRemovedMember = user.membershipStatus === "REMOVED";
   const hasResearcherRole = user.roles.includes("RESEARCHER");
   const hasDesignerRole = user.roles.includes("DESIGNER");
   const hasListerRole = user.roles.includes("LISTER");
@@ -306,27 +307,32 @@ export function TeamMemberActivityView({
             <h1 className="truncate text-xl font-bold tracking-tight text-foreground sm:text-2xl">
               {displayName}
             </h1>
+            {isRemovedMember ? <Badge variant="outline">Removed member</Badge> : null}
           </div>
           <p className="mt-1 break-all text-sm text-muted-foreground">{user.email}</p>
-          <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <CalendarDays className="size-3.5" />
-            Joined {formatDate(user.joinedAt)}
-          </p>
+          {user.joinedAt ? (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <CalendarDays className="size-3.5" />
+              Joined {formatDate(user.joinedAt)}
+            </p>
+          ) : null}
         </div>
-        <div className="space-y-1.5 lg:text-right">
-          <p className="text-xs font-medium text-muted-foreground">Current Roles</p>
-          <div className="flex flex-wrap gap-1.5 lg:justify-end">
-            {user.roles.length > 0 ? (
-              user.roles.map((role) => (
-                <Badge className="font-mono text-[11px]" key={role} variant="secondary">
-                  {ROLE_LABELS[role]}
-                </Badge>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No current roles.</p>
-            )}
+        {!isRemovedMember ? (
+          <div className="space-y-1.5 lg:text-right">
+            <p className="text-xs font-medium text-muted-foreground">Current Roles</p>
+            <div className="flex flex-wrap gap-1.5 lg:justify-end">
+              {user.roles.length > 0 ? (
+                user.roles.map((role) => (
+                  <Badge className="font-mono text-[11px]" key={role} variant="secondary">
+                    {ROLE_LABELS[role]}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No current roles.</p>
+              )}
+            </div>
           </div>
-        </div>
+        ) : null}
       </header>
 
       {/* 2. Period Filter */}
