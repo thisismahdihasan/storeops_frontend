@@ -118,10 +118,11 @@ export const userActivityResponseSchema = z.object({
     recentItems: z.array(
       z.object({
         activityRole: z.enum(["RESEARCHER", "DESIGNER", "LISTER"]),
+        activityAt: z.string(),
         id: z.string(),
+        researchItemId: z.string(),
         status: researchStatusSchema,
         title: z.string().nullable(),
-        updatedAt: z.string(),
       }),
     ),
     summary: z.object({

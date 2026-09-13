@@ -449,7 +449,7 @@ export function TeamMemberActivityView({
                       {displayTitle}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {roleLabel} · Updated {formatUpdatedAt(item.updatedAt)}
+                      {roleLabel} · {formatUpdatedAt(item.activityAt)}
                     </p>
                   </div>
                   <div className="shrink-0 self-start sm:self-center">
