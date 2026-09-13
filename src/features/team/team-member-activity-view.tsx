@@ -34,10 +34,21 @@ type TeamMemberActivityViewProps = {
   workspaceId: string;
 };
 
-type MetricCardProps = {
+type PrimaryMetricCardProps = {
   isCurrentSnapshot?: boolean;
   label: string;
   value: number;
+};
+
+type SecondaryMetricCardProps = {
+  label: string;
+  value: number;
+};
+
+type MetricSectionProps = {
+  children: React.ReactNode;
+  secondary?: React.ReactNode;
+  title: string;
 };
 
 function formatDate(value: string) {
@@ -80,38 +91,96 @@ function getStatusTone(status: UserActivityRecentItem["status"]) {
   }
 }
 
-function MetricCard({ isCurrentSnapshot = false, label, value }: MetricCardProps) {
+function formatStatusLabel(status: string): string {
+  switch (status) {
+    case "DESIGN_IN_PROGRESS":
+      return "Design In Progress";
+    case "READY_FOR_LISTING":
+      return "Ready for Listing";
+    case "LISTING_IN_PROGRESS":
+      return "Listing In Progress";
+    case "DESIGN_APPROVED":
+      return "Design Approved";
+    case "CORRECTION_NEEDED":
+      return "Correction Needed";
+    case "ISSUE_REPORTED":
+      return "Issue Reported";
+    case "DESIGN_REVIEW":
+      return "Design Review";
+    case "RESEARCHED":
+      return "Researched";
+    case "ASSIGNED":
+      return "Assigned";
+    case "LISTED":
+      return "Listed";
+    default:
+      return status
+        .split("_")
+        .map((word, index) =>
+          index > 0 && word.toLowerCase() === "for"
+            ? "for"
+            : word.charAt(0) + word.slice(1).toLowerCase(),
+        )
+        .join(" ");
+  }
+}
+
+function PrimaryMetricCard({
+  isCurrentSnapshot = false,
+  label,
+  value,
+}: PrimaryMetricCardProps) {
   return (
-    <article className="rounded-xl border border-border bg-card p-4 shadow-xs">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+    <article className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-xs">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </p>
+        {isCurrentSnapshot ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <Clock3 className="size-3 text-muted-foreground" />
+            Snapshot
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
         {value.toLocaleString()}
       </p>
-      {isCurrentSnapshot ? (
-        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-          <Clock3 className="size-3" />
-          Current-state snapshot
-        </p>
-      ) : null}
     </article>
   );
 }
 
-function MetricSection({
-  children,
-  title,
-}: {
-  children: React.ReactNode;
-  title: string;
-}) {
+function SecondaryMetricCard({ label, value }: SecondaryMetricCardProps) {
   return (
-    <section aria-label={`${title} metrics`} className="space-y-3">
-      <h2 className="text-base font-semibold text-foreground">{title}</h2>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {children}
-      </div>
+    <div className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/30 px-3.5 py-2.5">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-sm font-semibold text-foreground sm:text-base">
+        {value.toLocaleString()}
+      </span>
+    </div>
+  );
+}
+
+function MetricSection({ children, secondary, title }: MetricSectionProps) {
+  return (
+    <section
+      aria-label={`${title} metrics`}
+      className="space-y-3 rounded-xl border border-border bg-card/50 p-4 shadow-xs sm:p-5"
+    >
+      <h3 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">
+        {title}
+      </h3>
+      {children}
+      {secondary ? (
+        <div className="space-y-2 pt-1">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Supporting Metrics
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {secondary}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -192,8 +261,32 @@ export function TeamMemberActivityView({
   const { dateRange, recentItems, summary, user } = activityQuery.data.data;
   const displayName = user.name || user.email;
 
+  const hasAnySummaryGroup =
+    summary.research !== null ||
+    summary.design !== null ||
+    summary.listing !== null;
+
+  const totalPeriodActivity =
+    (summary.research?.totalCreated ?? 0) +
+    (summary.design
+      ? summary.design.assignedCount +
+        summary.design.currentInProgress +
+        summary.design.submittedCount +
+        summary.design.approvedCount +
+        summary.design.correctionsCount +
+        summary.design.completedCount
+      : 0) +
+    (summary.listing
+      ? summary.listing.assignedCount +
+        summary.listing.currentInProgress +
+        summary.listing.listedCount
+      : 0);
+
+  const hasMetrics = hasAnySummaryGroup && totalPeriodActivity > 0;
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Back Navigation */}
       <Button
         nativeButton={false}
         render={<Link href={`/w/${workspaceId}/team`} />}
@@ -204,6 +297,7 @@ export function TeamMemberActivityView({
         Back to Team
       </Button>
 
+      {/* 1. Member Header */}
       <header className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs sm:p-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -227,79 +321,146 @@ export function TeamMemberActivityView({
         </div>
       </header>
 
+      {/* 2. Period Filter */}
       <DateFilter
         context="activity"
         currentFilter={filter}
         resolvedRange={dateRange}
       />
 
-      <div className="space-y-6">
-        {summary.research ? (
-          <MetricSection title="Research">
-            <MetricCard label="Total Created" value={summary.research.totalCreated} />
-          </MetricSection>
-        ) : null}
+      {/* 3. Role-Relevant Summary Metrics */}
+      <section aria-labelledby="summary-metrics-heading" className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-foreground" id="summary-metrics-heading">
+            Performance Summary
+          </h2>
+        </div>
 
-        {summary.design ? (
-          <MetricSection title="Designer">
-            <MetricCard label="Assigned" value={summary.design.assignedCount} />
-            <MetricCard
-              isCurrentSnapshot
-              label="In Progress Now"
-              value={summary.design.currentInProgress}
-            />
-            <MetricCard label="Submitted" value={summary.design.submittedCount} />
-            <MetricCard label="Approved" value={summary.design.approvedCount} />
-            <MetricCard label="Corrections" value={summary.design.correctionsCount} />
-            <MetricCard label="Completed" value={summary.design.completedCount} />
-          </MetricSection>
-        ) : null}
+        {!hasMetrics ? (
+          <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+            No activity in this period.
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {summary.research ? (
+              <MetricSection title="Research">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <PrimaryMetricCard
+                    label="Research Created"
+                    value={summary.research.totalCreated}
+                  />
+                </div>
+              </MetricSection>
+            ) : null}
 
-        {summary.listing ? (
-          <MetricSection title="Lister">
-            <MetricCard label="Assigned" value={summary.listing.assignedCount} />
-            <MetricCard
-              isCurrentSnapshot
-              label="In Progress Now"
-              value={summary.listing.currentInProgress}
-            />
-            <MetricCard label="Listed" value={summary.listing.listedCount} />
-          </MetricSection>
-        ) : null}
-      </div>
+            {summary.design ? (
+              <MetricSection
+                secondary={
+                  <>
+                    <SecondaryMetricCard
+                      label="Assigned"
+                      value={summary.design.assignedCount}
+                    />
+                    <SecondaryMetricCard
+                      label="Submitted"
+                      value={summary.design.submittedCount}
+                    />
+                    <SecondaryMetricCard
+                      label="Corrections"
+                      value={summary.design.correctionsCount}
+                    />
+                  </>
+                }
+                title="Design"
+              >
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <PrimaryMetricCard
+                    isCurrentSnapshot
+                    label="In Progress"
+                    value={summary.design.currentInProgress}
+                  />
+                  <PrimaryMetricCard
+                    label="Completed"
+                    value={summary.design.completedCount}
+                  />
+                  <PrimaryMetricCard
+                    label="Approved"
+                    value={summary.design.approvedCount}
+                  />
+                </div>
+              </MetricSection>
+            ) : null}
 
+            {summary.listing ? (
+              <MetricSection
+                secondary={
+                  <SecondaryMetricCard
+                    label="Assigned"
+                    value={summary.listing.assignedCount}
+                  />
+                }
+                title="Listing"
+              >
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <PrimaryMetricCard
+                    isCurrentSnapshot
+                    label="In Progress"
+                    value={summary.listing.currentInProgress}
+                  />
+                  <PrimaryMetricCard
+                    label="Listed"
+                    value={summary.listing.listedCount}
+                  />
+                </div>
+              </MetricSection>
+            ) : null}
+          </div>
+        )}
+      </section>
+
+      {/* 4. Recent Work / Items */}
       <section aria-labelledby="recent-items-heading" className="space-y-3">
         <div>
           <h2 className="text-base font-semibold text-foreground" id="recent-items-heading">
             Recent Items
           </h2>
           <p className="text-xs text-muted-foreground">
-            Current workspace items involving this member.
+            Recent workspace items involving this member.
           </p>
         </div>
 
         {recentItems.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
-            No recent items.
+            No recent work found.
           </div>
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-            {recentItems.map((item) => (
-              <li className="space-y-3 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:space-y-0" key={item.id}>
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">
-                    {item.title ?? "Untitled research item"}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {item.activityRole.charAt(0) + item.activityRole.slice(1).toLowerCase()} role · Updated {formatUpdatedAt(item.updatedAt)}
-                  </p>
-                </div>
-                <StatusBadge
-                  label={item.status.replaceAll("_", " ")}
-                  tone={getStatusTone(item.status)}
-                />
-              </li>
-            ))}
+          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+            {recentItems.map((item) => {
+              const displayTitle = item.title ?? "Untitled research item";
+              const roleLabel = ROLE_LABELS[item.activityRole] ?? item.activityRole;
+
+              return (
+                <li
+                  className="flex flex-col gap-2.5 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                  key={item.id}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {displayTitle}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {roleLabel} · Updated {formatUpdatedAt(item.updatedAt)}
+                    </p>
+                  </div>
+                  <div className="shrink-0 self-start sm:self-center">
+                    <StatusBadge
+                      label={formatStatusLabel(item.status)}
+                      tone={getStatusTone(item.status)}
+                    />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
