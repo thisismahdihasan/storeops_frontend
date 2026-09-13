@@ -13,10 +13,6 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  MemberFilterSelect,
-  type MemberFilterOption,
-} from "@/components/member-filter-select";
 import { cn } from "@/lib/utils";
 import type {
   DashboardFilterParams,
@@ -39,8 +35,6 @@ type PerformanceTab = "researchers" | "designers" | "listers";
 
 export function TeamPerformance({ filter, workspaceId }: TeamPerformanceProps) {
   const [activeTab, setActiveTab] = useState<PerformanceTab>("researchers");
-  const [selectedDesignerId, setSelectedDesignerId] = useState<string>();
-  const [selectedListerId, setSelectedListerId] = useState<string>();
 
   const researchersQuery = useResearcherPerformance(
     workspaceId,
@@ -57,26 +51,6 @@ export function TeamPerformance({ filter, workspaceId }: TeamPerformanceProps) {
     filter,
     activeTab === "listers",
   );
-  const designers = designersQuery.data?.data.designers;
-  const listers = listersQuery.data?.data.listers;
-  const visibleDesigners = selectedDesignerId
-    ? designers?.filter((designer) => designer.userId === selectedDesignerId)
-    : designers;
-  const visibleListers = selectedListerId
-    ? listers?.filter((lister) => lister.userId === selectedListerId)
-    : listers;
-  const designerOptions: MemberFilterOption[] = (designers ?? []).map(
-    (designer) => ({
-      email: designer.email,
-      name: designer.name,
-      userId: designer.userId,
-    }),
-  );
-  const listerOptions: MemberFilterOption[] = (listers ?? []).map((lister) => ({
-    email: lister.email,
-    name: lister.name,
-    userId: lister.userId,
-  }));
 
   return (
     <section aria-labelledby="team-performance-heading" className="space-y-4">
@@ -174,53 +148,23 @@ export function TeamPerformance({ filter, workspaceId }: TeamPerformanceProps) {
         )}
 
         {activeTab === "designers" && (
-          <div className="space-y-3 p-4">
-            <MemberFilterSelect
-              allLabel="All Designers"
-              emptyMessage={designersQuery.isLoading ? "Loading designers..." : "No designers found."}
-              label="Designer"
-              onValueChange={setSelectedDesignerId}
-              options={designerOptions}
-              value={selectedDesignerId}
-            />
-            <DesignersTable
-              isLoading={designersQuery.isLoading}
-              isError={designersQuery.isError}
-              data={visibleDesigners}
-              emptyStateMessage={
-                selectedDesignerId
-                  ? "No design activity in this period."
-                  : undefined
-              }
-              onRetry={() => void designersQuery.refetch()}
-              workspaceId={workspaceId}
-            />
-          </div>
+          <DesignersTable
+            isLoading={designersQuery.isLoading}
+            isError={designersQuery.isError}
+            data={designersQuery.data?.data.designers}
+            onRetry={() => void designersQuery.refetch()}
+            workspaceId={workspaceId}
+          />
         )}
 
         {activeTab === "listers" && (
-          <div className="space-y-3 p-4">
-            <MemberFilterSelect
-              allLabel="All Listers"
-              emptyMessage={listersQuery.isLoading ? "Loading listers..." : "No listers found."}
-              label="Lister"
-              onValueChange={setSelectedListerId}
-              options={listerOptions}
-              value={selectedListerId}
-            />
-            <ListersTable
-              isLoading={listersQuery.isLoading}
-              isError={listersQuery.isError}
-              data={visibleListers}
-              emptyStateMessage={
-                selectedListerId
-                  ? "No listing activity in this period."
-                  : undefined
-              }
-              onRetry={() => void listersQuery.refetch()}
-              workspaceId={workspaceId}
-            />
-          </div>
+          <ListersTable
+            isLoading={listersQuery.isLoading}
+            isError={listersQuery.isError}
+            data={listersQuery.data?.data.listers}
+            onRetry={() => void listersQuery.refetch()}
+            workspaceId={workspaceId}
+          />
         )}
       </div>
 
@@ -283,14 +227,21 @@ function ResearchersTable({
               <td className="px-4 py-3">
                 <div className="flex flex-col">
                   <Link
-                    href={`/w/${workspaceId}/team/${row.userId}`}
+                    href={`/w/${workspaceId}/research?createdBy=${row.userId}`}
                     className="font-medium text-foreground hover:underline"
                   >
                     {row.name || "Unnamed Researcher"}
                   </Link>
-                  <span className="text-[11px] text-muted-foreground">
-                    {row.email}
-                  </span>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span>{row.email}</span>
+                    <span>•</span>
+                    <Link
+                      href={`/w/${workspaceId}/team/${row.userId}`}
+                      className="hover:text-foreground hover:underline"
+                    >
+                      Activity
+                    </Link>
+                  </div>
                 </div>
               </td>
               <td className="px-4 py-3 text-right font-semibold text-foreground">
@@ -367,14 +318,21 @@ function DesignersTable({
               <td className="px-4 py-3">
                 <div className="flex flex-col">
                   <Link
-                    href={`/w/${workspaceId}/team/${row.userId}`}
+                    href={`/w/${workspaceId}/designs?designerId=${row.userId}`}
                     className="font-medium text-foreground hover:underline"
                   >
                     {row.name || "Unnamed Designer"}
                   </Link>
-                  <span className="text-[11px] text-muted-foreground">
-                    {row.email}
-                  </span>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span>{row.email}</span>
+                    <span>•</span>
+                    <Link
+                      href={`/w/${workspaceId}/team/${row.userId}`}
+                      className="hover:text-foreground hover:underline"
+                    >
+                      Activity
+                    </Link>
+                  </div>
                 </div>
               </td>
               <td className="px-4 py-3 text-right text-foreground">
@@ -457,14 +415,21 @@ function ListersTable({
               <td className="px-4 py-3">
                 <div className="flex flex-col">
                   <Link
-                    href={`/w/${workspaceId}/team/${row.userId}`}
+                    href={`/w/${workspaceId}/listings?listerId=${row.userId}`}
                     className="font-medium text-foreground hover:underline"
                   >
                     {row.name || "Unnamed Lister"}
                   </Link>
-                  <span className="text-[11px] text-muted-foreground">
-                    {row.email}
-                  </span>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span>{row.email}</span>
+                    <span>•</span>
+                    <Link
+                      href={`/w/${workspaceId}/team/${row.userId}`}
+                      className="hover:text-foreground hover:underline"
+                    >
+                      Activity
+                    </Link>
+                  </div>
                 </div>
               </td>
               <td className="px-4 py-3 text-right text-foreground">

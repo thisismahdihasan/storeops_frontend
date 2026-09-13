@@ -69,6 +69,15 @@ const NAVIGATION_DEFINITIONS: NavigationDefinition[] = [
   },
   {
     group: "OPERATIONS",
+    icon: Palette,
+    id: "designs-management",
+    mode: "management",
+    roles: ["ADMIN"],
+    segment: "designs",
+    title: "Designs",
+  },
+  {
+    group: "OPERATIONS",
     icon: CheckSquare,
     id: "reviews",
     mode: "management",
@@ -84,6 +93,15 @@ const NAVIGATION_DEFINITIONS: NavigationDefinition[] = [
     roles: ["ADMIN"],
     segment: "issues",
     title: "Issues",
+  },
+  {
+    group: "OPERATIONS",
+    icon: Tag,
+    id: "listings-management",
+    mode: "management",
+    roles: ["ADMIN"],
+    segment: "listings",
+    title: "Listings",
   },
   {
     group: "MANAGEMENT",
@@ -138,7 +156,7 @@ const NAVIGATION_DEFINITIONS: NavigationDefinition[] = [
     mode: "work",
     roles: ["LISTER"],
     segment: "listing",
-    title: "Listing",
+    title: "My Listings",
   },
   {
     badgeKey: "unreadNotifications",
@@ -166,10 +184,12 @@ const WORKER_ROLES: WorkspaceRole[] = [
 const ROUTE_ACCESS_ROLES: Record<string, WorkspaceRole[]> = {
   corrections: ["DESIGNER"],
   dashboard: ["ADMIN"],
+  designs: ["ADMIN"],
   issues: ["ADMIN"],
+  listing: ["LISTER"],
+  listings: ["ADMIN"],
   "my-work": ["DESIGNER"],
   notifications: ["ADMIN", "RESEARCHER", "DESIGNER", "LISTER"],
-  listing: ["LISTER"],
   research: ["ADMIN", "RESEARCHER"],
   reviews: ["ADMIN"],
   team: ["ADMIN"],
@@ -201,7 +221,9 @@ export function resolveNavigationModeForRouteSegments(
 
   if (
     segment === "dashboard" ||
+    segment === "designs" ||
     segment === "issues" ||
+    segment === "listings" ||
     segment === "team" ||
     (segment === "reviews" && !nestedSegment)
   ) {

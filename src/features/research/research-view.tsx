@@ -60,9 +60,6 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
       name: member.name,
       userId: member.userId,
     }));
-  const selectedResearcher = researchers.find(
-    (researcher) => researcher.userId === currentFilters.createdBy,
-  );
   const scopedResearchCount = researchQuery.data?.data.pagination.total;
 
   const handlePageChange = (newPage: number) => {
@@ -123,9 +120,9 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
         researchers={researchers}
       />
 
-      {canManageResearch && selectedResearcher && scopedResearchCount !== undefined && (
+      {canManageResearch && scopedResearchCount !== undefined && (
         <p className="text-xs text-muted-foreground" role="status">
-          {scopedResearchCount.toLocaleString()} {scopedResearchCount === 1 ? "research item" : "research items"} by {selectedResearcher.name || selectedResearcher.email}
+          {scopedResearchCount.toLocaleString()} {scopedResearchCount === 1 ? "research item" : "research items"}
         </p>
       )}
 
@@ -135,7 +132,9 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
         emptyStateTitle={
           canManageResearch && currentFilters.createdBy
             ? "No research items found for this researcher."
-            : undefined
+            : hasActiveFilters
+              ? "No research items match these filters."
+              : undefined
         }
         isLoading={researchQuery.isLoading}
         isError={researchQuery.isError}

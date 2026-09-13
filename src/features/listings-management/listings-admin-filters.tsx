@@ -11,92 +11,36 @@ import {
   type MemberFilterOption,
 } from "@/components/member-filter-select";
 import { Input } from "@/components/ui/input";
-import type { ResearchListFilterParams, ResearchStatus } from "./research.types";
+import type { AdminListingFilterParams } from "./listings-admin.types";
+import type { ResearchStatus } from "@/features/research/research.types";
 
-const STATUS_OPTIONS: Array<{ label: string; value: ResearchStatus }> = [
-  { label: "Researched", value: "RESEARCHED" },
-  { label: "Assigned", value: "ASSIGNED" },
-  { label: "Designing", value: "DESIGN_IN_PROGRESS" },
-  { label: "Waiting Review", value: "DESIGN_REVIEW" },
-  { label: "Correction Needed", value: "CORRECTION_NEEDED" },
-  { label: "Issue Reported", value: "ISSUE_REPORTED" },
-  { label: "Design Approved", value: "DESIGN_APPROVED" },
+const LISTING_STATUS_OPTIONS: Array<{ label: string; value: ResearchStatus }> = [
   { label: "Ready for Listing", value: "READY_FOR_LISTING" },
   { label: "Listing In Progress", value: "LISTING_IN_PROGRESS" },
   { label: "Listed", value: "LISTED" },
 ];
 
-export function parseResearchFiltersFromParams(
-  searchParams: URLSearchParams,
-): ResearchListFilterParams {
-  const statusParam = searchParams.get("status");
-  const searchParam = searchParams.get("search") ?? undefined;
-  const dateParam = searchParams.get("date") ?? undefined;
-  const createdByParam = searchParams.get("createdBy") ?? undefined;
-  const pageParam = searchParams.get("page");
-
-  const validStatuses = new Set<string>([
-    "RESEARCHED",
-    "ASSIGNED",
-    "DESIGN_IN_PROGRESS",
-    "DESIGN_REVIEW",
-    "CORRECTION_NEEDED",
-    "ISSUE_REPORTED",
-    "DESIGN_APPROVED",
-    "READY_FOR_LISTING",
-    "LISTING_IN_PROGRESS",
-    "LISTED",
-  ]);
-
-  const parsedStatus =
-    statusParam && validStatuses.has(statusParam)
-      ? (statusParam as ResearchStatus)
-      : undefined;
-
-  const parsedPage =
-    pageParam && !Number.isNaN(Number(pageParam)) && Number(pageParam) > 0
-      ? Number(pageParam)
-      : 1;
-
-  // Validate date regex YYYY-MM-DD if present
-  const isValidDate = dateParam ? /^\d{4}-\d{2}-\d{2}$/.test(dateParam) : false;
-
-  return {
-    createdBy: createdByParam,
-    date: isValidDate ? dateParam : undefined,
-    limit: 20,
-    page: parsedPage,
-    search: searchParam && searchParam.trim().length > 0 ? searchParam.trim() : undefined,
-    status: parsedStatus,
-  };
-}
-
-type ResearchFiltersProps = {
-  currentFilters: ResearchListFilterParams;
-  isAdmin?: boolean;
-  researchers?: MemberFilterOption[];
+type ListingsAdminFiltersProps = {
+  currentFilters: AdminListingFilterParams;
+  listers?: MemberFilterOption[];
 };
 
-export function ResearchFilters({
+export function ListingsAdminFilters({
   currentFilters,
-  isAdmin = true,
-  researchers = [],
-}: ResearchFiltersProps) {
+  listers = [],
+}: ListingsAdminFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Local state for search input
   const [searchInput, setSearchInput] = useState(currentFilters.search ?? "");
   const [prevPropSearch, setPrevPropSearch] = useState(currentFilters.search);
 
-  // Sync searchInput when URL searchParam changes without cascading effect
   if (currentFilters.search !== prevPropSearch) {
     setPrevPropSearch(currentFilters.search);
     setSearchInput(currentFilters.search ?? "");
   }
 
-  // Debounced search sync to URL
   useEffect(() => {
     const timer = setTimeout(() => {
       const trimmed = searchInput.trim();
@@ -108,7 +52,7 @@ export function ResearchFilters({
         } else {
           params.delete("search");
         }
-        params.delete("page"); // Reset to page 1 on search change
+        params.delete("page");
         router.push(`${pathname}?${params.toString()}`);
       }
     }, 400);
@@ -128,23 +72,23 @@ export function ResearchFilters({
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const handleListerChange = (userId: string | undefined) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (userId) {
+      params.set("listerId", userId);
+    } else {
+      params.delete("listerId");
+    }
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   const handleDateChange = (date: string | undefined) => {
     const params = new URLSearchParams(searchParams.toString());
     if (date) {
       params.set("date", date);
     } else {
       params.delete("date");
-    }
-    params.delete("page");
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
-  const handleResearcherChange = (userId: string | undefined) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (userId) {
-      params.set("createdBy", userId);
-    } else {
-      params.delete("createdBy");
     }
     params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
@@ -159,7 +103,7 @@ export function ResearchFilters({
     currentFilters.status ||
       currentFilters.search ||
       currentFilters.date ||
-      (isAdmin && currentFilters.createdBy) ||
+      currentFilters.listerId ||
       (currentFilters.page && currentFilters.page > 1),
   );
 
@@ -173,7 +117,7 @@ export function ResearchFilters({
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by title, listing ID, or Etsy URL..."
+            placeholder="Search listings by title, listing ID, or Etsy URL..."
             className="h-9 pl-9 pr-8 text-xs"
           />
           {searchInput.length > 0 && (
@@ -190,40 +134,36 @@ export function ResearchFilters({
         </div>
       }
     >
-      {/* Researcher Combobox Selector */}
-      {isAdmin && (
-        <MemberFilterSelect
-          allLabel="All Researchers"
-          emptyMessage="No researchers found."
-          label="Researcher"
-          onValueChange={handleResearcherChange}
-          options={researchers}
-          value={currentFilters.createdBy}
-        />
-      )}
+      {/* Lister Combobox Selector */}
+      <MemberFilterSelect
+        allLabel="All Listers"
+        emptyMessage="No listers found."
+        label="Lister"
+        onValueChange={handleListerChange}
+        options={listers}
+        value={currentFilters.listerId}
+      />
 
-      {/* Status filter (Admin only) */}
-      {isAdmin && (
-        <select
-          value={currentFilters.status ?? "ALL"}
-          onChange={handleStatusChange}
-          className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
-          aria-label="Filter by status"
-        >
-          <option value="ALL">All Statuses</option>
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      )}
+      {/* Status Filter */}
+      <select
+        value={currentFilters.status ?? "ALL"}
+        onChange={handleStatusChange}
+        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+        aria-label="Filter by listing status"
+      >
+        <option value="ALL">All Statuses</option>
+        {LISTING_STATUS_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
 
-      {/* Date filter (single UTC calendar day) */}
+      {/* Date Filter */}
       <DateFilterPicker
         value={currentFilters.date}
         onChange={handleDateChange}
-        label="Created date"
+        label="Activity date"
         allLabel="All dates"
       />
     </FilterToolbarLayout>
