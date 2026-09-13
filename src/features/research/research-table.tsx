@@ -347,7 +347,7 @@ function ResearchTableRow({
             label={formatStatusLabel(item.status)}
             tone={getStatusTone(item.status)}
           />
-          {item.latestIssueReport && (
+          {item.status === "ISSUE_REPORTED" && item.latestIssueReport && (
             <span
               className="inline-flex items-center gap-1 text-[10px] text-destructive"
               title={`Issue: ${item.latestIssueReport.reason}`}
