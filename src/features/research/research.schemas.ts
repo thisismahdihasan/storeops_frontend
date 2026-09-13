@@ -157,37 +157,42 @@ export const createResearchResponseSchema = z.object({
   success: z.literal(true),
 });
 
-export const duplicateResearchDataSchema = z.object({
-  alreadyExists: z.literal(true),
-  createdAt: z.string(),
-  createdBy: userSummarySchema,
-  currentStatus: researchStatusSchema,
-  researchItemId: z.string(),
-});
+export const duplicateResearchDataSchema = z.union([
+  z.object({ alreadyExists: z.literal(true) }).strict(),
+  z.object({
+    alreadyExists: z.literal(true),
+    createdAt: z.string(),
+    createdBy: userSummarySchema,
+    currentStatus: researchStatusSchema,
+    researchItemId: z.string(),
+  }),
+]);
+
+export const etsyListingUrlSchema = z
+  .string()
+  .trim()
+  .min(1, "Etsy listing URL is required")
+  .refine((url) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return false;
+      }
+      const hostname = parsed.hostname.toLowerCase();
+      const isEtsyHost =
+        hostname === "etsy.com" || hostname.endsWith(".etsy.com");
+      if (!isEtsyHost) {
+        return false;
+      }
+      return /(?:^|\/)listing\/(\d+)(?:\/|$)/i.test(parsed.pathname);
+    } catch {
+      return false;
+    }
+  }, "Please enter a valid Etsy listing URL with a numeric listing ID (e.g. https://www.etsy.com/listing/123456789)");
 
 // Client-side validation schema for Add Research form
 export const createResearchFormSchema = z.object({
-  etsyUrl: z
-    .string()
-    .trim()
-    .min(1, "Etsy listing URL is required")
-    .refine((url) => {
-      try {
-        const parsed = new URL(url);
-        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-          return false;
-        }
-        const hostname = parsed.hostname.toLowerCase();
-        const isEtsyHost =
-          hostname === "etsy.com" || hostname.endsWith(".etsy.com");
-        if (!isEtsyHost) {
-          return false;
-        }
-        return /(?:^|\/)listing\/(\d+)(?:\/|$)/i.test(parsed.pathname);
-      } catch {
-        return false;
-      }
-    }, "Please enter a valid Etsy listing URL with a numeric listing ID (e.g. https://www.etsy.com/listing/123456789)"),
+  etsyUrl: etsyListingUrlSchema,
 });
 
 export const previewDuplicateDataSchema = z.object({

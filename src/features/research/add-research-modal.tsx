@@ -1,7 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import {
   AlertCircle,
   AlertTriangle,
@@ -34,6 +36,10 @@ import { ApiError } from "@/lib/api";
 import { DuplicateAlertModal } from "./duplicate-alert-modal";
 import { ReferenceImagePicker } from "./reference-image-picker";
 import { DuplicateResearchError } from "./research.api";
+import {
+  createResearchFormSchema,
+  etsyListingUrlSchema,
+} from "./research.schemas";
 import type {
   DuplicateResearchData,
   PreviewResearchResult,
@@ -46,22 +52,12 @@ export type AddResearchModalProps = {
   workspaceId: string;
 };
 
+type AddResearchFormValues = {
+  etsyUrl: string;
+};
+
 function isValidEtsyListingUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url.trim());
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return false;
-    }
-    const hostname = parsed.hostname.toLowerCase();
-    const isEtsyHost =
-      hostname === "etsy.com" || hostname.endsWith(".etsy.com");
-    if (!isEtsyHost) {
-      return false;
-    }
-    return /(?:^|\/)listing\/(\d+)(?:\/|$)/i.test(parsed.pathname);
-  } catch {
-    return false;
-  }
+  return etsyListingUrlSchema.safeParse(url).success;
 }
 
 function getStatusTone(
@@ -97,14 +93,20 @@ export function AddResearchModal({
   workspaceId,
 }: AddResearchModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [etsyUrl, setEtsyUrl] = useState("");
-  const [inputError, setInputError] = useState<string | null>(null);
+  const form = useForm<AddResearchFormValues>({
+    defaultValues: { etsyUrl: "" },
+    mode: "onChange",
+    reValidateMode: "onChange",
+    resolver: zodResolver(createResearchFormSchema),
+  });
+  const etsyUrl = useWatch({ control: form.control, name: "etsyUrl" }) ?? "";
 
   // Preview state
   const [previewResult, setPreviewResult] =
     useState<PreviewResearchResult | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const lastPreviewedUrlRef = useRef<string>("");
+  const previewRequestIdRef = useRef(0);
 
   // Manual image state for when Etsy image is missing
   const [manualFile, setManualFile] = useState<File | null>(null);
@@ -114,21 +116,31 @@ export function AddResearchModal({
   const [raceConditionDuplicate, setRaceConditionDuplicate] =
     useState<DuplicateResearchData | null>(null);
 
-  const previewMutation = usePreviewResearch(workspaceId);
-  const createMutation = useCreateResearchItem(workspaceId);
+  const {
+    isPending: isPreviewLoading,
+    mutateAsync: previewResearch,
+    reset: resetPreview,
+  } = usePreviewResearch(workspaceId);
+  const {
+    isPending: isCreating,
+    mutateAsync: createResearchItem,
+    reset: resetCreate,
+  } = useCreateResearchItem(workspaceId);
 
   // Reset all state when dialog opens/closes
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      setEtsyUrl("");
-      setInputError(null);
+      previewRequestIdRef.current += 1;
+      form.reset({ etsyUrl: "" });
       setPreviewResult(null);
       setPreviewError(null);
       setManualFile(null);
       setSubmitError(null);
       setRaceConditionDuplicate(null);
       lastPreviewedUrlRef.current = "";
+      resetPreview();
+      resetCreate();
     }
   };
 
@@ -137,22 +149,31 @@ export function AddResearchModal({
     async (urlToPreview: string) => {
       const trimmed = urlToPreview.trim();
       if (!isValidEtsyListingUrl(trimmed)) {
-        setInputError(
-          "Please enter a valid Etsy listing URL (e.g. https://www.etsy.com/listing/123456789/product-title)."
-        );
+        form.setError("etsyUrl", {
+          message:
+            "Please enter a valid Etsy listing URL (e.g. https://www.etsy.com/listing/123456789/product-title).",
+          type: "manual",
+        });
         setPreviewResult(null);
         return;
       }
 
-      setInputError(null);
+      const requestId = ++previewRequestIdRef.current;
+      form.clearErrors("etsyUrl");
       setPreviewError(null);
       setSubmitError(null);
       lastPreviewedUrlRef.current = trimmed;
 
       try {
-        const result = await previewMutation.mutateAsync(trimmed);
+        const result = await previewResearch(trimmed);
+        if (requestId !== previewRequestIdRef.current) {
+          return;
+        }
         setPreviewResult(result.data);
       } catch (err) {
+        if (requestId !== previewRequestIdRef.current) {
+          return;
+        }
         const message =
           err instanceof Error
             ? err.message
@@ -161,7 +182,7 @@ export function AddResearchModal({
         setPreviewResult(null);
       }
     },
-    [previewMutation]
+    [form, previewResearch]
   );
 
   // Debounced auto-preview when valid URL is typed or pasted
@@ -185,25 +206,31 @@ export function AddResearchModal({
   // Handle URL change
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setEtsyUrl(val);
-    setInputError(null);
-    setPreviewError(null);
-    setSubmitError(null);
-    if (!val.trim()) {
-      setPreviewResult(null);
-      setManualFile(null);
+    const trimmed = val.trim();
+    if (trimmed !== lastPreviewedUrlRef.current) {
+      previewRequestIdRef.current += 1;
       lastPreviewedUrlRef.current = "";
-    } else if (previewResult && val.trim() !== lastPreviewedUrlRef.current) {
       setPreviewResult(null);
       setManualFile(null);
     }
+
+    form.setValue("etsyUrl", val, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    setPreviewError(null);
+    setSubmitError(null);
   };
 
   // Submit creation (JSON if Etsy image exists; FormData if manual image selected)
   const handleCreate = async () => {
     const targetUrl = previewResult?.normalizedUrl || etsyUrl.trim();
     if (!isValidEtsyListingUrl(targetUrl)) {
-      setInputError("A valid Etsy listing URL is required.");
+      form.setError("etsyUrl", {
+        message: "A valid Etsy listing URL is required.",
+        type: "manual",
+      });
       return;
     }
 
@@ -218,7 +245,7 @@ export function AddResearchModal({
     setSubmitError(null);
 
     try {
-      const result = await createMutation.mutateAsync({
+      const result = await createResearchItem({
         etsyUrl: targetUrl,
         image: manualFile || undefined,
       });
@@ -254,8 +281,8 @@ export function AddResearchModal({
     }
   };
 
-  const isPreviewLoading = previewMutation.isPending;
-  const isCreating = createMutation.isPending;
+  const urlError = form.formState.errors.etsyUrl?.message;
+  const isEtsyUrlValid = isValidEtsyListingUrl(etsyUrl);
   const isDuplicate = previewResult?.alreadyExists === true;
   const duplicateInfo = previewResult?.duplicate;
 
@@ -306,6 +333,9 @@ export function AddResearchModal({
                     id="etsy-listing-url"
                     placeholder="https://www.etsy.com/listing/123456789/product-title"
                     className="pl-9 text-xs"
+                    autoComplete="url"
+                    aria-describedby={urlError ? "etsy-listing-url-error" : undefined}
+                    aria-invalid={Boolean(urlError)}
                     value={etsyUrl}
                     onChange={handleUrlChange}
                     onKeyDown={(e) => {
@@ -328,7 +358,7 @@ export function AddResearchModal({
                   variant="outline"
                   onClick={() => void executePreview(etsyUrl)}
                   disabled={
-                    !isValidEtsyListingUrl(etsyUrl) ||
+                    !isEtsyUrlValid ||
                     isPreviewLoading ||
                     isCreating
                   }
@@ -343,9 +373,13 @@ export function AddResearchModal({
                 </Button>
               </div>
 
-              {inputError && (
-                <p className="text-xs font-medium text-destructive">
-                  {inputError}
+              {urlError && (
+                <p
+                  id="etsy-listing-url-error"
+                  className="text-xs font-medium text-destructive"
+                  role="alert"
+                >
+                  {urlError}
                 </p>
               )}
             </div>
@@ -387,59 +421,71 @@ export function AddResearchModal({
             )}
 
             {/* Preview Result: Duplicate State */}
-            {previewResult && isDuplicate && duplicateInfo && !isPreviewLoading && (
+            {previewResult && isDuplicate && !isPreviewLoading && (
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
                 <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-semibold text-xs">
                   <AlertCircle className="size-4 shrink-0" />
-                  <span>Listing Already Exists in Workspace</span>
+                  <span>{duplicateInfo ? "Listing Already Exists in Workspace" : "Already added"}</span>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  This Etsy listing was already added to this workspace. Adding duplicates is not allowed.
+                  {duplicateInfo
+                    ? "This Etsy listing was already added to this workspace. Adding duplicates is not allowed."
+                    : "This Etsy listing has already been added to this workspace."}
                 </p>
 
-                <div className="space-y-2 rounded-lg border border-border bg-card/70 p-3 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Status:</span>
-                    <StatusBadge
-                      label={formatStatusLabel(duplicateInfo.currentStatus)}
-                      tone={getStatusTone(duplicateInfo.currentStatus)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-muted-foreground">
-                      <User className="size-3.5" />
-                      <span>Added by:</span>
-                    </span>
-                    <span className="font-medium text-foreground">
-                      {duplicateInfo.createdBy.name || duplicateInfo.createdBy.email}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-muted-foreground">
-                      <Calendar className="size-3.5" />
-                      <span>Date added:</span>
-                    </span>
-                    <span className="text-foreground">
-                      {new Date(duplicateInfo.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
+                {!duplicateInfo && (
+                  <p className="text-xs text-muted-foreground">
+                    You can’t add the same listing twice.
+                  </p>
+                )}
 
-                <div className="flex justify-end pt-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      handleOpenChange(false);
-                      onOpenExistingDetail(duplicateInfo.researchItemId);
-                    }}
-                    className="gap-1.5"
-                  >
-                    <span>View Existing Item</span>
-                    <ArrowRight className="size-3.5" />
-                  </Button>
-                </div>
+                {duplicateInfo && (
+                  <>
+                    <div className="space-y-2 rounded-lg border border-border bg-card/70 p-3 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Status:</span>
+                        <StatusBadge
+                          label={formatStatusLabel(duplicateInfo.currentStatus)}
+                          tone={getStatusTone(duplicateInfo.currentStatus)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <User className="size-3.5" />
+                          <span>Added by:</span>
+                        </span>
+                        <span className="font-medium text-foreground">
+                          {duplicateInfo.createdBy.name || duplicateInfo.createdBy.email}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <Calendar className="size-3.5" />
+                          <span>Date added:</span>
+                        </span>
+                        <span className="text-foreground">
+                          {new Date(duplicateInfo.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          handleOpenChange(false);
+                          onOpenExistingDetail(duplicateInfo.researchItemId);
+                        }}
+                        className="gap-1.5"
+                      >
+                        <span>View Existing Item</span>
+                        <ArrowRight className="size-3.5" />
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

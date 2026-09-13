@@ -59,6 +59,36 @@ export function DuplicateAlertModal({
     return null;
   }
 
+  const hasDuplicateMetadata = "researchItemId" in duplicateData;
+
+  if (!hasDuplicateMetadata) {
+    return (
+      <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+        <DialogContent className="max-w-md p-6">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500">
+              <AlertCircle className="size-5 shrink-0" />
+              <DialogTitle className="text-base">Already added</DialogTitle>
+            </div>
+            <DialogDescription className="mt-1 text-xs">
+              This Etsy listing has already been added to this workspace.
+            </DialogDescription>
+          </DialogHeader>
+
+          <p className="text-xs text-muted-foreground">
+            You can’t add the same listing twice.
+          </p>
+
+          <DialogFooter className="mt-2 flex-row justify-end sm:flex-row">
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Dismiss
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const creatorName =
     duplicateData.createdBy.name || duplicateData.createdBy.email;
   const createdDate = new Date(duplicateData.createdAt).toLocaleDateString(

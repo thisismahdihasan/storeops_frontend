@@ -162,13 +162,17 @@ export type ResearchDetailResponse = {
   success: true;
 };
 
-export type DuplicateResearchData = {
-  alreadyExists: true;
-  createdAt: string;
-  createdBy: UserSummary;
-  currentStatus: ResearchStatus;
-  researchItemId: string;
-};
+export type DuplicateResearchData =
+  | {
+      alreadyExists: true;
+    }
+  | {
+      alreadyExists: true;
+      createdAt: string;
+      createdBy: UserSummary;
+      currentStatus: ResearchStatus;
+      researchItemId: string;
+    };
 
 export type ResearchListFilterParams = {
   createdBy?: string;
