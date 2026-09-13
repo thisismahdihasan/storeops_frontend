@@ -62,7 +62,7 @@ export function DesignWorkspaceView({ researchItemId, workspaceId }: DesignWorks
   };
 
   return (
-    <main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8">
+    <main className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
       <header className="space-y-4 border-b border-border pb-5">
         <Button nativeButton={false} render={<Link href={`/w/${workspaceId}/my-work`} />} size="sm" variant="ghost">
           <ArrowLeft />Back to My Work

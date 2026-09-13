@@ -21,7 +21,7 @@ export function DashboardView({ workspaceId }: DashboardViewProps) {
   const overviewQuery = useDashboardOverview(workspaceId, filter);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Page Header */}
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">

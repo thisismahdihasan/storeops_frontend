@@ -23,7 +23,8 @@ import { cn } from "@/lib/utils";
 import { AuthenticatedReferenceImage } from "./authenticated-reference-image";
 import { downloadResearchReferenceImage } from "./research.api";
 
-type ReferencePreviewProps = {
+export type ReferencePreviewProps = {
+  canDownload?: boolean;
   className?: string;
   normalizedUrl?: string;
   onOpenDetail?: () => void;
@@ -35,6 +36,7 @@ type ReferencePreviewProps = {
 };
 
 export function ReferencePreview({
+  canDownload = true,
   className,
   normalizedUrl,
   onOpenDetail,
@@ -72,7 +74,7 @@ export function ReferencePreview({
           type="button"
           onClick={onOpenDetail}
           className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-md border border-dashed border-border bg-muted/30 text-muted-foreground/60 transition-colors hover:border-primary/50 hover:bg-muted/50 hover:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+            "flex size-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 text-muted-foreground/60 transition-colors hover:border-primary/50 hover:bg-muted/50 hover:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
             className,
           )}
           title={
@@ -89,7 +91,7 @@ export function ReferencePreview({
     return (
       <div
         className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground/60",
+          "flex size-12 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/40 text-muted-foreground/60",
           className,
         )}
         title="No reference image available"
@@ -105,7 +107,7 @@ export function ReferencePreview({
         type="button"
         onClick={() => setIsOpen(true)}
         className={cn(
-          "group relative flex size-10 shrink-0 overflow-hidden rounded-md border border-border bg-muted/40 transition-all hover:ring-2 hover:ring-primary/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+          "group relative flex size-12 shrink-0 overflow-hidden rounded-lg border border-border bg-muted/40 transition-all hover:ring-2 hover:ring-primary/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
           className,
         )}
         title="Click to preview reference image"
@@ -158,21 +160,23 @@ export function ReferencePreview({
               </a>
             )}
 
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => void handleDownload()}
-              disabled={isDownloading}
-              className="ml-auto gap-1.5"
-            >
-              {isDownloading ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Download className="size-3.5" />
-              )}
-              <span>Download Image</span>
-            </Button>
+            {canDownload && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void handleDownload()}
+                disabled={isDownloading}
+                className="ml-auto gap-1.5"
+              >
+                {isDownloading ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Download className="size-3.5" />
+                )}
+                <span>Download Image</span>
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

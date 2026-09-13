@@ -195,7 +195,7 @@ export function TeamView({ workspaceId }: TeamViewProps) {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
       <header className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">Workspace access</p>

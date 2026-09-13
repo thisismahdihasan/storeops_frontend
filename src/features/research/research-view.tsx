@@ -35,6 +35,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
   const canCreate =
     userRoles.includes("ADMIN") || userRoles.includes("RESEARCHER");
   const isAdmin = userRoles.includes("ADMIN");
+  const isResearcherOnly = userRoles.includes("RESEARCHER") && !isAdmin;
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -59,15 +60,17 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
   );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Page Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            Research Management
+            {isResearcherOnly ? "Product Research" : "Research Management"}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Etsy product discovery queue, reference assets, and automatic designer assignment.
+            {isResearcherOnly
+              ? "Discover Etsy listings, verify reference images, and submit items to the design queue."
+              : "Etsy product discovery queue, reference assets, and automatic designer assignment."}
           </p>
         </div>
 
@@ -86,7 +89,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
       </div>
 
       {/* Filters Bar */}
-      <ResearchFilters currentFilters={currentFilters} />
+      <ResearchFilters currentFilters={currentFilters} isAdmin={isAdmin} />
 
       {/* Research Table */}
       <ResearchTable

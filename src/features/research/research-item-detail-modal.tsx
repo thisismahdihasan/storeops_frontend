@@ -187,10 +187,16 @@ export function ResearchItemDetailModal({
             <div className="space-y-5">
               <DialogHeader>
                 <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
-                  <StatusBadge
-                    label={formatStatusLabel(item.status)}
-                    tone={getStatusTone(item.status)}
-                  />
+                  {isAdmin ? (
+                    <StatusBadge
+                      label={formatStatusLabel(item.status)}
+                      tone={getStatusTone(item.status)}
+                    />
+                  ) : (
+                    <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      Product Research
+                    </span>
+                  )}
                   <span className="font-mono text-xs text-muted-foreground">
                     ID: #{item.etsyListingId}
                   </span>
@@ -236,6 +242,7 @@ export function ResearchItemDetailModal({
 
                 <DialogDescription className="text-xs text-muted-foreground">
                   Added on {new Date(item.createdAt).toLocaleString()}
+                  {!isAdmin && item.createdBy?.name ? ` by ${item.createdBy.name}` : ""}
                 </DialogDescription>
               </DialogHeader>
 
@@ -263,7 +270,7 @@ export function ResearchItemDetailModal({
                       </Button>
                     )}
 
-                    {item.referenceImageUrl && (
+                    {isAdmin && item.referenceImageUrl && (
                       <Button
                         type="button"
                         size="xs"
@@ -309,56 +316,58 @@ export function ResearchItemDetailModal({
                 </div>
               </div>
 
-              {/* Item Attributes Grid */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {/* Creator Card */}
-                <div className="rounded-lg border border-border bg-card p-3.5 shadow-xs">
-                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <User className="size-3.5" />
-                    <span>Researcher</span>
-                  </div>
-                  <p className="mt-1 text-xs font-semibold text-foreground">
-                    {item.createdBy.name || "Unnamed"}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {item.createdBy.email}
-                  </p>
-                </div>
-
-                {/* Designer Card */}
-                <div className="rounded-lg border border-border bg-card p-3.5 shadow-xs">
-                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <Paintbrush className="size-3.5" />
-                    <span>Assigned Designer</span>
-                  </div>
-                  {item.currentDesigner ? (
-                    <>
-                      <p className="mt-1 text-xs font-semibold text-foreground">
-                        {item.currentDesigner.name || "Unnamed"}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {item.currentDesigner.email}
-                      </p>
-                      {item.currentDesignAssignment && (
-                        <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <Clock className="size-3" />
-                          Assigned:{" "}
-                          {new Date(
-                            item.currentDesignAssignment.assignedAt,
-                          ).toLocaleDateString()}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="mt-1 text-xs text-muted-foreground italic">
-                      Unassigned (Status: Researched)
+              {/* Item Attributes Grid (Admin only) */}
+              {isAdmin && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {/* Creator Card */}
+                  <div className="rounded-lg border border-border bg-card p-3.5 shadow-xs">
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <User className="size-3.5" />
+                      <span>Researcher</span>
+                    </div>
+                    <p className="mt-1 text-xs font-semibold text-foreground">
+                      {item.createdBy.name || "Unnamed"}
                     </p>
-                  )}
-                </div>
-              </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      {item.createdBy.email}
+                    </p>
+                  </div>
 
-              {/* Latest Review Submission Card (if present) */}
-              {item.latestReview && (
+                  {/* Designer Card */}
+                  <div className="rounded-lg border border-border bg-card p-3.5 shadow-xs">
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <Paintbrush className="size-3.5" />
+                      <span>Assigned Designer</span>
+                    </div>
+                    {item.currentDesigner ? (
+                      <>
+                        <p className="mt-1 text-xs font-semibold text-foreground">
+                          {item.currentDesigner.name || "Unnamed"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {item.currentDesigner.email}
+                        </p>
+                        {item.currentDesignAssignment && (
+                          <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <Clock className="size-3" />
+                            Assigned:{" "}
+                            {new Date(
+                              item.currentDesignAssignment.assignedAt,
+                            ).toLocaleDateString()}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="mt-1 text-xs text-muted-foreground italic">
+                        Unassigned (Status: Researched)
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Latest Review Submission Card (Admin only, if present) */}
+              {isAdmin && item.latestReview && (
                 <div className="rounded-lg border border-border bg-card p-4 shadow-xs">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">

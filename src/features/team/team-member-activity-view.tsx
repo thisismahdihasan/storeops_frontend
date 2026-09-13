@@ -187,7 +187,7 @@ function MetricSection({ children, secondary, title }: MetricSectionProps) {
 
 function ActivitySkeleton() {
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8" role="status">
+    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8" role="status">
       <span className="sr-only">Loading member activity</span>
       <div className="h-7 w-32 animate-pulse rounded bg-muted" />
       <div className="h-36 animate-pulse rounded-2xl bg-muted/60" />
@@ -285,7 +285,7 @@ export function TeamMemberActivityView({
   const hasMetrics = hasAnySummaryGroup && totalPeriodActivity > 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Back Navigation */}
       <Button
         nativeButton={false}

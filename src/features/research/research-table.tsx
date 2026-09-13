@@ -12,6 +12,7 @@ import {
   Eye,
   Loader2,
   MessageSquare,
+  Pencil,
   Plus,
   RefreshCw,
   Search,
@@ -29,7 +30,7 @@ import type {
   ResearchStatus,
 } from "./research.types";
 
-type ResearchTableProps = {
+export type ResearchTableProps = {
   data?: ResearchListResult;
   hasActiveFilters: boolean;
   isError: boolean;
@@ -44,7 +45,7 @@ type ResearchTableProps = {
 };
 
 function getStatusTone(
-  status: ResearchStatus,
+  status: ResearchStatus
 ): "danger" | "info" | "neutral" | "success" | "warning" {
   switch (status) {
     case "CORRECTION_NEEDED":
@@ -84,11 +85,11 @@ export function ResearchTable({
   userRoles,
   workspaceId,
 }: ResearchTableProps) {
-  const canCreate =
-    userRoles.includes("ADMIN") || userRoles.includes("RESEARCHER");
+  const isAdmin = userRoles.includes("ADMIN");
+  const canCreate = isAdmin || userRoles.includes("RESEARCHER");
 
   if (isLoading) {
-    return <TableSkeleton />;
+    return <TableSkeleton isAdmin={isAdmin} />;
   }
 
   if (isError) {
@@ -162,24 +163,30 @@ export function ResearchTable({
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-border bg-muted/30 font-medium text-muted-foreground">
-                <th scope="col" className="w-14 px-3 py-3">
+                <th scope="col" className="w-16 px-3 py-3">
                   Reference
                 </th>
                 <th scope="col" className="px-4 py-3">
                   Etsy Listing / Title
                 </th>
-                <th scope="col" className="px-4 py-3">
-                  Researcher
-                </th>
+                {isAdmin && (
+                  <th scope="col" className="px-4 py-3">
+                    Researcher
+                  </th>
+                )}
                 <th scope="col" className="px-4 py-3">
                   Added
                 </th>
-                <th scope="col" className="px-4 py-3">
-                  Status
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Designer
-                </th>
+                {isAdmin && (
+                  <th scope="col" className="px-4 py-3">
+                    Status
+                  </th>
+                )}
+                {isAdmin && (
+                  <th scope="col" className="px-4 py-3">
+                    Designer
+                  </th>
+                )}
                 <th scope="col" className="px-4 py-3 text-right">
                   Actions
                 </th>
@@ -275,7 +282,7 @@ function ResearchTableRow({
       toast.error(
         err instanceof Error
           ? err.message
-          : "Failed to download reference image.",
+          : "Failed to download reference image."
       );
     } finally {
       setIsDownloading(false);
@@ -284,9 +291,10 @@ function ResearchTableRow({
 
   return (
     <tr className="transition-colors hover:bg-muted/20">
-      {/* Reference Thumbnail */}
+      {/* Reference Thumbnail (Enlarged to size-12 / 48px) */}
       <td className="px-3 py-3">
         <ReferencePreview
+          canDownload={isAdmin}
           referenceImageUrl={item.referenceImageUrl}
           title={item.title}
           researchItemId={item.id}
@@ -299,7 +307,7 @@ function ResearchTableRow({
 
       {/* Etsy Listing / Title */}
       <td className="max-w-xs px-4 py-3 sm:max-w-sm md:max-w-md">
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-1">
           <button
             type="button"
             onClick={() => onOpenDetail(item.id)}
@@ -307,146 +315,183 @@ function ResearchTableRow({
           >
             {item.title || `Etsy Listing #${item.etsyListingId}`}
           </button>
-          <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
             <span className="font-mono">#{item.etsyListingId}</span>
-            <a
-              href={item.normalizedUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-0.5 hover:text-foreground"
-              title="View on Etsy"
-            >
-              <span>Etsy</span>
-              <ExternalLink className="size-2.5" />
-            </a>
+            {!isAdmin ? (
+              <a
+                href={item.normalizedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`View listing #${item.etsyListingId} on Etsy`}
+                className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground"
+              >
+                <span>View on Etsy</span>
+                <ExternalLink className="size-2.5" />
+              </a>
+            ) : (
+              <a
+                href={item.normalizedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-0.5 hover:text-foreground"
+                title="View on Etsy"
+              >
+                <span>Etsy</span>
+                <ExternalLink className="size-2.5" />
+              </a>
+            )}
           </div>
         </div>
       </td>
 
-      {/* Researcher */}
-      <td className="px-4 py-3">
-        <div className="flex flex-col">
-          <span className="font-medium text-foreground">
-            {item.createdBy.name || "Unnamed"}
-          </span>
-          <span className="text-[11px] text-muted-foreground">
-            {item.createdBy.email}
-          </span>
-        </div>
-      </td>
+      {/* Researcher (Admin only) */}
+      {isAdmin && (
+        <td className="px-4 py-3">
+          <div className="flex flex-col">
+            <span className="font-medium text-foreground">
+              {item.createdBy.name || "Unnamed"}
+            </span>
+            <span className="text-[11px] text-muted-foreground">
+              {item.createdBy.email}
+            </span>
+          </div>
+        </td>
+      )}
 
       {/* Added Date */}
       <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
         {new Date(item.createdAt).toLocaleDateString()}
       </td>
 
-      {/* Status + Issue indicator */}
-      <td className="px-4 py-3 whitespace-nowrap">
-        <div className="flex flex-col items-start gap-1">
-          <StatusBadge
-            label={formatStatusLabel(item.status)}
-            tone={getStatusTone(item.status)}
-          />
-          {item.status === "ISSUE_REPORTED" && item.latestIssueReport && (
-            <span
-              className="inline-flex items-center gap-1 text-[10px] text-destructive"
-              title={`Issue: ${item.latestIssueReport.reason}`}
-            >
-              <AlertTriangle className="size-2.5" />
-              <span>Issue reported</span>
+      {/* Status + Issue indicator (Admin only) */}
+      {isAdmin && (
+        <td className="px-4 py-3 whitespace-nowrap">
+          <div className="flex flex-col items-start gap-1">
+            <StatusBadge
+              label={formatStatusLabel(item.status)}
+              tone={getStatusTone(item.status)}
+            />
+            {item.status === "ISSUE_REPORTED" && item.latestIssueReport && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] text-destructive"
+                title={`Issue: ${item.latestIssueReport.reason}`}
+              >
+                <AlertTriangle className="size-2.5" />
+                <span>Issue reported</span>
+              </span>
+            )}
+          </div>
+        </td>
+      )}
+
+      {/* Designer (Admin only) */}
+      {isAdmin && (
+        <td className="px-4 py-3">
+          {item.currentDesigner ? (
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium text-foreground">
+                  {item.currentDesigner.name || "Unnamed"}
+                </span>
+                {designerReplyCount > 0 && (
+                  canClickReview ? (
+                    <Link
+                      aria-label={replyCountLabel}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary transition-colors hover:bg-primary/20 hover:underline"
+                      href={`/w/${workspaceId}/reviews/${latestReviewId}`}
+                      onClick={(e) => e.stopPropagation()}
+                      title={replyCountTooltip}
+                    >
+                      <MessageSquare className="size-2.5" />
+                      <span>{designerReplyCount}</span>
+                    </Link>
+                  ) : (
+                    <span
+                      aria-label={replyCountLabel}
+                      className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                      title={replyCountTooltip}
+                    >
+                      <MessageSquare className="size-2.5" />
+                      <span>{designerReplyCount}</span>
+                    </span>
+                  )
+                )}
+              </div>
+              <span className="text-[11px] text-muted-foreground">
+                {item.currentDesigner.email}
+              </span>
+            </div>
+          ) : (
+            <span className="text-[11px] text-muted-foreground italic">
+              Unassigned
             </span>
           )}
-        </div>
-      </td>
-
-      {/* Designer */}
-      <td className="px-4 py-3">
-        {item.currentDesigner ? (
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-medium text-foreground">
-                {item.currentDesigner.name || "Unnamed"}
-              </span>
-              {designerReplyCount > 0 && (
-                canClickReview ? (
-                  <Link
-                    aria-label={replyCountLabel}
-                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary transition-colors hover:bg-primary/20 hover:underline"
-                    href={`/w/${workspaceId}/reviews/${latestReviewId}`}
-                    onClick={(e) => e.stopPropagation()}
-                    title={replyCountTooltip}
-                  >
-                    <MessageSquare className="size-2.5" />
-                    <span>{designerReplyCount}</span>
-                  </Link>
-                ) : (
-                  <span
-                    aria-label={replyCountLabel}
-                    className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
-                    title={replyCountTooltip}
-                  >
-                    <MessageSquare className="size-2.5" />
-                    <span>{designerReplyCount}</span>
-                  </span>
-                )
-              )}
-            </div>
-            <span className="text-[11px] text-muted-foreground">
-              {item.currentDesigner.email}
-            </span>
-          </div>
-        ) : (
-          <span className="text-[11px] text-muted-foreground italic">
-            Unassigned
-          </span>
-        )}
-      </td>
+        </td>
+      )}
 
       {/* Actions */}
       <td className="px-4 py-3 text-right whitespace-nowrap">
         <div className="flex items-center justify-end gap-1.5">
-          <Button
-            size="xs"
-            variant="ghost"
-            onClick={() => onOpenDetail(item.id)}
-            title="Open Details"
-            className="h-7 px-2 text-xs"
-          >
-            <Eye className="size-3" />
-            <span>Open</span>
-          </Button>
+          {isAdmin ? (
+            <Button
+              size="xs"
+              variant="ghost"
+              onClick={() => onOpenDetail(item.id)}
+              title="Open Details"
+              className="h-7 px-2 text-xs"
+            >
+              <Eye className="size-3" />
+              <span>Open</span>
+            </Button>
+          ) : (
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => onOpenDetail(item.id)}
+              title="Edit Research Item"
+              className="h-7 gap-1 px-2.5 text-xs font-medium"
+            >
+              <Pencil className="size-3" />
+              <span>Edit</span>
+            </Button>
+          )}
 
-          <Button
-            type="button"
-            size="xs"
-            variant="ghost"
-            onClick={() => void handleDownload()}
-            disabled={!item.referenceImageUrl || isDownloading}
-            title={
-              item.referenceImageUrl
-                ? "Download Reference Image"
-                : "No reference image available"
-            }
-            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-          >
-            {isDownloading ? (
-              <Loader2 className="size-3 animate-spin" />
-            ) : (
-              <Download className="size-3" />
-            )}
-          </Button>
+          {/* Download Action (Admin only) */}
+          {isAdmin && (
+            <Button
+              type="button"
+              size="xs"
+              variant="ghost"
+              onClick={() => void handleDownload()}
+              disabled={!item.referenceImageUrl || isDownloading}
+              title={
+                item.referenceImageUrl
+                  ? "Download Reference Image"
+                  : "No reference image available"
+              }
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              {isDownloading ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Download className="size-3" />
+              )}
+            </Button>
+          )}
         </div>
       </td>
     </tr>
   );
 }
 
-function TableSkeleton() {
+function TableSkeleton({ isAdmin = true }: { isAdmin?: boolean }) {
+  const columnCount = isAdmin ? 7 : 4;
+
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
       <div className="p-4 space-y-3">
         <div className="flex gap-4 border-b border-border/60 pb-3">
-          {Array.from({ length: 7 }).map((_, i) => (
+          {Array.from({ length: columnCount }).map((_, i) => (
             <div
               key={i}
               className="h-4 rounded-sm bg-muted animate-pulse flex-1"
@@ -455,7 +500,7 @@ function TableSkeleton() {
         </div>
         {Array.from({ length: 6 }).map((_, r) => (
           <div key={r} className="flex gap-4 py-2">
-            {Array.from({ length: 7 }).map((_, c) => (
+            {Array.from({ length: columnCount }).map((_, c) => (
               <div
                 key={c}
                 className="h-6 rounded-sm bg-muted/60 animate-pulse flex-1"

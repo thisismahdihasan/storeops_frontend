@@ -23,7 +23,7 @@ export default async function NotificationsPage({
   return (
     <Suspense
       fallback={
-        <main className="mx-auto w-full max-w-5xl space-y-5 p-4 sm:p-6 lg:p-8">
+        <main className="mx-auto w-full max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
           <div className="h-20 animate-pulse rounded-xl bg-muted/60" />
           <NotificationCenterSkeleton />
         </main>

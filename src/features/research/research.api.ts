@@ -92,12 +92,22 @@ export async function createResearchItem(
   input: CreateResearchInput,
 ): Promise<CreateResearchResponse> {
   try {
+    const manualImage = input.image instanceof File ? input.image : undefined;
+    const requestOptions = manualImage
+      ? (() => {
+          const formData = new FormData();
+          formData.append("etsyUrl", input.etsyUrl.trim());
+          formData.append("image", manualImage);
+          return { body: formData, method: "POST" as const };
+        })()
+      : {
+          json: { etsyUrl: input.etsyUrl.trim() },
+          method: "POST" as const,
+        };
+
     const response = await apiRequest<unknown>(
       `/api/v1/workspaces/${workspaceId}/research-items`,
-      {
-        json: { etsyUrl: input.etsyUrl.trim() },
-        method: "POST",
-      },
+      requestOptions,
     );
 
     const parsed = createResearchResponseSchema.safeParse(response);

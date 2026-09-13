@@ -72,7 +72,7 @@ export function DesignerWorkView({ workspaceId }: DesignerWorkViewProps) {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
       <header className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">Designer workflow</p><h1 className="mt-1 flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl"><Palette className="size-6 text-primary" />My Work</h1><p className="mt-1 max-w-2xl text-sm text-muted-foreground">Your active design assignments, ordered by most recently assigned.</p></div>{queueQuery.data && <p className="text-sm text-muted-foreground">{queueQuery.data.data.pagination.total} active assignment{queueQuery.data.data.pagination.total === 1 ? "" : "s"}</p>}</header>
       <DesignerWorkFilters key={filters.search ?? ""} filters={filters} onChange={updateFilters} />
       <DesignerWorkList data={queueQuery.data?.data} filtersActive={Boolean(filters.search || filters.status)} isError={queueQuery.isError} isLoading={queueQuery.isLoading || workspacesQuery.isLoading} onOpenWork={handleOpenWork} onPageChange={(page) => updateFilters({ page })} onReportIssue={setIssueWork} onRetry={() => void queueQuery.refetch()} onStartCorrection={(work) => void handleStartCorrection(work)} onStartWork={(work) => void handleStartWork(work)} startingCorrectionItemId={startCorrectionMutation.isPending ? startCorrectionMutation.variables : undefined} startingWorkItemId={startWorkMutation.isPending ? startWorkMutation.variables : undefined} workspaceId={workspaceId} />

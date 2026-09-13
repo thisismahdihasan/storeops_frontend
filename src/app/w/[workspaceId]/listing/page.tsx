@@ -18,7 +18,7 @@ export default async function ListingPage({ params }: ListingPageProps) {
   return (
     <Suspense
       fallback={
-        <main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8">
+        <main className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
           <div className="h-24 animate-pulse rounded-xl bg-muted" />
           <div className="h-28 animate-pulse rounded-xl bg-muted" />
           <ListingQueueSkeleton />

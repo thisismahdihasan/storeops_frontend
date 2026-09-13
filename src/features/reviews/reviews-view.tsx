@@ -113,7 +113,7 @@ export function ReviewsView({ workspaceId }: ReviewsViewProps) {
 
   if (workspacesQuery.isLoading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
         <div className="h-8 w-48 animate-pulse rounded-md bg-muted" />
         <LoadingSkeleton />
       </div>
@@ -131,7 +131,7 @@ export function ReviewsView({ workspaceId }: ReviewsViewProps) {
   const totalItems = pagination?.total ?? 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Queue Header */}
       <header className="flex flex-col gap-2 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>

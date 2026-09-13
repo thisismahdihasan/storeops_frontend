@@ -22,7 +22,7 @@ export default async function CorrectionsPage({
   return (
     <Suspense
       fallback={
-        <div className="mx-auto max-w-6xl p-6 text-sm text-muted-foreground">
+        <div className="mx-auto max-w-screen-2xl p-6 text-sm text-muted-foreground">
           Loading corrections…
         </div>
       }

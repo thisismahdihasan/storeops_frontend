@@ -143,6 +143,7 @@ export type ReassignResearchResponse = {
 
 export type CreateResearchInput = {
   etsyUrl: string;
+  image?: File;
 };
 
 export type CreateResearchResponse = {

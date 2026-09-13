@@ -97,7 +97,7 @@ function AccessDenied({
 
 function DetailLoadingState() {
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       <div className="h-6 w-32 animate-pulse rounded bg-muted" />
       <div className="h-14 w-full animate-pulse rounded-xl bg-muted" />
       <div className="grid gap-6 lg:grid-cols-12">
@@ -203,7 +203,7 @@ export function ReviewDetailView({
     currentDesigner?.name || currentDesigner?.email || "Unassigned";
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Top Back Navigation Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Button

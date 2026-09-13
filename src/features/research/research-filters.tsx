@@ -68,9 +68,13 @@ export function parseResearchFiltersFromParams(
 
 type ResearchFiltersProps = {
   currentFilters: ResearchListFilterParams;
+  isAdmin?: boolean;
 };
 
-export function ResearchFilters({ currentFilters }: ResearchFiltersProps) {
+export function ResearchFilters({
+  currentFilters,
+  isAdmin = true,
+}: ResearchFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -168,23 +172,25 @@ export function ResearchFilters({ currentFilters }: ResearchFiltersProps) {
 
         {/* Filter controls row */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Status filter */}
-          <div className="flex items-center gap-1.5">
-            <Filter className="size-3.5 text-muted-foreground" />
-            <select
-              value={currentFilters.status ?? "ALL"}
-              onChange={handleStatusChange}
-              className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
-              aria-label="Filter by status"
-            >
-              <option value="ALL">All Statuses</option>
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Status filter (Admin only) */}
+          {isAdmin && (
+            <div className="flex items-center gap-1.5">
+              <Filter className="size-3.5 text-muted-foreground" />
+              <select
+                value={currentFilters.status ?? "ALL"}
+                onChange={handleStatusChange}
+                className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+                aria-label="Filter by status"
+              >
+                <option value="ALL">All Statuses</option>
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Date filter (single UTC calendar day) */}
           <div className="flex items-center gap-1.5">

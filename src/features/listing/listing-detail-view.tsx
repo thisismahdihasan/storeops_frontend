@@ -127,7 +127,7 @@ export function ListingDetailView({
   };
 
   return (
-    <main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8">
+    <main className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
       <header className="space-y-4 border-b border-border pb-5">
         <Button
           nativeButton={false}
@@ -193,7 +193,7 @@ function ListingDetailError({ error, onRetry, workspaceId }: { error: unknown; o
 
 export function ListingDetailSkeleton() {
   return (
-    <main aria-label="Loading listing detail" className="mx-auto max-w-7xl animate-pulse space-y-5 p-4 sm:p-6 lg:p-8" role="status">
+    <main aria-label="Loading listing detail" className="mx-auto max-w-screen-2xl animate-pulse space-y-5 p-4 sm:p-6 lg:p-8" role="status">
       <div className="h-24 rounded-xl bg-muted" />
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
         <div className="space-y-5"><div className="h-96 rounded-xl bg-muted" /><div className="h-80 rounded-xl bg-muted" /><div className="h-48 rounded-xl bg-muted" /></div>

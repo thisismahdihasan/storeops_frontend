@@ -170,7 +170,7 @@ export function CorrectionsView({ workspaceId }: CorrectionsViewProps) {
 
   if (workspacesQuery.isLoading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
         <LoadingSkeleton />
       </div>
     );
@@ -186,7 +186,7 @@ export function CorrectionsView({ workspaceId }: CorrectionsViewProps) {
   const currentPage = filters.page;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header Banner */}
       <header className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>

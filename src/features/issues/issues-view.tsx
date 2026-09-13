@@ -119,7 +119,7 @@ export function IssuesView({ workspaceId }: IssuesViewProps) {
   };
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <main className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Issues</h1>
@@ -172,7 +172,7 @@ export function IssuesView({ workspaceId }: IssuesViewProps) {
 
 function IssuesLoadingState() {
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-screen-2xl space-y-4 p-4 sm:p-6 lg:p-8">
       <div className="h-16 rounded-xl bg-muted/60 animate-pulse" />
       <div className="h-12 rounded-xl bg-muted/50 animate-pulse" />
       {Array.from({ length: 3 }).map((_, index) => (
