@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { useNavigationContext } from "@/components/layout/navigation-context";
+import { useCurrentSession } from "@/features/auth/use-current-session";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { SyncListingsButton } from "@/features/listing/sync-listings-button";
 import { AddResearchModal } from "./add-research-modal";
@@ -20,21 +22,35 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { mode } = useNavigationContext();
 
+  const sessionQuery = useCurrentSession();
   const workspacesQuery = useWorkspaces();
   const activeWorkspace = workspacesQuery.data?.data.workspaces.find(
     (ws) => ws.id === workspaceId,
   );
   const userRoles = activeWorkspace?.membership.roles ?? [];
 
+  const isAdmin = userRoles.includes("ADMIN");
+  const isMyResearchContext =
+    mode === "work" && userRoles.includes("RESEARCHER");
+  const currentUserId = sessionQuery.data?.data.user.id;
   const currentFilters = parseResearchFiltersFromParams(searchParams);
-  const researchQuery = useResearchItems(workspaceId, currentFilters);
+  const researchFilters = isMyResearchContext && currentUserId
+    ? { ...currentFilters, createdBy: currentUserId }
+    : currentFilters;
+  const researchQuery = useResearchItems(
+    workspaceId,
+    researchFilters,
+    !isMyResearchContext || Boolean(currentUserId),
+    isMyResearchContext ? "my-work" : "management",
+  );
 
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
-  const canCreate = userRoles.includes("RESEARCHER");
-  const isAdmin = userRoles.includes("ADMIN");
-  const isResearcherOnly = userRoles.includes("RESEARCHER") && !isAdmin;
+  const canCreate = isMyResearchContext;
+  const isManagementContext = !isMyResearchContext;
+  const canManageResearch = isAdmin && isManagementContext;
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -54,7 +70,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
     currentFilters.status ||
       currentFilters.search ||
       currentFilters.date ||
-      currentFilters.createdBy ||
+      (isManagementContext && currentFilters.createdBy) ||
       (currentFilters.page && currentFilters.page > 1),
   );
 
@@ -64,19 +80,19 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            {isResearcherOnly ? "Product Research" : "Research Management"}
+            {isMyResearchContext ? "My Research" : "Research Management"}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            {isResearcherOnly
-              ? "Discover Etsy listings, verify reference images, and submit items to the design queue."
+            {isMyResearchContext
+              ? "Discover Etsy listings, manage your reference assets, and track your research work."
               : "Etsy product discovery queue, reference assets, and automatic designer assignment."}
           </p>
         </div>
 
-        {(canCreate || isAdmin) && (
+        {(canCreate || canManageResearch) && (
           <div className="flex flex-wrap items-center gap-2">
-            {isAdmin && <SyncUnassignedButton workspaceId={workspaceId} />}
-            {isAdmin && <SyncListingsButton workspaceId={workspaceId} />}
+            {canManageResearch && <SyncUnassignedButton workspaceId={workspaceId} />}
+            {canManageResearch && <SyncListingsButton workspaceId={workspaceId} />}
             {canCreate && (
               <AddResearchModal
                 workspaceId={workspaceId}
@@ -88,7 +104,10 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
       </div>
 
       {/* Filters Bar */}
-      <ResearchFilters currentFilters={currentFilters} isAdmin={isAdmin} />
+      <ResearchFilters
+        currentFilters={currentFilters}
+        isAdmin={canManageResearch}
+      />
 
       {/* Research Table */}
       <ResearchTable
@@ -96,6 +115,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
         isLoading={researchQuery.isLoading}
         isError={researchQuery.isError}
         onRetry={() => void researchQuery.refetch()}
+        isManagementContext={isManagementContext}
         workspaceId={workspaceId}
         userRoles={userRoles}
         hasActiveFilters={hasActiveFilters}
@@ -118,6 +138,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
         researchItemId={selectedItemId}
         workspaceId={workspaceId}
         userRoles={userRoles}
+        isManagementContext={isManagementContext}
       />
     </div>
   );

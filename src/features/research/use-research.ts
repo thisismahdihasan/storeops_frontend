@@ -20,14 +20,19 @@ import type {
   ResearchListFilterParams,
 } from "./research.types";
 
+export type ResearchListScope = "management" | "my-work";
+
 export const researchKeys = {
   all: ["research"] as const,
   detail: (workspaceId: string, researchItemId: string) =>
     ["research", workspaceId, "detail", researchItemId] as const,
   details: (workspaceId: string) =>
     ["research", workspaceId, "detail"] as const,
-  list: (workspaceId: string, filter?: ResearchListFilterParams) =>
-    ["research", workspaceId, "list", filter ?? {}] as const,
+  list: (
+    workspaceId: string,
+    scope: ResearchListScope,
+    filter?: ResearchListFilterParams,
+  ) => ["research", workspaceId, "list", scope, filter ?? {}] as const,
   lists: (workspaceId: string) =>
     ["research", workspaceId, "list"] as const,
   referenceImage: (workspaceId: string, researchItemId: string) =>
@@ -44,11 +49,12 @@ export function useResearchItems(
   workspaceId: string,
   filter?: ResearchListFilterParams,
   enabled = true,
+  scope: ResearchListScope = "management",
 ) {
   return useQuery({
     enabled: enabled && workspaceId.length > 0,
     queryFn: () => getResearchItems(workspaceId, filter),
-    queryKey: researchKeys.list(workspaceId, filter),
+    queryKey: researchKeys.list(workspaceId, scope, filter),
     retry: (failureCount, error) => !isAuthError(error) && failureCount < 1,
     staleTime: 15_000,
   });

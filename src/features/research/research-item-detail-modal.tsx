@@ -42,6 +42,7 @@ import type { ResearchStatus } from "./research.types";
 import { useDeleteResearchItem, useResearchItemDetail } from "./use-research";
 
 type ResearchItemDetailModalProps = {
+  isManagementContext?: boolean;
   onClose: () => void;
   open: boolean;
   researchItemId: string | null;
@@ -78,6 +79,7 @@ function formatStatusLabel(status: ResearchStatus): string {
 }
 
 export function ResearchItemDetailModal({
+  isManagementContext = true,
   onClose,
   open,
   researchItemId,
@@ -89,9 +91,9 @@ export function ResearchItemDetailModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const isAdmin = userRoles.includes("ADMIN");
+  const isAdmin = isManagementContext && userRoles.includes("ADMIN");
   const canManageImage =
-    userRoles.includes("ADMIN") || userRoles.includes("RESEARCHER");
+    isAdmin || userRoles.includes("RESEARCHER");
 
   const detailQuery = useResearchItemDetail(
     workspaceId,

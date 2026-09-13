@@ -11,6 +11,7 @@ import { NOTIFICATIONS_PAGE_LIMIT } from "@/features/notifications/notifications
 import { useNotifications } from "@/features/notifications/use-notifications";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { MobileNav } from "./mobile-nav";
+import { NavigationContextProvider } from "./navigation-context";
 import {
   isRouteAllowedForRoles,
   resolveDefaultNavigationMode,
@@ -84,6 +85,8 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
           nextMode,
         ),
       );
+    } else if (routeSegments[0] === "research") {
+      router.push(`/w/${activeWorkspaceId}/research`);
     }
   };
 
@@ -169,7 +172,8 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
     isRouteAllowedForRoles(routeSegments, activeWorkspace.membership.roles);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <NavigationContextProvider mode={navigationMode}>
+      <div className="flex min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <Sidebar
         activeWorkspaceId={activeWorkspaceId}
@@ -236,6 +240,7 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
         user={user}
         workspaces={workspaces}
       />
-    </div>
+      </div>
+    </NavigationContextProvider>
   );
 }

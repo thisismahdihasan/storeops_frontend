@@ -35,6 +35,7 @@ export type ResearchTableProps = {
   hasActiveFilters: boolean;
   isError: boolean;
   isLoading: boolean;
+  isManagementContext: boolean;
   onOpenAddModal: () => void;
   onOpenDetail: (researchItemId: string) => void;
   onPageChange: (newPage: number) => void;
@@ -77,6 +78,7 @@ export function ResearchTable({
   hasActiveFilters,
   isError,
   isLoading,
+  isManagementContext,
   onOpenAddModal,
   onOpenDetail,
   onPageChange,
@@ -85,11 +87,12 @@ export function ResearchTable({
   userRoles,
   workspaceId,
 }: ResearchTableProps) {
-  const isAdmin = userRoles.includes("ADMIN");
-  const canCreate = userRoles.includes("RESEARCHER");
+  const isAdmin = isManagementContext && userRoles.includes("ADMIN");
+  const canCreate = !isManagementContext && userRoles.includes("RESEARCHER");
+  const showStatus = isAdmin || canCreate;
 
   if (isLoading) {
-    return <TableSkeleton isAdmin={isAdmin} />;
+    return <TableSkeleton columnCount={isAdmin ? 7 : showStatus ? 5 : 4} />;
   }
 
   if (isError) {
@@ -177,7 +180,7 @@ export function ResearchTable({
                 <th scope="col" className="px-4 py-3">
                   Added
                 </th>
-                {isAdmin && (
+                {showStatus && (
                   <th scope="col" className="px-4 py-3">
                     Status
                   </th>
@@ -197,9 +200,10 @@ export function ResearchTable({
                 <ResearchTableRow
                   key={item.id}
                   item={item}
+                  isAdmin={isAdmin}
                   onOpenDetail={onOpenDetail}
+                  showStatus={showStatus}
                   userCanUpload={canCreate}
-                  userRoles={userRoles}
                   workspaceId={workspaceId}
                 />
               ))}
@@ -250,15 +254,17 @@ export function ResearchTable({
 
 function ResearchTableRow({
   item,
+  isAdmin,
   onOpenDetail,
+  showStatus,
   userCanUpload,
-  userRoles,
   workspaceId,
 }: {
   item: ResearchItemListItem;
+  isAdmin: boolean;
   onOpenDetail: (id: string) => void;
+  showStatus: boolean;
   userCanUpload: boolean;
-  userRoles: WorkspaceRole[];
   workspaceId: string;
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
@@ -268,7 +274,6 @@ function ResearchTableRow({
     latestDesignerReplyAt: null,
     latestReviewId: null,
   };
-  const isAdmin = userRoles.includes("ADMIN");
   const canClickReview = isAdmin && Boolean(latestReviewId);
   const replyCountLabel = `${designerReplyCount} Designer ${designerReplyCount === 1 ? "reply" : "replies"}`;
   const replyCountTooltip = `${replyCountLabel} on review annotations`;
@@ -344,7 +349,7 @@ function ResearchTableRow({
         </div>
       </td>
 
-      {/* Researcher (Admin only) */}
+      {/* Researcher (Management only) */}
       {isAdmin && (
         <td className="px-4 py-3">
           <div className="flex flex-col">
@@ -363,8 +368,8 @@ function ResearchTableRow({
         {new Date(item.createdAt).toLocaleDateString()}
       </td>
 
-      {/* Status + Issue indicator (Admin only) */}
-      {isAdmin && (
+      {/* Status + Issue indicator */}
+      {showStatus && (
         <td className="px-4 py-3 whitespace-nowrap">
           <div className="flex flex-col items-start gap-1">
             <StatusBadge
@@ -484,9 +489,7 @@ function ResearchTableRow({
   );
 }
 
-function TableSkeleton({ isAdmin = true }: { isAdmin?: boolean }) {
-  const columnCount = isAdmin ? 7 : 4;
-
+function TableSkeleton({ columnCount }: { columnCount: number }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
       <div className="p-4 space-y-3">
