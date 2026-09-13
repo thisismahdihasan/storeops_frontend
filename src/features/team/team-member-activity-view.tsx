@@ -260,29 +260,30 @@ export function TeamMemberActivityView({
 
   const { dateRange, recentItems, summary, user } = activityQuery.data.data;
   const displayName = user.name || user.email;
+  const hasResearcherRole = user.roles.includes("RESEARCHER");
+  const hasDesignerRole = user.roles.includes("DESIGNER");
+  const hasListerRole = user.roles.includes("LISTER");
 
-  const hasAnySummaryGroup =
-    summary.research !== null ||
-    summary.design !== null ||
-    summary.listing !== null;
+  const showResearch = hasResearcherRole || summary.research !== null;
+  const showDesign = hasDesignerRole || summary.design !== null;
+  const showListing = hasListerRole || summary.listing !== null;
 
-  const totalPeriodActivity =
-    (summary.research?.totalCreated ?? 0) +
-    (summary.design
-      ? summary.design.assignedCount +
-        summary.design.currentInProgress +
-        summary.design.submittedCount +
-        summary.design.approvedCount +
-        summary.design.correctionsCount +
-        summary.design.completedCount
-      : 0) +
-    (summary.listing
-      ? summary.listing.assignedCount +
-        summary.listing.currentInProgress +
-        summary.listing.listedCount
-      : 0);
+  const researchSummary = summary.research ?? { totalCreated: 0 };
+  const designSummary = summary.design ?? {
+    approvedCount: 0,
+    assignedCount: 0,
+    completedCount: 0,
+    correctionsCount: 0,
+    currentInProgress: 0,
+    submittedCount: 0,
+  };
+  const listingSummary = summary.listing ?? {
+    assignedCount: 0,
+    currentInProgress: 0,
+    listedCount: 0,
+  };
 
-  const hasMetrics = hasAnySummaryGroup && totalPeriodActivity > 0;
+  const hasVisibleMetricSections = showResearch || showDesign || showListing;
 
   return (
     <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
@@ -312,12 +313,19 @@ export function TeamMemberActivityView({
             Joined {formatDate(user.joinedAt)}
           </p>
         </div>
-        <div className="flex flex-wrap gap-1.5 lg:justify-end">
-          {user.roles.map((role) => (
-            <Badge className="font-mono text-[11px]" key={role} variant="secondary">
-              {ROLE_LABELS[role]}
-            </Badge>
-          ))}
+        <div className="space-y-1.5 lg:text-right">
+          <p className="text-xs font-medium text-muted-foreground">Current Roles</p>
+          <div className="flex flex-wrap gap-1.5 lg:justify-end">
+            {user.roles.length > 0 ? (
+              user.roles.map((role) => (
+                <Badge className="font-mono text-[11px]" key={role} variant="secondary">
+                  {ROLE_LABELS[role]}
+                </Badge>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No current roles.</p>
+            )}
+          </div>
         </div>
       </header>
 
@@ -336,38 +344,38 @@ export function TeamMemberActivityView({
           </h2>
         </div>
 
-        {!hasMetrics ? (
+        {!hasVisibleMetricSections ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
             No activity in this period.
           </div>
         ) : (
           <div className="space-y-5">
-            {summary.research ? (
+            {showResearch ? (
               <MetricSection title="Research">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <PrimaryMetricCard
                     label="Research Created"
-                    value={summary.research.totalCreated}
+                    value={researchSummary.totalCreated}
                   />
                 </div>
               </MetricSection>
             ) : null}
 
-            {summary.design ? (
+            {showDesign ? (
               <MetricSection
                 secondary={
                   <>
                     <SecondaryMetricCard
                       label="Assigned"
-                      value={summary.design.assignedCount}
+                      value={designSummary.assignedCount}
                     />
                     <SecondaryMetricCard
                       label="Submitted"
-                      value={summary.design.submittedCount}
+                      value={designSummary.submittedCount}
                     />
                     <SecondaryMetricCard
                       label="Corrections"
-                      value={summary.design.correctionsCount}
+                      value={designSummary.correctionsCount}
                     />
                   </>
                 }
@@ -377,26 +385,26 @@ export function TeamMemberActivityView({
                   <PrimaryMetricCard
                     isCurrentSnapshot
                     label="In Progress"
-                    value={summary.design.currentInProgress}
+                    value={designSummary.currentInProgress}
                   />
                   <PrimaryMetricCard
                     label="Completed"
-                    value={summary.design.completedCount}
+                    value={designSummary.completedCount}
                   />
                   <PrimaryMetricCard
                     label="Approved"
-                    value={summary.design.approvedCount}
+                    value={designSummary.approvedCount}
                   />
                 </div>
               </MetricSection>
             ) : null}
 
-            {summary.listing ? (
+            {showListing ? (
               <MetricSection
                 secondary={
                   <SecondaryMetricCard
                     label="Assigned"
-                    value={summary.listing.assignedCount}
+                    value={listingSummary.assignedCount}
                   />
                 }
                 title="Listing"
@@ -405,11 +413,11 @@ export function TeamMemberActivityView({
                   <PrimaryMetricCard
                     isCurrentSnapshot
                     label="In Progress"
-                    value={summary.listing.currentInProgress}
+                    value={listingSummary.currentInProgress}
                   />
                   <PrimaryMetricCard
                     label="Listed"
-                    value={summary.listing.listedCount}
+                    value={listingSummary.listedCount}
                   />
                 </div>
               </MetricSection>
@@ -425,7 +433,7 @@ export function TeamMemberActivityView({
             Recent Items
           </h2>
           <p className="text-xs text-muted-foreground">
-            Recent workspace items involving this member.
+            Recent workspace activity involving this member.
           </p>
         </div>
 
