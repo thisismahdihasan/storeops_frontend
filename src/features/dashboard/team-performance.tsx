@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   AlertCircle,
@@ -12,6 +13,10 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  MemberFilterSelect,
+  type MemberFilterOption,
+} from "@/components/member-filter-select";
 import { cn } from "@/lib/utils";
 import type {
   DashboardFilterParams,
@@ -34,6 +39,8 @@ type PerformanceTab = "researchers" | "designers" | "listers";
 
 export function TeamPerformance({ filter, workspaceId }: TeamPerformanceProps) {
   const [activeTab, setActiveTab] = useState<PerformanceTab>("researchers");
+  const [selectedDesignerId, setSelectedDesignerId] = useState<string>();
+  const [selectedListerId, setSelectedListerId] = useState<string>();
 
   const researchersQuery = useResearcherPerformance(
     workspaceId,
@@ -50,6 +57,26 @@ export function TeamPerformance({ filter, workspaceId }: TeamPerformanceProps) {
     filter,
     activeTab === "listers",
   );
+  const designers = designersQuery.data?.data.designers;
+  const listers = listersQuery.data?.data.listers;
+  const visibleDesigners = selectedDesignerId
+    ? designers?.filter((designer) => designer.userId === selectedDesignerId)
+    : designers;
+  const visibleListers = selectedListerId
+    ? listers?.filter((lister) => lister.userId === selectedListerId)
+    : listers;
+  const designerOptions: MemberFilterOption[] = (designers ?? []).map(
+    (designer) => ({
+      email: designer.email,
+      name: designer.name,
+      userId: designer.userId,
+    }),
+  );
+  const listerOptions: MemberFilterOption[] = (listers ?? []).map((lister) => ({
+    email: lister.email,
+    name: lister.name,
+    userId: lister.userId,
+  }));
 
   return (
     <section aria-labelledby="team-performance-heading" className="space-y-4">
@@ -142,25 +169,58 @@ export function TeamPerformance({ filter, workspaceId }: TeamPerformanceProps) {
             isError={researchersQuery.isError}
             data={researchersQuery.data?.data.researchers}
             onRetry={() => void researchersQuery.refetch()}
+            workspaceId={workspaceId}
           />
         )}
 
         {activeTab === "designers" && (
-          <DesignersTable
-            isLoading={designersQuery.isLoading}
-            isError={designersQuery.isError}
-            data={designersQuery.data?.data.designers}
-            onRetry={() => void designersQuery.refetch()}
-          />
+          <div className="space-y-3 p-4">
+            <MemberFilterSelect
+              allLabel="All Designers"
+              emptyMessage={designersQuery.isLoading ? "Loading designers..." : "No designers found."}
+              label="Designer"
+              onValueChange={setSelectedDesignerId}
+              options={designerOptions}
+              value={selectedDesignerId}
+            />
+            <DesignersTable
+              isLoading={designersQuery.isLoading}
+              isError={designersQuery.isError}
+              data={visibleDesigners}
+              emptyStateMessage={
+                selectedDesignerId
+                  ? "No design activity in this period."
+                  : undefined
+              }
+              onRetry={() => void designersQuery.refetch()}
+              workspaceId={workspaceId}
+            />
+          </div>
         )}
 
         {activeTab === "listers" && (
-          <ListersTable
-            isLoading={listersQuery.isLoading}
-            isError={listersQuery.isError}
-            data={listersQuery.data?.data.listers}
-            onRetry={() => void listersQuery.refetch()}
-          />
+          <div className="space-y-3 p-4">
+            <MemberFilterSelect
+              allLabel="All Listers"
+              emptyMessage={listersQuery.isLoading ? "Loading listers..." : "No listers found."}
+              label="Lister"
+              onValueChange={setSelectedListerId}
+              options={listerOptions}
+              value={selectedListerId}
+            />
+            <ListersTable
+              isLoading={listersQuery.isLoading}
+              isError={listersQuery.isError}
+              data={visibleListers}
+              emptyStateMessage={
+                selectedListerId
+                  ? "No listing activity in this period."
+                  : undefined
+              }
+              onRetry={() => void listersQuery.refetch()}
+              workspaceId={workspaceId}
+            />
+          </div>
         )}
       </div>
 
@@ -177,16 +237,20 @@ export function TeamPerformance({ filter, workspaceId }: TeamPerformanceProps) {
 // ==========================================
 type SubTableProps<T> = {
   data?: T[];
+  emptyStateMessage?: string;
   isError: boolean;
   isLoading: boolean;
   onRetry: () => void;
+  workspaceId: string;
 };
 
 function ResearchersTable({
   data,
+  emptyStateMessage,
   isError,
   isLoading,
   onRetry,
+  workspaceId,
 }: SubTableProps<ResearcherPerformanceRow>) {
   if (isLoading) {
     return <TableSkeleton rows={4} columns={2} />;
@@ -197,7 +261,7 @@ function ResearchersTable({
   }
 
   if (!data || data.length === 0) {
-    return <TableEmptyState roleName="researchers" />;
+    return <TableEmptyState roleName="researchers" message={emptyStateMessage} />;
   }
 
   return (
@@ -218,9 +282,12 @@ function ResearchersTable({
             <tr key={row.userId} className="hover:bg-muted/20 transition-colors">
               <td className="px-4 py-3">
                 <div className="flex flex-col">
-                  <span className="font-medium text-foreground">
+                  <Link
+                    href={`/w/${workspaceId}/team/${row.userId}`}
+                    className="font-medium text-foreground hover:underline"
+                  >
                     {row.name || "Unnamed Researcher"}
-                  </span>
+                  </Link>
                   <span className="text-[11px] text-muted-foreground">
                     {row.email}
                   </span>
@@ -242,9 +309,11 @@ function ResearchersTable({
 // ==========================================
 function DesignersTable({
   data,
+  emptyStateMessage,
   isError,
   isLoading,
   onRetry,
+  workspaceId,
 }: SubTableProps<DesignerPerformanceRow>) {
   if (isLoading) {
     return <TableSkeleton rows={4} columns={7} />;
@@ -255,7 +324,7 @@ function DesignersTable({
   }
 
   if (!data || data.length === 0) {
-    return <TableEmptyState roleName="designers" />;
+    return <TableEmptyState roleName="designers" message={emptyStateMessage} />;
   }
 
   return (
@@ -297,9 +366,12 @@ function DesignersTable({
             <tr key={row.userId} className="hover:bg-muted/20 transition-colors">
               <td className="px-4 py-3">
                 <div className="flex flex-col">
-                  <span className="font-medium text-foreground">
+                  <Link
+                    href={`/w/${workspaceId}/team/${row.userId}`}
+                    className="font-medium text-foreground hover:underline"
+                  >
                     {row.name || "Unnamed Designer"}
-                  </span>
+                  </Link>
                   <span className="text-[11px] text-muted-foreground">
                     {row.email}
                   </span>
@@ -336,9 +408,11 @@ function DesignersTable({
 // ==========================================
 function ListersTable({
   data,
+  emptyStateMessage,
   isError,
   isLoading,
   onRetry,
+  workspaceId,
 }: SubTableProps<ListerPerformanceRow>) {
   if (isLoading) {
     return <TableSkeleton rows={4} columns={4} />;
@@ -349,7 +423,7 @@ function ListersTable({
   }
 
   if (!data || data.length === 0) {
-    return <TableEmptyState roleName="listers" />;
+    return <TableEmptyState roleName="listers" message={emptyStateMessage} />;
   }
 
   return (
@@ -382,9 +456,12 @@ function ListersTable({
             <tr key={row.userId} className="hover:bg-muted/20 transition-colors">
               <td className="px-4 py-3">
                 <div className="flex flex-col">
-                  <span className="font-medium text-foreground">
+                  <Link
+                    href={`/w/${workspaceId}/team/${row.userId}`}
+                    className="font-medium text-foreground hover:underline"
+                  >
                     {row.name || "Unnamed Lister"}
-                  </span>
+                  </Link>
                   <span className="text-[11px] text-muted-foreground">
                     {row.email}
                   </span>
@@ -443,12 +520,18 @@ function TableSkeleton({ rows, columns }: { columns: number; rows: number }) {
   );
 }
 
-function TableEmptyState({ roleName }: { roleName: string }) {
+function TableEmptyState({
+  message,
+  roleName,
+}: {
+  message?: string;
+  roleName: string;
+}) {
   return (
     <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
       <Users className="size-8 text-muted-foreground/60" />
       <p className="mt-2 text-xs font-medium text-foreground">
-        No active {roleName} recorded for this period
+        {message ?? `No active ${roleName} recorded for this period`}
       </p>
       <p className="mt-1 text-[11px] text-muted-foreground max-w-sm">
         Members with this role will appear here once assignments or throughput actions are recorded.

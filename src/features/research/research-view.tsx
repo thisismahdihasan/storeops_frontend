@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useNavigationContext } from "@/components/layout/navigation-context";
 import { useCurrentSession } from "@/features/auth/use-current-session";
+import { useTeamMembers } from "@/features/team/use-team";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { SyncListingsButton } from "@/features/listing/sync-listings-button";
 import { AddResearchModal } from "./add-research-modal";
@@ -51,6 +52,18 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
   const canCreate = isMyResearchContext;
   const isManagementContext = !isMyResearchContext;
   const canManageResearch = isAdmin && isManagementContext;
+  const teamMembersQuery = useTeamMembers(workspaceId, canManageResearch);
+  const researchers = (teamMembersQuery.data?.data.members ?? [])
+    .filter((member) => member.roles.includes("RESEARCHER"))
+    .map((member) => ({
+      email: member.email,
+      name: member.name,
+      userId: member.userId,
+    }));
+  const selectedResearcher = researchers.find(
+    (researcher) => researcher.userId === currentFilters.createdBy,
+  );
+  const scopedResearchCount = researchQuery.data?.data.pagination.total;
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -107,11 +120,23 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
       <ResearchFilters
         currentFilters={currentFilters}
         isAdmin={canManageResearch}
+        researchers={researchers}
       />
+
+      {canManageResearch && selectedResearcher && scopedResearchCount !== undefined && (
+        <p className="text-xs text-muted-foreground" role="status">
+          {scopedResearchCount.toLocaleString()} {scopedResearchCount === 1 ? "research item" : "research items"} by {selectedResearcher.name || selectedResearcher.email}
+        </p>
+      )}
 
       {/* Research Table */}
       <ResearchTable
         data={researchQuery.data?.data}
+        emptyStateTitle={
+          canManageResearch && currentFilters.createdBy
+            ? "No research items found for this researcher."
+            : undefined
+        }
         isLoading={researchQuery.isLoading}
         isError={researchQuery.isError}
         onRetry={() => void researchQuery.refetch()}

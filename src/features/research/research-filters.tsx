@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Calendar, Filter, RotateCcw, Search, X } from "lucide-react";
 
+import {
+  MemberFilterSelect,
+  type MemberFilterOption,
+} from "@/components/member-filter-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ResearchListFilterParams, ResearchStatus } from "./research.types";
@@ -69,11 +73,13 @@ export function parseResearchFiltersFromParams(
 type ResearchFiltersProps = {
   currentFilters: ResearchListFilterParams;
   isAdmin?: boolean;
+  researchers?: MemberFilterOption[];
 };
 
 export function ResearchFilters({
   currentFilters,
   isAdmin = true,
+  researchers = [],
 }: ResearchFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -133,6 +139,17 @@ export function ResearchFilters({
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const handleResearcherChange = (userId: string | undefined) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (userId) {
+      params.set("createdBy", userId);
+    } else {
+      params.delete("createdBy");
+    }
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   const handleResetFilters = () => {
     setSearchInput("");
     router.push(pathname);
@@ -172,6 +189,17 @@ export function ResearchFilters({
 
         {/* Filter controls row */}
         <div className="flex flex-wrap items-center gap-2.5">
+          {isAdmin && (
+            <MemberFilterSelect
+              allLabel="All Researchers"
+              emptyMessage="No researchers found."
+              label="Researcher"
+              onValueChange={handleResearcherChange}
+              options={researchers}
+              value={currentFilters.createdBy}
+            />
+          )}
+
           {/* Status filter (Admin only) */}
           {isAdmin && (
             <div className="flex items-center gap-1.5">

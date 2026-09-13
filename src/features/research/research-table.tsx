@@ -32,6 +32,7 @@ import type {
 
 export type ResearchTableProps = {
   data?: ResearchListResult;
+  emptyStateTitle?: string;
   hasActiveFilters: boolean;
   isError: boolean;
   isLoading: boolean;
@@ -75,6 +76,7 @@ function formatStatusLabel(status: ResearchStatus): string {
 
 export function ResearchTable({
   data,
+  emptyStateTitle,
   hasActiveFilters,
   isError,
   isLoading,
@@ -123,7 +125,7 @@ export function ResearchTable({
         {hasActiveFilters ? (
           <>
             <h3 className="mt-3 text-sm font-semibold text-foreground">
-              No matching research items
+              {emptyStateTitle ?? "No matching research items"}
             </h3>
             <p className="mt-1 text-xs text-muted-foreground max-w-sm">
               No items match your active search, status, or date filters.
