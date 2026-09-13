@@ -1,18 +1,10 @@
-import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { FeaturePlaceholder } from "@/components/layout/feature-placeholder";
-
-export const metadata: Metadata = {
-  description: "Researcher personal assignments and draft submissions",
-  title: "My Research — StoreOps",
+type MyResearchPageProps = {
+  params: Promise<{ workspaceId: string }>;
 };
 
-export default function MyResearchPage() {
-  return (
-    <FeaturePlaceholder
-      description="Your personally assigned research items, saved drafts, and submission history will appear here."
-      moduleName="My Research"
-      title="My Research Queue"
-    />
-  );
+export default async function MyResearchPage({ params }: MyResearchPageProps) {
+  const { workspaceId } = await params;
+  redirect(`/w/${workspaceId}/research`);
 }

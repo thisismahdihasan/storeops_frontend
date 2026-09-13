@@ -3,7 +3,6 @@ import {
   AlertCircle,
   Bell,
   CheckSquare,
-  FileSearch,
   LayoutDashboard,
   Palette,
   RotateCcw,
@@ -53,14 +52,6 @@ const NAVIGATION_DEFINITIONS: NavigationDefinition[] = [
     roles: ["ADMIN", "RESEARCHER"],
     segment: "research",
     title: "Research",
-  },
-  {
-    group: "OPERATIONS",
-    icon: FileSearch,
-    id: "my-research",
-    roles: ["RESEARCHER"],
-    segment: "my-research",
-    title: "My Research",
   },
   {
     group: "DESIGNER WORKFLOW",
@@ -180,9 +171,15 @@ export function resolveDefaultRouteForRoles(
 }
 
 export function isRouteAllowedForRoles(
-  segment: string,
+  routeSegments: readonly string[],
   roles: WorkspaceRole[],
 ): boolean {
+  const [segment, nestedSegment] = routeSegments;
+
+  if (segment === "reviews" && nestedSegment) {
+    return roles.includes("ADMIN") || roles.includes("DESIGNER");
+  }
+
   const definition = NAVIGATION_DEFINITIONS.find((item) => item.segment === segment);
   if (!definition) {
     return true;

@@ -120,10 +120,10 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
 
   // Check role-based route access for current sub-path
   const pathParts = pathname.split("/");
-  const currentSegment = pathParts[3]; // /w/[workspaceId]/[segment]
+  const routeSegments = pathParts.slice(3); // /w/[workspaceId]/[segment]/...
   const isAllowed =
-    !currentSegment ||
-    isRouteAllowedForRoles(currentSegment, activeWorkspace.membership.roles);
+    routeSegments.length === 0 ||
+    isRouteAllowedForRoles(routeSegments, activeWorkspace.membership.roles);
 
   return (
     <div className="flex min-h-screen bg-background">

@@ -72,7 +72,23 @@ export function DesignWorkspaceView({ researchItemId, workspaceId }: DesignWorks
             <p className="font-mono text-xs text-muted-foreground">Etsy #{detail.researchItem.etsyListingId}</p>
             <h1 className="mt-1 break-words text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
           </div>
-          <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
+            {detail.latestReview && (
+              <Button
+                nativeButton={false}
+                render={
+                  <Link
+                    href={`/w/${workspaceId}/reviews/${detail.latestReview.id}`}
+                  />
+                }
+                size="sm"
+                variant="outline"
+              >
+                View Review History
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -168,6 +184,6 @@ function actionErrorMessage(error: unknown): string { return error instanceof Er
 
 function LoadingState() { return <main className="flex min-h-80 items-center justify-center p-6" role="status"><div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-5 animate-spin" />Loading design workspace…</div></main>; }
 
-function AccessDeniedState({ workspaceId }: { workspaceId: string }) { return <main className="mx-auto max-w-lg p-6"><section className="rounded-xl border border-destructive/20 bg-card p-6 text-center"><AlertCircle className="mx-auto size-8 text-destructive" /><h1 className="mt-3 text-xl font-semibold">Designer access required</h1><p className="mt-2 text-sm text-muted-foreground">This workspace is available only to members with the explicit Designer role.</p><Button className="mt-4" nativeButton={false} render={<Link href={`/w/${workspaceId}/my-work`} />} variant="outline">Back to My Work</Button></section></main>; }
+function AccessDeniedState({ workspaceId }: { workspaceId: string }) { return <main className="mx-auto max-w-lg p-6"><section className="rounded-xl border border-destructive/20 bg-card p-6 text-center"><AlertCircle className="mx-auto size-8 text-destructive" /><h1 className="mt-3 text-xl font-semibold">Designer access required</h1><p className="mt-2 text-sm text-muted-foreground">This workspace is available only to members with the explicit Designer role.</p><Button className="mt-4" nativeButton={false} render={<Link href={`/w/${workspaceId}`} />} variant="outline">Back to Workspace</Button></section></main>; }
 
 function DetailErrorState({ error, onRetry, workspaceId }: { error: unknown; onRetry: () => void; workspaceId: string }) { const status = error instanceof ApiError ? error.status : 0; const title = status === 403 ? "You cannot access this design work" : status === 404 ? "Design work not found" : status === 401 ? "Your session has expired" : "Unable to load design work"; const message = status === 403 ? "Only the currently assigned Designer can open this workspace." : status === 404 ? "This work item may no longer be available." : error instanceof Error ? error.message : "Check your connection and try again."; return <main className="mx-auto max-w-lg p-6"><section className="rounded-xl border border-border bg-card p-6 text-center"><AlertCircle className="mx-auto size-8 text-destructive" /><h1 className="mt-3 text-xl font-semibold">{title}</h1><p className="mt-2 text-sm text-muted-foreground">{message}</p><div className="mt-4 flex justify-center gap-2"><Button onClick={onRetry} type="button" variant="outline">Retry</Button><Button nativeButton={false} render={<Link href={`/w/${workspaceId}/my-work`} />} variant="outline">Back to My Work</Button></div></section></main>; }

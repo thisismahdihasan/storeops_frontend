@@ -1,9 +1,37 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { reassignResearchDesigner } from "@/features/research/research.api";
+import {
+  getIssueItems,
+  reassignResearchDesigner,
+} from "@/features/research/research.api";
 import { researchKeys } from "@/features/research/use-research";
+import type { IssueListFilterParams } from "@/features/research/research.types";
+import { ApiError } from "@/lib/api";
+
+export const issueKeys = {
+  all: ["issues"] as const,
+  list: (workspaceId: string, filter: IssueListFilterParams) =>
+    ["issues", workspaceId, "list", filter] as const,
+  lists: (workspaceId: string) => ["issues", workspaceId, "list"] as const,
+};
+
+export function useIssueItems(
+  workspaceId: string,
+  filter: IssueListFilterParams,
+  enabled = true,
+) {
+  return useQuery({
+    enabled: enabled && workspaceId.length > 0,
+    queryFn: () => getIssueItems(workspaceId, filter),
+    queryKey: issueKeys.list(workspaceId, filter),
+    retry: (failureCount, error) =>
+      !(error instanceof ApiError && (error.status === 401 || error.status === 403)) &&
+      failureCount < 1,
+    staleTime: 15_000,
+  });
+}
 
 export function useReassignIssue(workspaceId: string) {
   const queryClient = useQueryClient();
@@ -16,6 +44,9 @@ export function useReassignIssue(workspaceId: string) {
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: researchKeys.lists(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: issueKeys.lists(workspaceId),
       });
       void queryClient.invalidateQueries({
         queryKey: researchKeys.detail(workspaceId, variables.researchItemId),

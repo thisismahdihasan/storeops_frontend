@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { useResearchItems } from "@/features/research/use-research";
 import { useTeamMembers } from "@/features/team/use-team";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 
@@ -15,7 +14,7 @@ import { IssueList } from "./issue-list";
 import { IssuesFilters } from "./issues-filters";
 import type { ActiveIssue } from "./issues.types";
 import { ReassignIssueDialog } from "./reassign-issue-dialog";
-import { useReassignIssue } from "./use-issues";
+import { useIssueItems, useReassignIssue } from "./use-issues";
 
 const ISSUE_PAGE_LIMIT = 20;
 
@@ -64,9 +63,9 @@ export function IssuesView({ workspaceId }: IssuesViewProps) {
   const isAdmin = activeWorkspace?.membership.roles.includes("ADMIN") ?? false;
   const search = searchParams.get("search")?.trim() || undefined;
   const page = parsePage(searchParams.get("page"));
-  const issuesQuery = useResearchItems(
+  const issuesQuery = useIssueItems(
     workspaceId,
-    { limit: ISSUE_PAGE_LIMIT, page, search, status: "ISSUE_REPORTED" },
+    { limit: ISSUE_PAGE_LIMIT, page, search },
     isAdmin,
   );
   const membersQuery = useTeamMembers(workspaceId, isAdmin);

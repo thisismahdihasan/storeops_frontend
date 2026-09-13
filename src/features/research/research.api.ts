@@ -17,6 +17,7 @@ import type {
   CreateResearchResponse,
   DeleteResearchItemResponse,
   DuplicateResearchData,
+  IssueListFilterParams,
   PreviewResearchResponse,
   ReassignResearchResponse,
   ResearchDetailResponse,
@@ -132,6 +133,31 @@ export async function getResearchItems(
   const parsed = researchListResponseSchema.safeParse(response);
   if (!parsed.success) {
     throw new ApiError(502, "Unexpected research list response format.");
+  }
+
+  return parsed.data;
+}
+
+export async function getIssueItems(
+  workspaceId: string,
+  filter: IssueListFilterParams,
+): Promise<ResearchListResponse> {
+  const searchParams = new URLSearchParams({
+    limit: String(filter.limit ?? 20),
+    page: String(filter.page ?? 1),
+  });
+
+  if (filter.search?.trim()) {
+    searchParams.set("search", filter.search.trim());
+  }
+
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${workspaceId}/research-items/issues?${searchParams.toString()}`,
+  );
+  const parsed = researchListResponseSchema.safeParse(response);
+
+  if (!parsed.success) {
+    throw new ApiError(502, "Unexpected issue list response format.");
   }
 
   return parsed.data;

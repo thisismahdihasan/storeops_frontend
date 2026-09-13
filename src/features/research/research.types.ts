@@ -178,6 +178,11 @@ export type ResearchListFilterParams = {
   status?: ResearchStatus;
 };
 
+export type IssueListFilterParams = Pick<
+  ResearchListFilterParams,
+  "limit" | "page" | "search"
+>;
+
 export type PreviewDuplicateData = {
   createdAt: string;
   createdBy: UserSummary;

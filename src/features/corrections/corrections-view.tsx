@@ -65,10 +65,10 @@ function AccessDenied({ workspaceId }: { workspaceId: string }) {
         <div className="mt-6 flex justify-center">
           <Button
             nativeButton={false}
-            render={<Link href={`/w/${workspaceId}/dashboard`} />}
+            render={<Link href={`/w/${workspaceId}`} />}
             variant="outline"
           >
-            Back to Dashboard
+            Back to Workspace
           </Button>
         </div>
       </section>
