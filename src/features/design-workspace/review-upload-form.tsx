@@ -11,9 +11,11 @@ const MAX_REVIEW_IMAGE_BYTES = 10 * 1024 * 1024;
 const REVIEW_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 type ReviewUploadFormProps = {
+  helperText?: string;
   isPending: boolean;
   onReportIssue?: () => void;
   onSubmit: (file: File, note: string) => void;
+  title?: string;
 };
 
 function formatFileSize(size: number): string {
@@ -28,9 +30,11 @@ function validationMessage(candidate: File): string | null {
 }
 
 export function ReviewUploadForm({
+  helperText = "Send one JPEG, PNG, or WebP image up to 10 MB to Admin review.",
   isPending,
   onReportIssue,
   onSubmit,
+  title = "Upload Proof for Review",
 }: ReviewUploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [note, setNote] = useState("");
@@ -120,8 +124,8 @@ export function ReviewUploadForm({
   return (
     <div className="space-y-4">
       <div className="space-y-0.5">
-        <h3 className="text-sm font-semibold text-foreground">Upload Proof for Review</h3>
-        <p className="text-xs text-muted-foreground">Send one JPEG, PNG, or WebP image up to 10 MB to Admin review.</p>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <p className="text-xs text-muted-foreground">{helperText}</p>
       </div>
       <div className="space-y-4">
         <input accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handleFileChange} ref={inputRef} type="file" />

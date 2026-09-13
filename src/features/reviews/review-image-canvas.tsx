@@ -13,9 +13,12 @@ import { useCreateReviewAnnotation } from "./use-reviews";
 
 type ReviewImageCanvasProps = {
   annotations: ReviewAnnotationDetail[];
+  hoveredAnnotationId?: string | null;
   imageDeletedAt: string | null;
   imageUrl: string | null;
   isActionable: boolean;
+  onHoverAnnotation?: (annotationId: string | null) => void;
+  onOpenImage?: () => void;
   onSelectAnnotation?: (annotationId: string) => void;
   researchItemId?: string;
   reviewId: string;
@@ -26,9 +29,12 @@ type ReviewImageCanvasProps = {
 
 export function ReviewImageCanvas({
   annotations,
+  hoveredAnnotationId,
   imageDeletedAt,
   imageUrl,
   isActionable,
+  onHoverAnnotation,
+  onOpenImage,
   onSelectAnnotation,
   researchItemId,
   reviewId,
@@ -69,7 +75,10 @@ export function ReviewImageCanvas({
   }
 
   function handleImageClick(e: MouseEvent<HTMLDivElement>) {
-    if (!isActionable) return;
+    if (!isActionable) {
+      onOpenImage?.();
+      return;
+    }
 
     // If clicking directly on an existing marker or composer popover, do nothing
     const target = e.target as HTMLElement;
@@ -149,15 +158,18 @@ export function ReviewImageCanvas({
         {/* Existing Annotation Markers */}
         {annotations.map((annotation, idx) => {
           const isSelected = selectedAnnotationId === annotation.id;
+          const isHovered = hoveredAnnotationId === annotation.id;
           const markerNumber = idx + 1;
 
           return (
             <button
               aria-label={`Annotation ${markerNumber}: ${annotation.comment}`}
-              className={`group absolute -translate-x-1/2 -translate-y-1/2 rounded-full font-bold shadow-md transition-all focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+              className={`group absolute -translate-x-1/2 -translate-y-1/2 rounded-full border font-bold shadow-md transition-all focus-visible:outline-none ${
                 isSelected
-                  ? "z-30 size-7 bg-primary text-xs text-primary-foreground ring-4 ring-primary/30"
-                  : "z-20 size-6 bg-amber-500 text-[11px] text-white hover:scale-110 hover:bg-amber-600"
+                  ? "z-30 size-7 border-amber-200 bg-amber-600 text-xs text-white ring-4 ring-amber-500/40"
+                  : isHovered
+                    ? "z-30 size-7 border-amber-100 bg-amber-600 text-xs text-white ring-4 ring-amber-500/30"
+                    : "z-20 size-6 border-amber-400 bg-amber-500 text-[11px] text-white hover:scale-110 hover:bg-amber-600 focus-visible:ring-2 focus-visible:ring-amber-500"
               }`}
               data-annotation-element="true"
               key={annotation.id}
@@ -165,6 +177,10 @@ export function ReviewImageCanvas({
                 e.stopPropagation();
                 onSelectAnnotation?.(annotation.id);
               }}
+              onBlur={() => onHoverAnnotation?.(null)}
+              onFocus={() => onHoverAnnotation?.(annotation.id)}
+              onMouseEnter={() => onHoverAnnotation?.(annotation.id)}
+              onMouseLeave={() => onHoverAnnotation?.(null)}
               style={{
                 left: `${annotation.x * 100}%`,
                 top: `${annotation.y * 100}%`,

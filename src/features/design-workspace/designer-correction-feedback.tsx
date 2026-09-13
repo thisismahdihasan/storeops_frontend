@@ -10,34 +10,48 @@ import { formatWorkDate } from "@/features/designer-work/designer-work.types";
 import { ReviewImageCanvas } from "@/features/reviews/review-image-canvas";
 import { ApiError } from "@/lib/api";
 
-import type { DesignDetail } from "./design-workspace.types";
+import type { ReviewHistoryItem } from "@/features/reviews/reviews.types";
+import { DesignPreviewLightbox } from "./design-preview-lightbox";
 import { useDesignerAnnotationReply } from "./use-design-workspace";
+
+type ReviewFeedbackRound = Pick<
+  ReviewHistoryItem,
+  | "annotations"
+  | "id"
+  | "imageDeletedAt"
+  | "imageUrl"
+  | "note"
+  | "roundNumber"
+  | "submittedAt"
+>;
 
 type DesignerCorrectionFeedbackProps = {
   canReply: boolean;
-  detail: DesignDetail;
   onSelectAnnotation: (annotationId: string | null) => void;
+  researchItemId: string;
+  review: ReviewFeedbackRound;
   selectedAnnotationId: string | null;
   workspaceId: string;
 };
 
 export function DesignerCorrectionFeedback({
   canReply,
-  detail,
   onSelectAnnotation,
+  researchItemId,
+  review,
   selectedAnnotationId,
   workspaceId,
 }: DesignerCorrectionFeedbackProps) {
-  const { latestReview, researchItem } = detail;
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [replyTextByAnnotationId, setReplyTextByAnnotationId] = useState<
     Record<string, string>
   >({});
 
   const replyMutation = useDesignerAnnotationReply(
     workspaceId,
-    researchItem.id,
-    latestReview?.id,
+    researchItemId,
+    review.id,
   );
 
   useEffect(() => {
@@ -51,11 +65,10 @@ export function DesignerCorrectionFeedback({
     }
   }, [selectedAnnotationId]);
 
-  if (!latestReview) return null;
-
   const reviewImageUrl =
-    latestReview.imageDeletedAt === null ? latestReview.imageUrl : null;
-  const annotations = latestReview.annotations;
+    review.imageDeletedAt === null ? review.imageUrl : null;
+  const annotations = review.annotations;
+  const hasAnnotations = annotations.length > 0;
 
   async function handleSendReply(annotationId: string) {
     const text = (replyTextByAnnotationId[annotationId] ?? "").trim();
@@ -89,13 +102,13 @@ export function DesignerCorrectionFeedback({
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold tracking-tight text-foreground">
-              Correction Feedback — Round {latestReview.roundNumber}
+              Round {review.roundNumber} Preview
             </h2>
-            <Badge variant="secondary">Round {latestReview.roundNumber}</Badge>
+            <Badge variant="secondary">Round {review.roundNumber}</Badge>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Submitted {formatWorkDate(latestReview.submittedAt)} · Review notes
-            and annotations from Admin
+            Submitted {formatWorkDate(review.submittedAt)} · Read-only proof,
+            notes, and annotations from Admin
           </p>
         </div>
 
@@ -109,34 +122,45 @@ export function DesignerCorrectionFeedback({
       </div>
 
       {/* Designer Submission Note if present */}
-      {latestReview.note && (
+      {review.note && (
         <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3.5 text-xs text-foreground">
           <div className="flex items-center gap-1.5 font-semibold text-muted-foreground">
             <MessageSquareText className="size-3.5 text-primary" />
             Your Submission Note
           </div>
           <p className="mt-1.5 whitespace-pre-wrap leading-relaxed">
-            {latestReview.note}
+            {review.note}
           </p>
         </div>
       )}
 
       {/* Main Feedback Grid: Image Canvas on Left, Threads on Right */}
-      <div className="mt-5 grid gap-6 lg:grid-cols-12">
+      <div
+        className={`mt-5 grid gap-6 ${
+          hasAnnotations ? "lg:grid-cols-12" : ""
+        }`}
+      >
         {/* Left Column: Review Image with Numbered Pins */}
-        <div className="min-w-0 lg:col-span-7 xl:col-span-8">
+        <div
+          className={`min-w-0 ${
+            hasAnnotations
+              ? "lg:col-span-8 xl:col-span-9"
+              : "mx-auto w-full max-w-6xl"
+          }`}
+        >
           <div className="flex flex-col items-center">
             <ReviewImageCanvas
               annotations={annotations}
-              imageDeletedAt={latestReview.imageDeletedAt}
+              imageDeletedAt={review.imageDeletedAt}
               imageUrl={reviewImageUrl}
               isActionable={false}
               onSelectAnnotation={(id) =>
                 onSelectAnnotation(id === selectedAnnotationId ? null : id)
               }
-              researchItemId={researchItem.id}
-              reviewId={latestReview.id}
-              roundNumber={latestReview.roundNumber}
+              onOpenImage={() => setIsLightboxOpen(true)}
+              researchItemId={researchItemId}
+              reviewId={review.id}
+              roundNumber={review.roundNumber}
               selectedAnnotationId={selectedAnnotationId}
               workspaceId={workspaceId}
             />
@@ -144,7 +168,8 @@ export function DesignerCorrectionFeedback({
         </div>
 
         {/* Right Column: Numbered Annotation Threads */}
-        <div className="min-w-0 lg:col-span-5 xl:col-span-4">
+        {hasAnnotations && (
+          <div className="min-w-0 lg:col-span-4 xl:col-span-3">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -155,11 +180,6 @@ export function DesignerCorrectionFeedback({
               </span>
             </div>
 
-            {annotations.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center text-xs text-muted-foreground">
-                No visual annotations on this submission.
-              </div>
-            ) : (
               <div className="max-h-[640px] space-y-3 overflow-y-auto pr-1">
                 {annotations.map((annotation, index) => {
                   const isSelected = selectedAnnotationId === annotation.id;
@@ -311,10 +331,16 @@ export function DesignerCorrectionFeedback({
                   );
                 })}
               </div>
-            )}
           </div>
-        </div>
+          </div>
+        )}
       </div>
+      <DesignPreviewLightbox
+        imageUrl={reviewImageUrl}
+        onOpenChange={setIsLightboxOpen}
+        open={isLightboxOpen}
+        title={`Round ${review.roundNumber} proof`}
+      />
     </section>
   );
 }

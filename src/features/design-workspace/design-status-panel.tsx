@@ -21,6 +21,8 @@ import type { DesignDetail } from "./design-workspace.types";
 
 type DesignStatusPanelProps = {
   detail: DesignDetail;
+  hasInlineReviewHistory: boolean;
+  isActiveCorrectionSourceRound: boolean;
   isCompleting: boolean;
   isStartingCorrection: boolean;
   isStartingWork: boolean;
@@ -37,6 +39,8 @@ type DesignStatusPanelProps = {
 
 export function DesignStatusPanel({
   detail,
+  hasInlineReviewHistory,
+  isActiveCorrectionSourceRound,
   isCompleting,
   isStartingCorrection,
   isStartingWork,
@@ -64,13 +68,22 @@ export function DesignStatusPanel({
     status === "LISTED";
 
   const helperText = getHelperText(status, canStartWork);
+  const isRevisedProofSubmission =
+    hasInlineReviewHistory &&
+    isActiveCorrectionSourceRound &&
+    status === "DESIGN_IN_PROGRESS" &&
+    !canStartWork;
+  const shouldShowReviewUpload =
+    status === "DESIGN_IN_PROGRESS" &&
+    !canStartWork &&
+    (!hasInlineReviewHistory || isActiveCorrectionSourceRound);
 
   return (
     <section className="flex flex-1 flex-col rounded-xl border border-border bg-card p-5 sm:p-6 shadow-xs min-h-[480px]">
       {/* Panel Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Your Work</h2>
+          <h2 className="text-base font-semibold text-foreground">Current Task</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">{helperText}</p>
         </div>
         {canReportIssue && (
@@ -125,11 +138,21 @@ export function DesignStatusPanel({
           </div>
         )}
 
-        {status === "DESIGN_IN_PROGRESS" && !canStartWork && (
+        {shouldShowReviewUpload && (
           <ReviewUploadForm
+            helperText={
+              isRevisedProofSubmission
+                ? `Your revised submission will create Round ${(latestReview?.roundNumber ?? 0) + 1}.`
+                : undefined
+            }
             isPending={isSubmittingReview}
             onReportIssue={canReportIssue ? onOpenIssueDialog : undefined}
             onSubmit={onSubmitReview}
+            title={
+              isRevisedProofSubmission
+                ? "Submit Revised Proof"
+                : undefined
+            }
           />
         )}
 
@@ -150,7 +173,7 @@ export function DesignStatusPanel({
               </p>
             </div>
 
-            {latestReview?.note && (
+            {!hasInlineReviewHistory && latestReview?.note && (
               <div className="rounded-lg border border-border bg-muted/15 p-3 text-xs">
                 <p className="font-semibold text-muted-foreground">
                   Your Submission Note
@@ -161,7 +184,8 @@ export function DesignStatusPanel({
               </div>
             )}
 
-            {latestReview &&
+            {!hasInlineReviewHistory &&
+              latestReview &&
               latestReview.imageDeletedAt === null &&
               latestReview.imageUrl && (
                 <div className="space-y-1.5">
@@ -178,7 +202,7 @@ export function DesignStatusPanel({
                 </div>
               )}
 
-            {latestReview && (
+            {!hasInlineReviewHistory && latestReview && (
               <div>
                 <Button
                   nativeButton={false}
@@ -213,18 +237,9 @@ export function DesignStatusPanel({
                 )}
               </div>
 
-              {latestReview?.note && (
-                <div className="mt-3 rounded-md bg-background/80 p-3 text-xs">
-                  <p className="font-medium text-muted-foreground">
-                    Admin Feedback
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap leading-relaxed text-foreground">
-                    {latestReview.note}
-                  </p>
-                </div>
-              )}
-
-              {latestReview && latestReview.annotations.length > 0 && (
+              {!hasInlineReviewHistory &&
+                latestReview &&
+                latestReview.annotations.length > 0 && (
                 <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <MessageSquareText className="size-3.5 text-amber-600 dark:text-amber-400" />
                   <span>
@@ -253,7 +268,9 @@ export function DesignStatusPanel({
                 )}
                 <span>Start Correction</span>
               </Button>
-              {latestReview && latestReview.annotations.length > 0 && (
+              {!hasInlineReviewHistory &&
+                latestReview &&
+                latestReview.annotations.length > 0 && (
                 <Button
                   onClick={() => {
                     const el = document.getElementById(

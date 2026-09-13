@@ -16,6 +16,7 @@ type AuthenticatedReferenceImageProps = {
   hasImage: boolean;
   isActive?: boolean;
   minHeightClassName?: string;
+  onOpenImage?: (imageUrl: string) => void;
   onOpenUpload?: () => void;
   researchItemId: string;
   userCanUpload?: boolean;
@@ -30,6 +31,7 @@ export function AuthenticatedReferenceImage({
   hasImage,
   isActive = true,
   minHeightClassName = "min-h-[200px]",
+  onOpenImage,
   onOpenUpload,
   researchItemId,
   userCanUpload = false,
@@ -162,15 +164,34 @@ export function AuthenticatedReferenceImage({
         containerClassName,
       )}
     >
-      <img
-        src={objectUrl}
-        alt={alt}
-        onError={() => setDecodeError(true)}
-        className={cn(
-          "max-h-[340px] max-w-full rounded-md object-contain",
-          className,
-        )}
-      />
+      {onOpenImage ? (
+        <button
+          aria-label={`Open ${alt} larger`}
+          className="max-w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          onClick={() => onOpenImage(objectUrl)}
+          type="button"
+        >
+          <img
+            alt={alt}
+            className={cn(
+              "max-h-[340px] max-w-full rounded-md object-contain",
+              className,
+            )}
+            onError={() => setDecodeError(true)}
+            src={objectUrl}
+          />
+        </button>
+      ) : (
+        <img
+          alt={alt}
+          className={cn(
+            "max-h-[340px] max-w-full rounded-md object-contain",
+            className,
+          )}
+          onError={() => setDecodeError(true)}
+          src={objectUrl}
+        />
+      )}
     </div>
   );
 }

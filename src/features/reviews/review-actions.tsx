@@ -25,6 +25,7 @@ import {
 } from "./use-reviews";
 
 type ReviewActionsProps = {
+  annotationCount: number;
   isActionable: boolean;
   researchItemId: string;
   reviewId: string;
@@ -33,6 +34,7 @@ type ReviewActionsProps = {
 };
 
 export function ReviewActions({
+  annotationCount,
   isActionable,
   researchItemId,
   reviewId,
@@ -47,6 +49,7 @@ export function ReviewActions({
   const invalidate = useReviewActionInvalidation(workspaceId);
 
   const isPending = approveMutation.isPending || correctionMutation.isPending;
+  const isCorrectionFeedbackRequired = annotationCount === 0;
 
   if (!isActionable) {
     return null;
@@ -62,7 +65,7 @@ export function ReviewActions({
         error instanceof ApiError ? error.message : "Failed to approve design.";
       toast.error(message);
       // On 409 or any error, refetch relevant state because another actor may have changed status
-      invalidate(researchItemId, reviewId);
+      void invalidate(researchItemId, reviewId);
     }
   }
 
@@ -72,24 +75,35 @@ export function ReviewActions({
       toast.success("Correction requested.");
       setIsCorrectionOpen(false);
     } catch (error) {
-      const message =
-        error instanceof ApiError
+      const message = hasCorrectionFeedbackRequiredCode(error)
+        ? "Add at least one correction note before requesting changes."
+        : error instanceof ApiError
           ? error.message
           : "Failed to request correction.";
       toast.error(message);
       // On 409 or any error, refetch relevant state because another actor may have changed status
-      invalidate(researchItemId, reviewId);
+      void invalidate(researchItemId, reviewId);
     }
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <section
+      aria-label="Review decision"
+      className="rounded-xl border border-border bg-card p-4 shadow-xs"
+    >
+      <div>
+        <h2 className="text-sm font-semibold text-foreground">Review decision</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Approve the submission or send it back with actionable feedback.
+        </p>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
       {/* Request Correction Dialog */}
       <AlertDialog onOpenChange={setIsCorrectionOpen} open={isCorrectionOpen}>
         <AlertDialogTrigger
           render={
             <Button
-              disabled={isPending}
+              disabled={isPending || isCorrectionFeedbackRequired}
               type="button"
               variant="outline"
             />
@@ -102,9 +116,7 @@ export function ReviewActions({
           <AlertDialogHeader>
             <AlertDialogTitle>Request Corrections for Round {roundNumber}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to request corrections for this design? The
-              assigned designer will be notified with your pinned image
-              annotations to begin revisions.
+              Request corrections with {annotationCount} {annotationCount === 1 ? "note" : "notes"} for Round {roundNumber}? The assigned designer will be notified to begin revisions.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -156,6 +168,20 @@ export function ReviewActions({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+      {isCorrectionFeedbackRequired ? (
+        <p className="mt-3 text-xs font-medium text-amber-700 dark:text-amber-300">
+          Add at least one correction note before requesting changes.
+        </p>
+      ) : null}
+    </section>
   );
+}
+
+function hasCorrectionFeedbackRequiredCode(error: unknown): boolean {
+  if (!(error instanceof ApiError) || typeof error.data !== "object" || error.data === null) {
+    return false;
+  }
+
+  return "code" in error.data && error.data.code === "CORRECTION_FEEDBACK_REQUIRED";
 }

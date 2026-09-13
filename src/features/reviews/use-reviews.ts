@@ -20,6 +20,7 @@ import { reviewsKeys } from "./reviews.keys";
 import type {
   CreateAnnotationInput,
   CreateReplyInput,
+  ReviewDetailResponse,
 } from "./reviews.types";
 
 function shouldRetry(error: unknown, failureCount: number): boolean {
@@ -64,45 +65,92 @@ export function useReviewDetail(
 export function useReviewActionInvalidation(workspaceId: string) {
   const queryClient = useQueryClient();
 
-  return (researchItemId?: string, reviewId?: string) => {
-    void queryClient.invalidateQueries({
-      queryKey: reviewsKeys.queues(workspaceId),
-    });
+  return async (researchItemId?: string, reviewId?: string) => {
+    const invalidations = [
+      queryClient.invalidateQueries({
+        queryKey: reviewsKeys.queues(workspaceId),
+      }),
+    ];
 
     if (reviewId) {
-      void queryClient.invalidateQueries({
-        queryKey: reviewsKeys.detail(workspaceId, reviewId),
-      });
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: reviewsKeys.detail(workspaceId, reviewId),
+        }),
+      );
     } else {
-      void queryClient.invalidateQueries({
-        queryKey: reviewsKeys.details(workspaceId),
-      });
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: reviewsKeys.details(workspaceId),
+        }),
+      );
     }
 
-    void queryClient.invalidateQueries({
-      queryKey: researchKeys.lists(workspaceId),
-    });
+    invalidations.push(
+      queryClient.invalidateQueries({
+        queryKey: researchKeys.lists(workspaceId),
+      }),
+    );
 
     if (researchItemId) {
-      void queryClient.invalidateQueries({
-        queryKey: researchKeys.detail(workspaceId, researchItemId),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: designWorkspaceKeys.detail(workspaceId, researchItemId),
-      });
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: researchKeys.detail(workspaceId, researchItemId),
+        }),
+      );
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: designWorkspaceKeys.detail(workspaceId, researchItemId),
+        }),
+      );
     }
 
-    void queryClient.invalidateQueries({
-      queryKey: designerWorkKeys.queues(workspaceId),
-    });
+    invalidations.push(
+      queryClient.invalidateQueries({
+        queryKey: designerWorkKeys.queues(workspaceId),
+      }),
+    );
 
-    void queryClient.invalidateQueries({
-      queryKey: dashboardKeys.overview(workspaceId),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: ["dashboard", workspaceId],
-    });
+    invalidations.push(
+      queryClient.invalidateQueries({
+        queryKey: dashboardKeys.overview(workspaceId),
+      }),
+    );
+    invalidations.push(
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard", workspaceId],
+      }),
+    );
+
+    await Promise.all(invalidations);
   };
+}
+
+function updateReviewDetailStatus(
+  queryClient: ReturnType<typeof useQueryClient>,
+  workspaceId: string,
+  researchItemId: string,
+  status: ReviewDetailResponse["data"]["researchItem"]["status"],
+) {
+  queryClient.setQueriesData<ReviewDetailResponse>(
+    { queryKey: reviewsKeys.details(workspaceId) },
+    (current) => {
+      if (!current || current.data.researchItem.id !== researchItemId) {
+        return current;
+      }
+
+      return {
+        ...current,
+        data: {
+          ...current.data,
+          researchItem: {
+            ...current.data.researchItem,
+            status,
+          },
+        },
+      };
+    },
+  );
 }
 
 export function useCreateReviewAnnotation(
@@ -161,11 +209,18 @@ export function useRequestReviewCorrection(
   reviewId: string,
 ) {
   const invalidate = useReviewActionInvalidation(workspaceId);
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: () => requestReviewCorrection(workspaceId, reviewId),
-    onSuccess: (data) => {
-      invalidate(data.data.researchItem.id, reviewId);
+    onSuccess: async (data) => {
+      updateReviewDetailStatus(
+        queryClient,
+        workspaceId,
+        data.data.researchItem.id,
+        data.data.researchItem.status,
+      );
+      await invalidate(data.data.researchItem.id, reviewId);
     },
   });
 }
@@ -175,11 +230,18 @@ export function useApproveReviewSubmission(
   reviewId: string,
 ) {
   const invalidate = useReviewActionInvalidation(workspaceId);
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: () => approveReviewSubmission(workspaceId, reviewId),
-    onSuccess: (data) => {
-      invalidate(data.data.researchItem.id, reviewId);
+    onSuccess: async (data) => {
+      updateReviewDetailStatus(
+        queryClient,
+        workspaceId,
+        data.data.researchItem.id,
+        data.data.researchItem.status,
+      );
+      await invalidate(data.data.researchItem.id, reviewId);
     },
   });
 }

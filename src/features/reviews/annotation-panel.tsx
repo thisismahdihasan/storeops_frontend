@@ -12,7 +12,9 @@ import { useCreateAnnotationReply } from "./use-reviews";
 
 type AnnotationPanelProps = {
   canReply?: boolean;
+  hoveredAnnotationId?: string | null;
   isActionable: boolean;
+  onHoverAnnotation?: (annotationId: string | null) => void;
   onSelectAnnotation: (annotationId: string) => void;
   researchItemId?: string;
   reviewId: string;
@@ -38,7 +40,9 @@ function formatDateTime(value: string | null): string {
 
 export function AnnotationPanel({
   canReply,
+  hoveredAnnotationId,
   isActionable,
+  onHoverAnnotation,
   onSelectAnnotation,
   researchItemId,
   reviewId,
@@ -158,6 +162,7 @@ export function AnnotationPanel({
           <div className="mt-4 space-y-4">
             {selectedReview.annotations.map((annotation, index) => {
               const isSelected = selectedAnnotationId === annotation.id;
+              const isHovered = hoveredAnnotationId === annotation.id;
               const markerNumber = index + 1;
               const isReplying = activeReplyId === annotation.id;
               const currentReplyText =
@@ -167,22 +172,33 @@ export function AnnotationPanel({
                 <article
                   className={`rounded-xl border p-3.5 transition-all ${
                     isSelected
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/20 shadow-xs"
+                      ? "border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/30 shadow-xs"
+                      : isHovered
+                        ? "border-amber-400 bg-amber-500/5"
                       : "border-border bg-muted/20 hover:border-border/80"
                   }`}
+                  id={`annotation-thread-${annotation.id}`}
                   key={annotation.id}
-                  onClick={() => onSelectAnnotation(annotation.id)}
+                  onMouseEnter={() => onHoverAnnotation?.(annotation.id)}
+                  onMouseLeave={() => onHoverAnnotation?.(null)}
                 >
                   {/* Annotation Header */}
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
+                    <button
+                      aria-pressed={isSelected}
+                      className="flex items-center gap-2 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                      onBlur={() => onHoverAnnotation?.(null)}
+                      onClick={() => onSelectAnnotation(annotation.id)}
+                      onFocus={() => onHoverAnnotation?.(annotation.id)}
+                      type="button"
+                    >
                       <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-500 text-[11px] font-bold text-white shadow-xs">
                         {markerNumber}
                       </span>
-                      <p className="text-xs font-semibold text-foreground">
-                        {annotation.createdBy.name || "Admin"}
-                      </p>
-                    </div>
+                      <span className="text-xs font-semibold text-foreground">
+                        Annotation {markerNumber} · {annotation.createdBy.name || "Admin"}
+                      </span>
+                    </button>
                     <time className="text-[11px] text-muted-foreground">
                       {formatDateTime(annotation.createdAt)}
                     </time>

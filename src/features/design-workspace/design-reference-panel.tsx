@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 import { downloadResearchReferenceImage } from "@/features/research/research.api";
 
+import { DesignPreviewLightbox } from "./design-preview-lightbox";
 import type { DesignDetail } from "./design-workspace.types";
 
 type DesignReferencePanelProps = {
@@ -17,6 +18,7 @@ type DesignReferencePanelProps = {
 
 export function DesignReferencePanel({ detail, workspaceId }: DesignReferencePanelProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [lightboxImageUrl, setLightboxImageUrl] = useState<string | null>(null);
   const { researchItem } = detail;
 
   const handleDownload = async () => {
@@ -44,6 +46,7 @@ export function DesignReferencePanel({ detail, workspaceId }: DesignReferencePan
           className="max-h-[600px] w-full rounded-lg object-contain"
           containerClassName="min-h-[280px] bg-transparent p-0 sm:min-h-[400px]"
           hasImage
+          onOpenImage={setLightboxImageUrl}
           researchItemId={researchItem.id}
           workspaceId={workspaceId}
         />
@@ -80,6 +83,14 @@ export function DesignReferencePanel({ detail, workspaceId }: DesignReferencePan
           <span>View on Etsy</span>
         </Button>
       </div>
+      <DesignPreviewLightbox
+        imageUrl={lightboxImageUrl}
+        onOpenChange={(open) => {
+          if (!open) setLightboxImageUrl(null);
+        }}
+        open={lightboxImageUrl !== null}
+        title="Reference image"
+      />
     </section>
   );
 }

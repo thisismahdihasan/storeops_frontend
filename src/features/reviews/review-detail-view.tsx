@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -149,6 +149,17 @@ export function ReviewDetailView({
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<
     string | null
   >(null);
+  const [hoveredAnnotationId, setHoveredAnnotationId] = useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    if (!selectedAnnotationId) return;
+
+    document
+      .getElementById(`annotation-thread-${selectedAnnotationId}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [selectedAnnotationId]);
 
   if (workspacesQuery.isLoading) {
     return <DetailLoadingState />;
@@ -191,6 +202,15 @@ export function ReviewDetailView({
   const isLatestReview = selectedReview.id === latestReviewId;
   const isActionable =
     isAdmin && researchItem.status === "DESIGN_REVIEW" && isLatestReview;
+  const reviewStateMessage = !isLatestReview
+    ? "Viewing historical round (read-only)"
+    : researchItem.status === "CORRECTION_NEEDED"
+      ? "Correction requested (read-only)"
+      : researchItem.status === "DESIGN_APPROVED"
+        ? "Design approved (read-only)"
+        : isAdmin
+          ? "Use the decision panel beside the feedback."
+          : "Viewing review feedback (read-only)";
   const canReply = canUserReplyToAnnotation({
     hasAdminRole: isAdmin,
     hasDesignerRole: isDesigner,
@@ -324,25 +344,8 @@ export function ReviewDetailView({
           </div>
         </div>
 
-        {/* Action Controls for latest review in DESIGN_REVIEW */}
-        <div className="shrink-0">
-          {isActionable ? (
-            <ReviewActions
-              isActionable={isActionable}
-              researchItemId={researchItem.id}
-              reviewId={selectedReview.id}
-              roundNumber={selectedReview.roundNumber}
-              workspaceId={workspaceId}
-            />
-          ) : (
-            <div className="rounded-lg border border-border/80 bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
-              {!isLatestReview
-                ? "Viewing historical round (read-only)"
-                : isAdmin
-                  ? `Item status is ${researchItem.status} (read-only)`
-                  : "Viewing review feedback (read-only)"}
-            </div>
-          )}
+        <div className="shrink-0 rounded-lg border border-border/80 bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
+          {reviewStateMessage}
         </div>
       </header>
 
@@ -362,6 +365,8 @@ export function ReviewDetailView({
               researchItemId={researchItem.id}
               reviewId={selectedReview.id}
               roundNumber={selectedReview.roundNumber}
+              hoveredAnnotationId={hoveredAnnotationId}
+              onHoverAnnotation={setHoveredAnnotationId}
               selectedAnnotationId={selectedAnnotationId}
               workspaceId={workspaceId}
             />
@@ -375,10 +380,24 @@ export function ReviewDetailView({
             onSelectAnnotation={setSelectedAnnotationId}
             researchItemId={researchItem.id}
             reviewId={selectedReview.id}
+            hoveredAnnotationId={hoveredAnnotationId}
+            onHoverAnnotation={setHoveredAnnotationId}
             selectedAnnotationId={selectedAnnotationId}
             selectedReview={selectedReview}
             workspaceId={workspaceId}
           />
+          {isActionable ? (
+            <div className="mt-4">
+              <ReviewActions
+                annotationCount={selectedReview.annotations.length}
+                isActionable={isActionable}
+                researchItemId={researchItem.id}
+                reviewId={selectedReview.id}
+                roundNumber={selectedReview.roundNumber}
+                workspaceId={workspaceId}
+              />
+            </div>
+          ) : null}
         </aside>
       </div>
     </div>

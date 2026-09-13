@@ -14,7 +14,12 @@ import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
 
 import { canUserReplyToAnnotation } from "@/features/reviews/reviews.constants";
+import { useReviewDetail } from "@/features/reviews/use-reviews";
 
+import {
+  DesignReviewHistoryStrip,
+  type DesignReviewHistorySelection,
+} from "./design-review-history-strip";
 import { DesignReferencePanel } from "./design-reference-panel";
 import { DesignStatusPanel } from "./design-status-panel";
 import { DesignerCorrectionFeedback } from "./designer-correction-feedback";
@@ -42,6 +47,14 @@ export function DesignWorkspaceView({
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<
     string | null
   >(null);
+  const latestReviewId = detailQuery.data?.data.latestReview?.id ?? "";
+  const reviewHistoryQuery = useReviewDetail(
+    workspaceId,
+    latestReviewId,
+    hasDesignerRole && latestReviewId.length > 0,
+  );
+  const [historySelection, setHistorySelection] =
+    useState<DesignReviewHistorySelection>({ kind: "review", reviewId: "" });
 
   if (workspacesQuery.isLoading || (hasDesignerRole && detailQuery.isLoading)) {
     return <LoadingState />;
@@ -66,10 +79,32 @@ export function DesignWorkspaceView({
     detail.researchItem.title ||
     `Etsy Listing #${detail.researchItem.etsyListingId}`;
 
-  const hasCorrectionFeedback = Boolean(
+  const reviewHistory = reviewHistoryQuery.data?.data;
+  const hasInlineReviewHistory = Boolean(
+    reviewHistory && reviewHistory.reviews.length > 0,
+  );
+  const selectedHistoryReview =
+    historySelection.kind === "review"
+      ? reviewHistory?.reviews.find(
+          (review) => review.id === historySelection.reviewId,
+        ) ?? null
+      : null;
+  const selectedReview =
+    selectedHistoryReview ??
+    reviewHistory?.reviews.find(
+      (review) => review.id === reviewHistory.latestReviewId,
+    ) ??
+    null;
+  const resolvedHistorySelection: DesignReviewHistorySelection =
+    historySelection.kind === "review" && !selectedHistoryReview && reviewHistory
+      ? { kind: "review", reviewId: reviewHistory.latestReviewId }
+      : historySelection;
+  const isSelectedLatestReview =
+    resolvedHistorySelection.kind === "review" &&
+    resolvedHistorySelection.reviewId === reviewHistory?.latestReviewId;
+  const hasLegacyCorrectionFeedback = Boolean(
     detail.latestReview &&
-      (detail.latestReview.annotations.length > 0 ||
-        detail.latestReview.note) &&
+      detail.latestReview.annotations.length > 0 &&
       (detail.researchItem.status === "CORRECTION_NEEDED" ||
         detail.researchItem.status === "DESIGN_IN_PROGRESS" ||
         detail.researchItem.status === "DESIGN_REVIEW"),
@@ -79,7 +114,7 @@ export function DesignWorkspaceView({
     hasDesignerRole,
     isAssignedDesigner: detail.assignment.isCurrent,
     itemStatus: detail.researchItem.status,
-    isLatestReviewRound: true,
+    isLatestReviewRound: isSelectedLatestReview,
   });
 
   const runAction = async (
@@ -96,6 +131,61 @@ export function DesignWorkspaceView({
       }
     }
   };
+
+  const handleHistorySelection = (selection: DesignReviewHistorySelection) => {
+    setHistorySelection(selection);
+    setSelectedAnnotationId(null);
+  };
+
+  const handleReviewSubmission = async (image: File, note: string) => {
+    try {
+      await actions.submitReview.mutateAsync({ image, note });
+      setHistorySelection({ kind: "review", reviewId: "" });
+      toast.success("Design uploaded for review.");
+    } catch (error) {
+      toast.error(actionErrorMessage(error));
+    }
+  };
+
+  const statusPanel = (
+    <DesignStatusPanel
+      detail={detail}
+      hasInlineReviewHistory={hasInlineReviewHistory}
+      isActiveCorrectionSourceRound={isSelectedLatestReview}
+      isCompleting={actions.completeWork.isPending}
+      isStartingCorrection={actions.startCorrection.isPending}
+      isStartingWork={actions.startWork.isPending}
+      isSubmittingFinalAssets={actions.submitFinalAssets.isPending}
+      isSubmittingReview={actions.submitReview.isPending}
+      onComplete={() =>
+        void runAction(
+          () => actions.completeWork.mutateAsync(),
+          "Design work completed.",
+        )
+      }
+      onOpenIssueDialog={() => setIsIssueDialogOpen(true)}
+      onStartCorrection={() =>
+        void runAction(
+          () => actions.startCorrection.mutateAsync(),
+          "Correction work started.",
+        )
+      }
+      onStartWork={() =>
+        void runAction(
+          () => actions.startWork.mutateAsync(),
+          "Design work started.",
+        )
+      }
+      onSubmitFinalAssets={(files) =>
+        void runAction(
+          () => actions.submitFinalAssets.mutateAsync(files),
+          "Final files uploaded.",
+        )
+      }
+      onSubmitReview={(image, note) => void handleReviewSubmission(image, note)}
+      workspaceId={workspaceId}
+    />
+  );
 
   return (
     <main className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
@@ -129,78 +219,84 @@ export function DesignWorkspaceView({
                     href={`/w/${workspaceId}/reviews/${detail.latestReview.id}`}
                   />
                 }
-                size="sm"
-                variant="outline"
+                size={hasInlineReviewHistory ? "xs" : "sm"}
+                variant={hasInlineReviewHistory ? "ghost" : "outline"}
               >
-                View Review History
+                {hasInlineReviewHistory
+                  ? "Open Full Review"
+                  : "View Review History"}
               </Button>
             )}
           </div>
         </div>
       </header>
 
-      {/* Main 2-Column Workspace Grid */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)] lg:items-stretch">
-        {/* Left Column: Reference Panel (~58%) */}
-        <DesignReferencePanel detail={detail} workspaceId={workspaceId} />
-
-        {/* Right Column: Your Work Panel (~42%) */}
-        <div className="min-w-0 flex flex-col">
-          <DesignStatusPanel
-            detail={detail}
-            isCompleting={actions.completeWork.isPending}
-            isStartingCorrection={actions.startCorrection.isPending}
-            isStartingWork={actions.startWork.isPending}
-            isSubmittingFinalAssets={actions.submitFinalAssets.isPending}
-            isSubmittingReview={actions.submitReview.isPending}
-            onComplete={() =>
-              void runAction(
-                () => actions.completeWork.mutateAsync(),
-                "Design work completed.",
-              )
+      {hasInlineReviewHistory && reviewHistory && (
+        <>
+          <DesignReviewHistoryStrip
+            isCorrectionNeeded={
+              detail.researchItem.status === "CORRECTION_NEEDED"
             }
-            onOpenIssueDialog={() => setIsIssueDialogOpen(true)}
-            onStartCorrection={() =>
-              void runAction(
-                () => actions.startCorrection.mutateAsync(),
-                "Correction work started.",
-              )
-            }
-            onStartWork={() =>
-              void runAction(
-                () => actions.startWork.mutateAsync(),
-                "Design work started.",
-              )
-            }
-            onSubmitFinalAssets={(files) =>
-              void runAction(
-                () => actions.submitFinalAssets.mutateAsync(files),
-                "Final files uploaded.",
-              )
-            }
-            onSubmitReview={(image, note) =>
-              void runAction(
-                () => actions.submitReview.mutateAsync({ image, note }),
-                "Design uploaded for review.",
-              )
-            }
+            latestReviewId={reviewHistory.latestReviewId}
+            onSelect={handleHistorySelection}
+            researchItemId={detail.researchItem.id}
+            reviews={reviewHistory.reviews}
+            selected={resolvedHistorySelection}
             workspaceId={workspaceId}
           />
-        </div>
-      </div>
+          <div
+            className={`grid gap-5 lg:items-start ${
+              isSelectedLatestReview
+                ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]"
+                : ""
+            }`}
+          >
+            <section aria-label="Selected preview" className="min-w-0">
+              {resolvedHistorySelection.kind === "reference" ? (
+                <DesignReferencePanel detail={detail} workspaceId={workspaceId} />
+              ) : selectedReview ? (
+                <div id="correction-feedback-section">
+                  <DesignerCorrectionFeedback
+                    canReply={canReply}
+                    onSelectAnnotation={setSelectedAnnotationId}
+                    researchItemId={detail.researchItem.id}
+                    review={selectedReview}
+                    selectedAnnotationId={selectedAnnotationId}
+                    workspaceId={workspaceId}
+                  />
+                </div>
+              ) : null}
+            </section>
+            {isSelectedLatestReview && (
+              <aside aria-label="Current task" className="min-w-0">
+                {statusPanel}
+              </aside>
+            )}
+          </div>
+        </>
+      )}
 
-      {/* Detailed Correction Feedback & Annotation Canvas (Placed below main workspace to avoid displacing primary working area) */}
-      {hasCorrectionFeedback && (
+      {!hasInlineReviewHistory && (
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)] lg:items-stretch">
+          <DesignReferencePanel detail={detail} workspaceId={workspaceId} />
+          <div className="min-w-0 flex flex-col">{statusPanel}</div>
+        </div>
+      )}
+
+      {!hasInlineReviewHistory &&
+      hasLegacyCorrectionFeedback &&
+      detail.latestReview ? (
         <section id="correction-feedback-section">
           <DesignerCorrectionFeedback
             canReply={canReply}
-            detail={detail}
             onSelectAnnotation={setSelectedAnnotationId}
+            researchItemId={detail.researchItem.id}
+            review={detail.latestReview}
             selectedAnnotationId={selectedAnnotationId}
             workspaceId={workspaceId}
           />
         </section>
-      )}
+      ) : null}
 
       {/* Report Issue Dialog */}
       <ReportIssueDialog
