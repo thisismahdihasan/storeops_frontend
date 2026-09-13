@@ -35,6 +35,7 @@ export async function getAdminDesignList(
   const response = await apiRequest<unknown>(endpoint);
   const parsed = adminDesignListResponseSchema.safeParse(response);
   if (!parsed.success) {
+    console.error("Design API parse error:", parsed.error.format());
     throw new ApiError(502, "Unexpected admin design list response format.");
   }
 

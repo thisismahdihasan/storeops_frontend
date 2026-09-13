@@ -42,6 +42,12 @@ export function parseListingAdminFiltersFromParams(
   };
 }
 
+export const adminListingWorkflowStatusSchema = z.enum([
+  "READY_FOR_LISTING",
+  "LISTING_IN_PROGRESS",
+  "LISTED",
+]);
+
 export const adminListingItemSchema = z.object({
   createdAt: z.string(),
   currentAssignment: z
@@ -76,7 +82,7 @@ export const adminListingItemSchema = z.object({
   normalizedUrl: z.string(),
   originalUrl: z.string(),
   referenceImageUrl: z.string().nullable(),
-  status: z.custom<ResearchStatus>(),
+  status: adminListingWorkflowStatusSchema,
   title: z.string().nullable(),
   updatedAt: z.string(),
 });
@@ -92,5 +98,6 @@ export const adminListingListResponseSchema = z.object({
     }),
   }),
   message: z.string(),
-  statusCode: z.number(),
+  statusCode: z.number().optional(),
+  success: z.boolean(),
 });

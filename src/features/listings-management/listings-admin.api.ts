@@ -35,6 +35,7 @@ export async function getAdminListingList(
   const response = await apiRequest<unknown>(endpoint);
   const parsed = adminListingListResponseSchema.safeParse(response);
   if (!parsed.success) {
+    console.error("Listing Admin API parse error:", parsed.error.format());
     throw new ApiError(502, "Unexpected admin listing list response format.");
   }
 

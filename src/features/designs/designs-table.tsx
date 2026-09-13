@@ -248,7 +248,7 @@ export function DesignsTable({
                             Round {item.latestReview.roundNumber}
                           </span>
                         )}
-                        {item.latestIssueReport && (
+                        {item.status === "ISSUE_REPORTED" && item.latestIssueReport && (
                           <span
                             className="inline-flex items-center gap-1 text-[10px] text-destructive font-medium"
                             title={item.latestIssueReport.details ?? undefined}

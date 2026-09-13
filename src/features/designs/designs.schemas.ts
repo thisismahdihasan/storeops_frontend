@@ -48,6 +48,18 @@ export function parseDesignFiltersFromParams(
   };
 }
 
+export const adminDesignWorkflowStatusSchema = z.enum([
+  "ASSIGNED",
+  "DESIGN_IN_PROGRESS",
+  "DESIGN_REVIEW",
+  "CORRECTION_NEEDED",
+  "ISSUE_REPORTED",
+  "DESIGN_APPROVED",
+  "READY_FOR_LISTING",
+  "LISTING_IN_PROGRESS",
+  "LISTED",
+]);
+
 export const adminDesignItemSchema = z.object({
   createdAt: z.string(),
   currentAssignment: z
@@ -86,7 +98,7 @@ export const adminDesignItemSchema = z.object({
   normalizedUrl: z.string(),
   originalUrl: z.string(),
   referenceImageUrl: z.string().nullable(),
-  status: z.custom<ResearchStatus>(),
+  status: adminDesignWorkflowStatusSchema,
   title: z.string().nullable(),
   updatedAt: z.string(),
 });
@@ -102,5 +114,6 @@ export const adminDesignListResponseSchema = z.object({
     }),
   }),
   message: z.string(),
-  statusCode: z.number(),
+  statusCode: z.number().optional(),
+  success: z.boolean(),
 });
