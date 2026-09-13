@@ -115,7 +115,7 @@ export function TeamView({ workspaceId }: TeamViewProps) {
           <div><h2 className="text-lg font-semibold" id="workspace-members-heading">Members</h2><p className="text-sm text-muted-foreground">Current accepted workspace memberships.</p></div>
           {membersQuery.data && <p className="shrink-0 text-sm text-muted-foreground">{membersQuery.data.data.members.length} member{membersQuery.data.data.members.length === 1 ? "" : "s"}</p>}
         </div>
-        <TeamMembersList errorMessage={getRequestErrorMessage(membersQuery.error)} isError={membersQuery.isError} isLoading={workspacesQuery.isLoading || membersQuery.isLoading} members={membersQuery.data?.data.members ?? []} onRetry={() => void membersQuery.refetch()} />
+        <TeamMembersList errorMessage={getRequestErrorMessage(membersQuery.error)} isError={membersQuery.isError} isLoading={workspacesQuery.isLoading || membersQuery.isLoading} members={membersQuery.data?.data.members ?? []} onRetry={() => void membersQuery.refetch()} workspaceId={workspaceId} />
       </section>
       <section aria-labelledby="pending-invites-heading" className="space-y-3">
         <div><h2 className="text-lg font-semibold" id="pending-invites-heading">Pending Invites</h2><p className="text-sm text-muted-foreground">Resend or revoke unaccepted workspace invitations.</p></div>

@@ -91,3 +91,67 @@ export const listerPerformanceResponseSchema = z.object({
   message: z.string(),
   success: z.literal(true),
 });
+
+const workspaceRoleSchema = z.enum([
+  "ADMIN",
+  "DESIGNER",
+  "LISTER",
+  "RESEARCHER",
+]);
+
+const researchStatusSchema = z.enum([
+  "RESEARCHED",
+  "ASSIGNED",
+  "DESIGN_IN_PROGRESS",
+  "DESIGN_REVIEW",
+  "CORRECTION_NEEDED",
+  "ISSUE_REPORTED",
+  "DESIGN_APPROVED",
+  "READY_FOR_LISTING",
+  "LISTING_IN_PROGRESS",
+  "LISTED",
+]);
+
+export const userActivityResponseSchema = z.object({
+  data: z.object({
+    dateRange: resolvedDashboardDateRangeSchema,
+    recentItems: z.array(
+      z.object({
+        activityRole: z.enum(["RESEARCHER", "DESIGNER", "LISTER"]),
+        id: z.string(),
+        status: researchStatusSchema,
+        title: z.string(),
+        updatedAt: z.string(),
+      }),
+    ),
+    summary: z.object({
+      design: z
+        .object({
+          approvedCount: z.number(),
+          assignedCount: z.number(),
+          completedCount: z.number(),
+          correctionsCount: z.number(),
+          currentInProgress: z.number(),
+          submittedCount: z.number(),
+        })
+        .nullable(),
+      listing: z
+        .object({
+          assignedCount: z.number(),
+          currentInProgress: z.number(),
+          listedCount: z.number(),
+        })
+        .nullable(),
+      research: z.object({ totalCreated: z.number() }).nullable(),
+    }),
+    user: z.object({
+      email: z.string().email(),
+      id: z.string(),
+      joinedAt: z.string(),
+      name: z.string().nullable(),
+      roles: z.array(workspaceRoleSchema),
+    }),
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});

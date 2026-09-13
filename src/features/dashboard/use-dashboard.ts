@@ -9,6 +9,7 @@ import {
   getDesignerPerformance,
   getListerPerformance,
   getResearcherPerformance,
+  getUserActivity,
 } from "./dashboard.api";
 import type { DashboardFilterParams } from "./dashboard.types";
 
@@ -22,6 +23,11 @@ export const dashboardKeys = {
     ["dashboard", workspaceId, "overview", filter ?? {}] as const,
   researchers: (workspaceId: string, filter?: DashboardFilterParams) =>
     ["dashboard", workspaceId, "researchers", filter ?? {}] as const,
+  userActivity: (
+    workspaceId: string,
+    userId: string,
+    filter?: DashboardFilterParams,
+  ) => ["dashboard", workspaceId, "user-activity", userId, filter ?? {}] as const,
 };
 
 function isAuthError(error: unknown) {
@@ -79,6 +85,21 @@ export function useListerPerformance(
     enabled: enabled && workspaceId.length > 0,
     queryFn: () => getListerPerformance(workspaceId, filter),
     queryKey: dashboardKeys.listers(workspaceId, filter),
+    retry: (failureCount, error) => !isAuthError(error) && failureCount < 1,
+    staleTime: 30_000,
+  });
+}
+
+export function useUserActivity(
+  workspaceId: string,
+  userId: string,
+  filter?: DashboardFilterParams,
+  enabled = true,
+) {
+  return useQuery({
+    enabled: enabled && workspaceId.length > 0 && userId.length > 0,
+    queryFn: () => getUserActivity(workspaceId, userId, filter),
+    queryKey: dashboardKeys.userActivity(workspaceId, userId, filter),
     retry: (failureCount, error) => !isAuthError(error) && failureCount < 1,
     staleTime: 30_000,
   });

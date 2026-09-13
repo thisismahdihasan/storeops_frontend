@@ -1,3 +1,7 @@
+import type { z } from "zod";
+
+import type { userActivityResponseSchema } from "./dashboard.schemas";
+
 export type DashboardDatePreset =
   | "all"
   | "today"
@@ -102,3 +106,7 @@ export type ListerPerformanceResponse = {
   message: string;
   success: true;
 };
+
+export type UserActivityResponse = z.infer<typeof userActivityResponseSchema>;
+export type UserActivityData = UserActivityResponse["data"];
+export type UserActivityRecentItem = UserActivityData["recentItems"][number];

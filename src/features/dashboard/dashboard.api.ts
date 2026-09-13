@@ -5,6 +5,7 @@ import {
   designerPerformanceResponseSchema,
   listerPerformanceResponseSchema,
   researcherPerformanceResponseSchema,
+  userActivityResponseSchema,
 } from "./dashboard.schemas";
 import type {
   DashboardFilterParams,
@@ -12,6 +13,7 @@ import type {
   DesignerPerformanceResponse,
   ListerPerformanceResponse,
   ResearcherPerformanceResponse,
+  UserActivityResponse,
 } from "./dashboard.types";
 
 function buildFilterQueryString(filter?: DashboardFilterParams): string {
@@ -97,6 +99,24 @@ export async function getListerPerformance(
 
   if (!parsed.success) {
     throw new ApiError(502, "Unexpected lister performance response format.");
+  }
+
+  return parsed.data;
+}
+
+export async function getUserActivity(
+  workspaceId: string,
+  userId: string,
+  filter?: DashboardFilterParams,
+): Promise<UserActivityResponse> {
+  const query = buildFilterQueryString(filter);
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${workspaceId}/admin/users/${userId}/activity${query}`,
+  );
+  const parsed = userActivityResponseSchema.safeParse(response);
+
+  if (!parsed.success) {
+    throw new ApiError(502, "Unexpected user activity response format.");
   }
 
   return parsed.data;
