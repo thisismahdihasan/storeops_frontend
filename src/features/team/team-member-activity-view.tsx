@@ -227,7 +227,11 @@ export function TeamMemberActivityView({
         </div>
       </header>
 
-      <DateFilter currentFilter={filter} resolvedRange={dateRange} />
+      <DateFilter
+        context="activity"
+        currentFilter={filter}
+        resolvedRange={dateRange}
+      />
 
       <div className="space-y-6">
         {summary.research ? (

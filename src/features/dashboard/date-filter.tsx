@@ -55,6 +55,7 @@ export function parseFilterFromParams(
 }
 
 type DateFilterProps = {
+  context?: "activity" | "pipeline";
   currentFilter: DashboardFilterParams;
   resolvedRange?: {
     dateFrom: string | null;
@@ -171,7 +172,11 @@ function CustomDateRangeForm({
   );
 }
 
-export function DateFilter({ currentFilter, resolvedRange }: DateFilterProps) {
+export function DateFilter({
+  context = "pipeline",
+  currentFilter,
+  resolvedRange,
+}: DateFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -219,7 +224,7 @@ export function DateFilter({ currentFilter, resolvedRange }: DateFilterProps) {
         <div className="flex items-center gap-2">
           <Calendar className="size-4 text-muted-foreground" />
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Cohort Period Filter
+            {context === "activity" ? "Metric Period Filter" : "Cohort Period Filter"}
           </span>
         </div>
 
@@ -266,7 +271,11 @@ export function DateFilter({ currentFilter, resolvedRange }: DateFilterProps) {
 
       {/* Explicit Cohort Context Description */}
       <div className="text-xs text-muted-foreground">
-        {activePreset === "all" ? (
+        {context === "activity" ? (
+          <span>
+            The selected period applies to member activity metrics. In Progress Now remains a current-state snapshot.
+          </span>
+        ) : activePreset === "all" ? (
           <span>
             Displaying the pipeline status for <strong>all research items</strong> in this workspace.
           </span>
