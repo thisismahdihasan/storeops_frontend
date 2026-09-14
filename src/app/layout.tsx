@@ -8,6 +8,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "StoreOps",
   description: "StoreOps production workflow platform.",
+  icons: {
+    icon: [{ url: "/icon.png", sizes: "512x512", type: "image/png" }],
+    apple: [{ url: "/apple-icon.png", sizes: "512x512", type: "image/png" }],
+  },
 };
 
 type RootLayoutProps = {

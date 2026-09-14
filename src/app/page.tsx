@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { LogOut, Mail } from "lucide-react";
 
 import { resolveDefaultRouteForRoles } from "@/components/layout/navigation.config";
+import { StoreOpsLogo } from "@/components/brand/storeops-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useCurrentSession } from "@/features/auth/use-current-session";
@@ -39,8 +40,10 @@ export default function HomePage() {
   if (sessionQuery.isPending || (currentUser && workspacesQuery.isPending)) {
     return (
       <main className="page-shell">
-        <section className="surface max-w-md space-y-3 p-8 text-center" aria-busy="true">
-          <p className="eyebrow">StoreOps</p>
+        <section className="surface max-w-md space-y-4 p-8 text-center" aria-busy="true">
+          <div className="flex justify-center">
+            <StoreOpsLogo variant="full" height={32} priority />
+          </div>
           <h1 className="text-xl font-semibold text-foreground">
             Verifying session…
           </h1>
@@ -57,15 +60,17 @@ export default function HomePage() {
           <ThemeToggle />
         </div>
         <section className="surface max-w-lg space-y-6 p-8">
-          <div className="space-y-2">
-            <p className="eyebrow">StoreOps</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              Internal Production Workflow
-            </h1>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Welcome to StoreOps. Sign in to your account or create one to
-              access your workspace assignments and production pipelines.
-            </p>
+          <div className="space-y-4">
+            <StoreOpsLogo variant="full" height={36} priority />
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                Internal Production Workflow
+              </h1>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Welcome to StoreOps. Sign in to your account or create one to
+                access your workspace assignments and production pipelines.
+              </p>
+            </div>
           </div>
 
           <div className="flex gap-3">
@@ -117,14 +122,16 @@ export default function HomePage() {
       </div>
 
       <section className="surface w-full max-w-lg space-y-6 p-6 sm:p-8">
-        <div className="space-y-1.5 border-b border-border pb-4">
-          <p className="eyebrow">StoreOps</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            No Active Workspace
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            You can create your first workspace now, or join an existing one using an invitation link.
-          </p>
+        <div className="space-y-3 border-b border-border pb-4">
+          <StoreOpsLogo variant="full" height={30} priority />
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              No Active Workspace
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              You can create your first workspace now, or join an existing one using an invitation link.
+            </p>
+          </div>
         </div>
 
         {/* Workspace Creation Form */}

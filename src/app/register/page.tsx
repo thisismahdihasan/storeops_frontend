@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 
+import { StoreOpsLogo } from "@/components/brand/storeops-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RegisterForm } from "@/features/auth/register-form";
 
@@ -17,14 +19,24 @@ export default function RegisterPage() {
       </div>
 
       <div className="surface w-full max-w-md space-y-6 p-8">
-        <div className="space-y-1.5 text-center">
-          <p className="eyebrow">StoreOps</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Create your account
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Get started with your StoreOps production workflow.
-          </p>
+        <div className="space-y-3 text-center">
+          <div className="flex justify-center">
+            <Link
+              href="/"
+              className="inline-flex rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="StoreOps Home"
+            >
+              <StoreOpsLogo variant="full" height={32} priority />
+            </Link>
+          </div>
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Create your account
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Get started with your StoreOps production workflow.
+            </p>
+          </div>
         </div>
 
         <Suspense

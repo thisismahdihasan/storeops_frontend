@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Layers, Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 
+import { StoreOpsLogo } from "@/components/brand/storeops-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { CurrentUser } from "@/features/auth/auth.types";
@@ -58,22 +59,14 @@ export function Sidebar({
       )}
     >
       {/* Brand Header */}
-      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-border px-5">
-        <div className="relative flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
-          <Layers className="size-4.5" />
-          <span
-            className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-brand-accent ring-2 ring-card"
-            aria-hidden="true"
-          />
-        </div>
-        <div className="flex flex-col">
-          <span className="font-heading text-base font-bold tracking-tight text-foreground leading-tight">
-            StoreOps
-          </span>
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-            Workspace Hub
-          </span>
-        </div>
+      <div className="flex h-16 shrink-0 items-center border-b border-border px-5">
+        <Link
+          href={`/w/${activeWorkspaceId}/dashboard`}
+          className="flex items-center rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="StoreOps Dashboard"
+        >
+          <StoreOpsLogo variant="full" height={30} priority />
+        </Link>
       </div>
 
       {/* Workspace Switcher */}
