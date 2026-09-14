@@ -5,6 +5,7 @@ export const currentUserSchema = z.object({
   email: z.string().email(),
   id: z.string().min(1),
   name: z.string().nullable(),
+  profileImageUrl: z.string().url().nullable(),
 });
 
 export const currentSessionResponseSchema = z.object({

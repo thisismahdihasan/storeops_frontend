@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AlertCircle, ShieldAlert, Store } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { EditProfileDialog } from "@/features/auth/edit-profile-dialog";
 import { useCurrentSession } from "@/features/auth/use-current-session";
 import { NOTIFICATIONS_PAGE_LIMIT } from "@/features/notifications/notifications.constants";
 import { useNotifications } from "@/features/notifications/use-notifications";
@@ -35,6 +36,7 @@ type SelectedNavigationMode = {
 
 export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [selectedNavigationMode, setSelectedNavigationMode] =
     useState<SelectedNavigationMode | null>(null);
   const pathname = usePathname();
@@ -178,6 +180,7 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
       <Sidebar
         activeWorkspaceId={activeWorkspaceId}
         navigationMode={navigationMode}
+        onEditProfile={() => setIsEditProfileOpen(true)}
         onNavigationModeChange={handleNavigationModeChange}
         unreadNotificationsCount={unreadNotificationsCount}
         user={user}
@@ -188,6 +191,7 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
       <div className="flex flex-1 flex-col min-w-0">
         <Topbar
           activeWorkspaceId={activeWorkspaceId}
+          onEditProfile={() => setIsEditProfileOpen(true)}
           onOpenMobileNav={() => setIsMobileNavOpen(true)}
           unreadNotificationsCount={unreadNotificationsCount}
           user={user}
@@ -232,6 +236,7 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
       {/* Mobile Drawer */}
       <MobileNav
         activeWorkspaceId={activeWorkspaceId}
+        onEditProfile={() => setIsEditProfileOpen(true)}
         onOpenChange={setIsMobileNavOpen}
         open={isMobileNavOpen}
         navigationMode={navigationMode}
@@ -239,6 +244,11 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
         unreadNotificationsCount={unreadNotificationsCount}
         user={user}
         workspaces={workspaces}
+      />
+      <EditProfileDialog
+        onOpenChange={setIsEditProfileOpen}
+        open={isEditProfileOpen}
+        user={user}
       />
       </div>
     </NavigationContextProvider>

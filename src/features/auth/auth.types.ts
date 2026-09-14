@@ -5,6 +5,7 @@ export type CurrentUser = {
   email: string;
   id: string;
   name: string | null;
+  profileImageUrl: string | null;
 };
 
 export type CurrentSession = {

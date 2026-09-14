@@ -1,11 +1,14 @@
 "use client";
 
-import { LogOut, ShieldCheck } from "lucide-react";
+import { LogOut, Pencil, ShieldCheck } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -17,46 +20,55 @@ import type { WorkspaceRole } from "@/features/workspace/workspace.types";
 
 export type UserMenuProps = {
   activeRoles?: WorkspaceRole[];
+  onEditProfile: () => void;
   user: CurrentUser;
 };
 
-export function getInitials(name: string | null | undefined, email: string): string {
-  const cleanName = (name ?? "").trim();
-  if (cleanName.length > 0) {
-    const parts = cleanName.split(/\s+/);
-    if (parts.length >= 2 && parts[0] && parts[1]) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return cleanName.slice(0, 2).toUpperCase();
-  }
-
-  return email.slice(0, 2).toUpperCase();
-}
-
-export function UserMenu({ activeRoles = [], user }: UserMenuProps) {
+export function UserMenu({ activeRoles = [], onEditProfile, user }: UserMenuProps) {
   const logoutMutation = useLogout();
-  const initials = getInitials(user.name, user.email);
+  const visibleRoles = activeRoles.slice(0, 2);
+  const hiddenRolesCount = activeRoles.length - visibleRoles.length;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="flex size-8 items-center justify-center rounded-full border border-border bg-primary/10 text-xs font-semibold text-primary shadow-xs transition-opacity hover:opacity-80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label="User account menu"
+        render={
+          <Button
+            aria-label="Open profile menu"
+            className="rounded-full p-0 transition-opacity hover:opacity-80"
+            size="icon"
+            variant="ghost"
+          />
+        }
       >
-        {initials}
+        <UserAvatar
+          email={user.email}
+          name={user.name}
+          profileImageUrl={user.profileImageUrl}
+        />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-semibold leading-none text-foreground">
-              {user.name}
-            </p>
-            <p className="text-xs leading-none text-muted-foreground truncate">
-              {user.email}
-            </p>
-          </div>
-        </DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-64 max-w-[calc(100vw-1rem)] p-1.5">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex items-center gap-3 p-1">
+              <UserAvatar
+                email={user.email}
+                name={user.name}
+                profileImageUrl={user.profileImageUrl}
+                size="md"
+              />
+              <div className="min-w-0 space-y-1">
+                <p className="truncate text-sm font-semibold leading-none text-foreground">
+                  {user.name || user.email}
+                </p>
+                <p className="truncate text-xs leading-none text-muted-foreground">
+                  {user.email}
+                </p>
+              </div>
+            </div>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
 
         {activeRoles.length > 0 && (
           <>
@@ -67,16 +79,26 @@ export function UserMenu({ activeRoles = [], user }: UserMenuProps) {
                 <span>Active Roles</span>
               </div>
               <div className="flex flex-wrap gap-1">
-                {activeRoles.map((role) => (
+                {visibleRoles.map((role) => (
                   <Badge key={role} variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
                     {role}
                   </Badge>
                 ))}
+                {hiddenRolesCount > 0 ? (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
+                    +{hiddenRolesCount}
+                  </Badge>
+                ) : null}
               </div>
             </div>
           </>
         )}
 
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onEditProfile} className="cursor-pointer">
+          <Pencil className="mr-2 size-4" />
+          <span>Edit profile</span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

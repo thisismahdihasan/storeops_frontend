@@ -11,6 +11,7 @@ import { UserMenu } from "./user-menu";
 
 export type TopbarProps = {
   activeWorkspaceId: string;
+  onEditProfile: () => void;
   onOpenMobileNav: () => void;
   unreadNotificationsCount?: number;
   user: CurrentUser;
@@ -19,6 +20,7 @@ export type TopbarProps = {
 
 export function Topbar({
   activeWorkspaceId,
+  onEditProfile,
   onOpenMobileNav,
   unreadNotificationsCount = 0,
   user,
@@ -71,7 +73,11 @@ export function Topbar({
         <ThemeToggle />
 
         <div className="ml-1 pl-1 border-l border-border">
-          <UserMenu user={user} activeRoles={activeRoles} />
+          <UserMenu
+            activeRoles={activeRoles}
+            onEditProfile={onEditProfile}
+            user={user}
+          />
         </div>
       </div>
     </header>

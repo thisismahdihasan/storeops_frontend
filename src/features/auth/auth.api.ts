@@ -30,6 +30,22 @@ export async function getCurrentSession(): Promise<CurrentSessionResponse> {
   return parsedResponse.data;
 }
 
+export async function updateProfile(
+  formData: FormData,
+): Promise<CurrentSessionResponse> {
+  const response = await apiRequest<unknown>("/api/v1/auth/profile", {
+    body: formData,
+    method: "PATCH",
+  });
+  const parsedResponse = currentSessionResponseSchema.safeParse(response);
+
+  if (!parsedResponse.success) {
+    throw new ApiError(502, "The service returned an unexpected profile response.");
+  }
+
+  return parsedResponse.data;
+}
+
 export async function loginUser(payload: LoginInput): Promise<AuthResponse> {
   const response = await apiRequest<unknown>("/api/v1/auth/login", {
     json: {
