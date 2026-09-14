@@ -33,3 +33,28 @@ export type RegisterInput = {
 export type AuthResponse = ApiSuccess<{
   user: CurrentUser;
 }>;
+
+export type ForgotPasswordRequestInput = {
+  email: string;
+};
+
+export type ForgotPasswordVerifyInput = {
+  code: string;
+  email: string;
+};
+
+export type ForgotPasswordResetInput = {
+  confirmPassword: string;
+  email: string;
+  password: string;
+  resetToken: string;
+};
+
+export type ForgotPasswordVerifyResponse = ApiSuccess<{
+  resetToken: string;
+}>;
+
+export type GenericAuthResponse = {
+  message: string;
+  success: true;
+};

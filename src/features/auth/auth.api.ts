@@ -3,11 +3,18 @@ import { ApiError, apiRequest } from "@/lib/api";
 import {
   authResponseSchema,
   currentSessionResponseSchema,
+  forgotPasswordVerifyResponseSchema,
+  genericAuthResponseSchema,
   logoutResponseSchema,
 } from "./auth.schemas";
 import type {
   AuthResponse,
   CurrentSessionResponse,
+  ForgotPasswordResetInput,
+  ForgotPasswordRequestInput,
+  ForgotPasswordVerifyInput,
+  ForgotPasswordVerifyResponse,
+  GenericAuthResponse,
   LoginInput,
   RegisterInput,
 } from "./auth.types";
@@ -75,6 +82,85 @@ export async function logoutUser(): Promise<{ message: string; success: true }> 
 
   if (!parsedResponse.success) {
     throw new ApiError(502, "The service returned an unexpected logout response.");
+  }
+
+  return parsedResponse.data;
+}
+
+export async function requestPasswordReset(
+  payload: ForgotPasswordRequestInput
+): Promise<GenericAuthResponse> {
+  const response = await apiRequest<unknown>(
+    "/api/v1/auth/forgot-password/request",
+    {
+      json: {
+        email: payload.email,
+      },
+      method: "POST",
+    }
+  );
+
+  const parsedResponse = genericAuthResponseSchema.safeParse(response);
+
+  if (!parsedResponse.success) {
+    throw new ApiError(
+      502,
+      "The service returned an unexpected password reset request response."
+    );
+  }
+
+  return parsedResponse.data;
+}
+
+export async function verifyPasswordResetCode(
+  payload: ForgotPasswordVerifyInput
+): Promise<ForgotPasswordVerifyResponse> {
+  const response = await apiRequest<unknown>(
+    "/api/v1/auth/forgot-password/verify",
+    {
+      json: {
+        code: payload.code,
+        email: payload.email,
+      },
+      method: "POST",
+    }
+  );
+
+  const parsedResponse = forgotPasswordVerifyResponseSchema.safeParse(response);
+
+  if (!parsedResponse.success) {
+    throw new ApiError(
+      502,
+      "The service returned an unexpected verification response."
+    );
+  }
+
+  return parsedResponse.data;
+}
+
+export async function resetPassword(
+  payload: ForgotPasswordResetInput
+): Promise<GenericAuthResponse> {
+  const response = await apiRequest<unknown>(
+    "/api/v1/auth/forgot-password/reset",
+    {
+      json: {
+        confirmPassword: payload.confirmPassword,
+        email: payload.email,
+        password: payload.password,
+        resetToken: payload.resetToken,
+      },
+      method: "POST",
+    }
+  );
+
+  const parsedResponse = genericAuthResponseSchema.safeParse(response);
+
+  if (!parsedResponse.success) {
+    throw new ApiError(
+      502,
+      "The service returned an unexpected password reset response."
+    );
   }
 
   return parsedResponse.data;
