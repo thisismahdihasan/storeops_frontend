@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { Providers } from "@/app/providers";
+import { stapelFontVariables } from "@/fonts";
 
 import "./globals.css";
 
@@ -20,7 +21,7 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={stapelFontVariables} suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
       </body>

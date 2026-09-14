@@ -108,7 +108,7 @@ export function MobileNav({
           <nav className="min-h-0 flex-1 space-y-6 overflow-y-auto px-3 py-4">
             {navigationGroups.map((group) => (
               <div key={group.title} className="space-y-1">
-                <h3 className="px-3 pt-2 pb-1.5 text-xs font-bold uppercase tracking-wider text-foreground/70 select-none">
+                <h3 className="px-3 pt-2 pb-1.5 font-ui text-xs font-bold uppercase tracking-wider text-foreground/70 select-none">
                   {group.title}
                 </h3>
                 <div className="space-y-1">
@@ -127,7 +127,7 @@ export function MobileNav({
                         onClick={() => onOpenChange(false)}
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
-                          "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                          "group flex items-center gap-3 rounded-lg px-3 py-2.5 font-ui text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
                           isActive
                             ? "bg-primary/15 text-primary font-semibold shadow-xs"
                             : "text-foreground/80 hover:bg-muted/80 hover:text-foreground",

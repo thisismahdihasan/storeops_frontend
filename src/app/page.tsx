@@ -63,7 +63,7 @@ export default function HomePage() {
           <div className="space-y-4">
             <StoreOpsLogo variant="full" height={36} priority />
             <div className="space-y-2">
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground">
                 Internal Production Workflow
               </h1>
               <p className="text-sm leading-6 text-muted-foreground">
