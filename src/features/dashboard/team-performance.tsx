@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { StatusBadge, STATUS_TONE_TEXT_CLASSES } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
 import type {
   DashboardFilterParams,
@@ -292,10 +293,13 @@ function DesignersTable({
             <th scope="col" className="px-4 py-3 text-right">
               <div className="inline-flex items-center gap-1">
                 <span>In Progress</span>
-                <span className="inline-flex items-center rounded-sm bg-blue-500/10 px-1 py-0.2 text-[9px] font-semibold text-blue-700 dark:text-blue-400">
+                <StatusBadge
+                  className="gap-0.5 rounded-sm px-1 py-0.2 text-[9px] font-semibold"
+                  tone="info"
+                >
                   <Clock className="mr-0.5 size-2.5" />
                   Live
-                </span>
+                </StatusBadge>
               </div>
             </th>
             <th scope="col" className="px-4 py-3 text-right">
@@ -338,7 +342,12 @@ function DesignersTable({
               <td className="px-4 py-3 text-right text-foreground">
                 {row.assignedCount.toLocaleString()}
               </td>
-              <td className="px-4 py-3 text-right font-medium text-blue-600 dark:text-blue-400">
+              <td
+                className={cn(
+                  "px-4 py-3 text-right font-medium",
+                  STATUS_TONE_TEXT_CLASSES.info,
+                )}
+              >
                 {row.currentInProgress.toLocaleString()}
               </td>
               <td className="px-4 py-3 text-right text-foreground">
@@ -398,10 +407,13 @@ function ListersTable({
             <th scope="col" className="px-4 py-3 text-right">
               <div className="inline-flex items-center gap-1">
                 <span>In Progress</span>
-                <span className="inline-flex items-center rounded-sm bg-blue-500/10 px-1 py-0.2 text-[9px] font-semibold text-blue-700 dark:text-blue-400">
+                <StatusBadge
+                  className="gap-0.5 rounded-sm px-1 py-0.2 text-[9px] font-semibold"
+                  tone="info"
+                >
                   <Clock className="mr-0.5 size-2.5" />
                   Live
-                </span>
+                </StatusBadge>
               </div>
             </th>
             <th scope="col" className="px-4 py-3 text-right">
@@ -435,7 +447,12 @@ function ListersTable({
               <td className="px-4 py-3 text-right text-foreground">
                 {row.assignedCount.toLocaleString()}
               </td>
-              <td className="px-4 py-3 text-right font-medium text-blue-600 dark:text-blue-400">
+              <td
+                className={cn(
+                  "px-4 py-3 text-right font-medium",
+                  STATUS_TONE_TEXT_CLASSES.info,
+                )}
+              >
                 {row.currentInProgress.toLocaleString()}
               </td>
               <td className="px-4 py-3 text-right font-semibold text-foreground">

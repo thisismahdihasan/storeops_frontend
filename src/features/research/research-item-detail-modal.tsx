@@ -31,9 +31,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { StatusBadge, STATUS_TONE_TEXT_CLASSES } from "@/components/ui/status-badge";
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
 import { ApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { AuthenticatedReferenceImage } from "./authenticated-reference-image";
 import { EditTitleDialog } from "./edit-title-dialog";
 import { ReferenceImageUploadModal } from "./reference-image-upload-modal";
@@ -378,22 +379,42 @@ export function ResearchItemDetailModal({
                     </span>
                     <div className="flex flex-wrap items-center gap-2">
                       {item.latestReview.approvedAt ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 text-[11px] font-medium",
+                            STATUS_TONE_TEXT_CLASSES.success,
+                          )}
+                        >
                           <CheckCircle2 className="size-3" />
                           Approved
                         </span>
                       ) : item.status === "CORRECTION_NEEDED" ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 text-[11px] font-medium",
+                            STATUS_TONE_TEXT_CLASSES.warning,
+                          )}
+                        >
                           <AlertTriangle className="size-3" />
                           Correction Needed
                         </span>
                       ) : item.status === "DESIGN_IN_PROGRESS" ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 dark:text-blue-400">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 text-[11px] font-medium",
+                            STATUS_TONE_TEXT_CLASSES.info,
+                          )}
+                        >
                           <Clock className="size-3" />
                           Correction In Progress
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 text-[11px] font-medium",
+                            STATUS_TONE_TEXT_CLASSES.warning,
+                          )}
+                        >
                           <Clock className="size-3" />
                           In Review
                         </span>

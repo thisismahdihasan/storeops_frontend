@@ -66,8 +66,12 @@ export function MobileNav({
           {/* Header */}
           <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
             <div className="flex items-center gap-2">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+              <div className="relative flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
                 <Layers className="size-4.5" />
+                <span
+                  className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-brand-accent ring-2 ring-card"
+                  aria-hidden="true"
+                />
               </div>
               <span className="font-heading text-base font-bold text-foreground">
                 StoreOps

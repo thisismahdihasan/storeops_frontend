@@ -59,8 +59,12 @@ export function Sidebar({
     >
       {/* Brand Header */}
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-border px-5">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+        <div className="relative flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
           <Layers className="size-4.5" />
+          <span
+            className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-brand-accent ring-2 ring-card"
+            aria-hidden="true"
+          />
         </div>
         <div className="flex flex-col">
           <span className="font-heading text-base font-bold tracking-tight text-foreground leading-tight">

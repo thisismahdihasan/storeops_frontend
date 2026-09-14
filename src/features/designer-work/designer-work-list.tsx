@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { StatusBadge, STATUS_TONE_TEXT_CLASSES } from "@/components/ui/status-badge";
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 import { cn } from "@/lib/utils";
 
@@ -392,21 +392,21 @@ function StatusGuidance({
 }) {
   if (status === "DESIGN_REVIEW") {
     return (
-      <p className="text-xs font-medium text-blue-700 dark:text-blue-400">
+      <p className={cn("text-xs font-medium", STATUS_TONE_TEXT_CLASSES.info)}>
         Waiting for Admin Review
       </p>
     );
   }
   if (status === "ISSUE_REPORTED") {
     return (
-      <p className="text-xs font-medium text-red-700 dark:text-red-400">
+      <p className={cn("text-xs font-medium", STATUS_TONE_TEXT_CLASSES.danger)}>
         Issue reported — waiting for Admin action.
       </p>
     );
   }
   if (status === "DESIGN_APPROVED") {
     return (
-      <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
+      <p className={cn("text-xs font-medium", STATUS_TONE_TEXT_CLASSES.success)}>
         Approved — final delivery will be handled in its dedicated phase.
       </p>
     );
