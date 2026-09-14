@@ -78,7 +78,7 @@ export function Sidebar({
       </div>
 
       {shouldShowNavigationModeSwitch(roles) ? (
-        <div className="shrink-0 px-3 pt-3">
+        <div className="shrink-0 px-3 pt-4">
           <NavigationModeSwitch
             mode={navigationMode}
             onModeChange={onNavigationModeChange}
@@ -87,13 +87,16 @@ export function Sidebar({
       ) : null}
 
       {/* Navigation Groups */}
-      <nav className="min-h-0 flex-1 space-y-6 overflow-y-auto px-3 py-4">
-        {navigationGroups.map((group) => (
-          <div key={group.title} className="space-y-1">
-            <h3 className="px-3 pt-2 pb-1.5 font-ui text-xs font-bold uppercase tracking-wider text-foreground/70 select-none">
+      <nav className="min-h-0 flex-1 overflow-y-auto px-3 pt-6 pb-4">
+        {navigationGroups.map((group, groupIdx) => (
+          <div
+            key={group.title}
+            className={groupIdx === 0 ? "mt-0" : "mt-7"}
+          >
+            <h3 className="px-3 mb-2 font-ui text-[13px] leading-[18px] font-semibold uppercase tracking-[0.04em] text-muted-foreground select-none">
               {group.title}
             </h3>
-            <div className="space-y-1">
+            <div className="flex flex-col gap-1">
               {group.items.map((item) => {
                 const isActive =
                   pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -107,25 +110,31 @@ export function Sidebar({
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2.5 font-ui text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                      "group relative flex h-10 items-center gap-2.5 rounded-[10px] px-3 font-ui text-[12px] leading-[18px] transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
                       isActive
-                        ? "bg-primary/15 text-primary font-semibold shadow-xs"
-                        : "text-foreground/80 hover:bg-muted/80 hover:text-foreground",
+                        ? "bg-primary/12 text-primary font-semibold shadow-xs dark:bg-primary/20 dark:text-foreground"
+                        : "text-foreground/80 hover:bg-muted/70 hover:text-foreground dark:hover:bg-white/5 dark:hover:text-foreground font-medium",
                     )}
                   >
+                    {isActive && (
+                      <span
+                        className="absolute left-1.5 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full bg-brand-accent"
+                        aria-hidden="true"
+                      />
+                    )}
                     <item.icon
                       className={cn(
-                        "size-4.5 shrink-0 transition-colors",
+                        "size-[17px] shrink-0 transition-colors",
                         isActive
-                          ? "text-primary"
-                          : "text-muted-foreground group-hover:text-foreground",
+                          ? "text-primary dark:text-brand-accent"
+                          : "text-muted-foreground group-hover:text-foreground dark:group-hover:text-foreground",
                       )}
                     />
                     <span className="truncate flex-1">{item.title}</span>
                     {showUnread && (
                       <Badge
                         variant="default"
-                        className="ml-auto h-5 min-w-5 px-1.5 text-[10px] font-bold"
+                        className="ml-auto h-5 min-w-5 px-1.5 font-ui text-[10px] font-bold"
                       >
                         {unreadNotificationsCount > 99
                           ? "99+"

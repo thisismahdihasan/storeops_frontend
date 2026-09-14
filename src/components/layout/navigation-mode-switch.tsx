@@ -21,7 +21,7 @@ export function NavigationModeSwitch({
   return (
     <div
       aria-label="Navigation context"
-      className="grid grid-cols-2 rounded-lg border border-border bg-muted/40 p-1"
+      className="grid h-[38px] grid-cols-2 rounded-lg border border-border bg-muted/40 p-1"
       role="group"
     >
       {modes.map((item) => {
@@ -31,9 +31,9 @@ export function NavigationModeSwitch({
           <button
             aria-pressed={isSelected}
             className={cn(
-              "rounded-md px-2 py-1.5 text-xs font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+              "flex h-full items-center justify-center rounded-md px-2 font-ui text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
               isSelected
-                ? "bg-card text-foreground shadow-xs"
+                ? "bg-background text-foreground shadow-xs dark:bg-card dark:text-foreground"
                 : "text-muted-foreground hover:text-foreground",
             )}
             key={item.value}
