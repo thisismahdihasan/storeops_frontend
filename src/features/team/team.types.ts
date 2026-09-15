@@ -1,8 +1,12 @@
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
 
 export type TeamMember = {
+  designerAssignmentEnabled: boolean;
+  designerAssignmentPausedUntil: string | null;
   email: string;
   joinedAt: string;
+  listerAssignmentEnabled: boolean;
+  listerAssignmentPausedUntil: string | null;
   membershipId: string;
   name: string | null;
   roles: WorkspaceRole[];
@@ -74,6 +78,24 @@ export type UpdateMemberRolesInput = {
 };
 
 export type UpdateMemberRolesResponse = {
+  data: {
+    member: TeamMember;
+  };
+  message: string;
+  success: true;
+};
+
+export type AssignmentAvailabilityMode = "AVAILABLE" | "OFF" | "PAUSED";
+
+export type AssignmentAvailabilityRole = "DESIGNER" | "LISTER";
+
+export type UpdateMemberAssignmentAvailabilityInput = {
+  mode: AssignmentAvailabilityMode;
+  pausedUntil?: string;
+  role: AssignmentAvailabilityRole;
+};
+
+export type UpdateMemberAssignmentAvailabilityResponse = {
   data: {
     member: TeamMember;
   };

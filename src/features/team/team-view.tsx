@@ -12,18 +12,24 @@ import { ApiError } from "@/lib/api";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 
 import { EditMemberRolesDialog } from "./edit-member-roles-dialog";
+import { AssignmentAvailabilityDialog } from "./assignment-availability-dialog";
 import { InviteMemberDialog } from "./invite-member-dialog";
 import { getMemberMutationErrorMessage } from "./member-mutation-errors";
 import { RemoveMemberDialog } from "./remove-member-dialog";
 import { TeamMembersList } from "./team-members-list";
 import { PendingInvitesList } from "./pending-invites-list";
-import type { PendingWorkspaceInvite, TeamMember } from "./team.types";
+import type {
+  PendingWorkspaceInvite,
+  TeamMember,
+  UpdateMemberAssignmentAvailabilityInput,
+} from "./team.types";
 import {
   usePendingWorkspaceInvites,
   useRemoveMember,
   useResendWorkspaceInvite,
   useRevokeWorkspaceInvite,
   useTeamMembers,
+  useUpdateMemberAssignmentAvailability,
   useUpdateMemberRoles,
 } from "./use-team";
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
@@ -63,6 +69,7 @@ export function TeamView({ workspaceId }: TeamViewProps) {
   const router = useRouter();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [availabilityMember, setAvailabilityMember] = useState<TeamMember | null>(null);
   const [removingMember, setRemovingMember] = useState<TeamMember | null>(null);
   const [cooldownEndsAtByInviteId, setCooldownEndsAtByInviteId] = useState<Record<string, number>>({});
   const currentSessionQuery = useCurrentSession();
@@ -74,6 +81,7 @@ export function TeamView({ workspaceId }: TeamViewProps) {
   const resendInviteMutation = useResendWorkspaceInvite(workspaceId);
   const revokeInviteMutation = useRevokeWorkspaceInvite(workspaceId);
   const updateMemberRolesMutation = useUpdateMemberRoles(workspaceId);
+  const updateAssignmentAvailabilityMutation = useUpdateMemberAssignmentAvailability(workspaceId);
   const removeMemberMutation = useRemoveMember(workspaceId);
   const currentUserId = currentSessionQuery.data?.data.user.id;
 
@@ -155,6 +163,25 @@ export function TeamView({ workspaceId }: TeamViewProps) {
     }
   };
 
+  const handleAssignmentAvailabilityUpdate = async (
+    input: UpdateMemberAssignmentAvailabilityInput,
+  ) => {
+    if (!availabilityMember) {
+      return;
+    }
+
+    try {
+      await updateAssignmentAvailabilityMutation.mutateAsync({
+        input,
+        userId: availabilityMember.userId,
+      });
+      setAvailabilityMember(null);
+    } catch (error) {
+      handleMemberMutationError(error);
+      throw error;
+    }
+  };
+
   const handleResend = async (invite: PendingWorkspaceInvite) => {
     try {
       await resendInviteMutation.mutateAsync(invite.id);
@@ -209,7 +236,7 @@ export function TeamView({ workspaceId }: TeamViewProps) {
           <div><h2 className="text-lg font-semibold" id="workspace-members-heading">Members</h2><p className="text-sm text-muted-foreground">Current accepted workspace memberships.</p></div>
           {membersQuery.data && <p className="shrink-0 text-sm text-muted-foreground">{membersQuery.data.data.members.length} member{membersQuery.data.data.members.length === 1 ? "" : "s"}</p>}
         </div>
-        <TeamMembersList canManageMembers={hasAdminRole} errorMessage={getRequestErrorMessage(membersQuery.error)} isError={membersQuery.isError} isLoading={workspacesQuery.isLoading || membersQuery.isLoading} members={membersQuery.data?.data.members ?? []} onEditRoles={setEditingMember} onRemove={setRemovingMember} onRetry={() => void membersQuery.refetch()} workspaceId={workspaceId} />
+        <TeamMembersList canManageMembers={hasAdminRole} errorMessage={getRequestErrorMessage(membersQuery.error)} isError={membersQuery.isError} isLoading={workspacesQuery.isLoading || membersQuery.isLoading} members={membersQuery.data?.data.members ?? []} onAssignmentAvailability={setAvailabilityMember} onEditRoles={setEditingMember} onRemove={setRemovingMember} onRetry={() => void membersQuery.refetch()} workspaceId={workspaceId} />
       </section>
       <section aria-labelledby="pending-invites-heading" className="space-y-3">
         <div><h2 className="text-lg font-semibold" id="pending-invites-heading">Pending Invites</h2><p className="text-sm text-muted-foreground">Resend or revoke unaccepted workspace invitations.</p></div>
@@ -217,6 +244,7 @@ export function TeamView({ workspaceId }: TeamViewProps) {
       </section>
       <InviteMemberDialog onOpenChange={setIsInviteDialogOpen} open={isInviteDialogOpen} workspaceId={workspaceId} />
       <EditMemberRolesDialog key={editingMember?.membershipId ?? "edit-member-roles-closed"} member={editingMember} onOpenChange={(open) => { if (!open) setEditingMember(null); }} onSubmit={handleRoleUpdate} open={editingMember !== null} submitting={updateMemberRolesMutation.isPending} />
+      <AssignmentAvailabilityDialog key={availabilityMember?.membershipId ?? "assignment-availability-closed"} member={availabilityMember} onOpenChange={(open) => { if (!open) setAvailabilityMember(null); }} onSubmit={handleAssignmentAvailabilityUpdate} open={availabilityMember !== null} submitting={updateAssignmentAvailabilityMutation.isPending} />
       <RemoveMemberDialog key={removingMember?.membershipId ?? "remove-member-closed"} member={removingMember} onOpenChange={(open) => { if (!open) setRemovingMember(null); }} onRemove={handleMemberRemoval} open={removingMember !== null} submitting={removeMemberMutation.isPending} />
     </div>
   );

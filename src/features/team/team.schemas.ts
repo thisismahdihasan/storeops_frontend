@@ -17,8 +17,12 @@ export const createWorkspaceInviteInputSchema = z.object({
 });
 
 export const teamMemberSchema = z.object({
+  designerAssignmentEnabled: z.boolean(),
+  designerAssignmentPausedUntil: z.string().nullable(),
   email: z.string().email(),
   joinedAt: z.string(),
+  listerAssignmentEnabled: z.boolean(),
+  listerAssignmentPausedUntil: z.string().nullable(),
   membershipId: z.string(),
   name: z.string().nullable(),
   roles: z.array(workspaceRoleSchema),
@@ -84,6 +88,14 @@ export const revokeWorkspaceInviteResponseSchema = z.object({
 });
 
 export const updateMemberRolesResponseSchema = z.object({
+  data: z.object({
+    member: teamMemberSchema,
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});
+
+export const updateMemberAssignmentAvailabilityResponseSchema = z.object({
   data: z.object({
     member: teamMemberSchema,
   }),

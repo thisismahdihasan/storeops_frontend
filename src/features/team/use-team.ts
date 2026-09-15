@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { ApiError } from "@/lib/api";
 import { currentSessionQueryKey } from "@/features/auth/use-current-session";
@@ -16,9 +17,15 @@ import {
   resendWorkspaceInvite,
   revokeWorkspaceInvite,
   teamMembersQueryKey,
+  updateMemberAssignmentAvailability,
   updateMemberRoles,
 } from "./team.api";
-import type { CreateWorkspaceInviteInput, UpdateMemberRolesInput } from "./team.types";
+import type {
+  CreateWorkspaceInviteInput,
+  TeamMembersResponse,
+  UpdateMemberAssignmentAvailabilityInput,
+  UpdateMemberRolesInput,
+} from "./team.types";
 
 function isUnauthenticatedError(error: unknown) {
   return error instanceof ApiError && error.status === 401;
@@ -105,6 +112,42 @@ export function useUpdateMemberRoles(workspaceId: string) {
     mutationFn: ({ input, userId }: { input: UpdateMemberRolesInput; userId: string }) =>
       updateMemberRoles(workspaceId, userId, input),
     onSuccess: () => invalidateMemberMutationQueries(queryClient, workspaceId),
+  });
+}
+
+export function useUpdateMemberAssignmentAvailability(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ input, userId }: { input: UpdateMemberAssignmentAvailabilityInput; userId: string }) =>
+      updateMemberAssignmentAvailability(workspaceId, userId, input),
+    onError: (error: Error) => {
+      toast.error(error.message || "Could not update assignment availability.");
+    },
+    onSuccess: (response) => {
+      queryClient.setQueryData<TeamMembersResponse>(
+        teamMembersQueryKey(workspaceId),
+        (current) => {
+          if (!current) return current;
+
+          return {
+            ...current,
+            data: {
+              ...current.data,
+              members: current.data.members.map((member) =>
+                member.userId === response.data.member.userId
+                  ? response.data.member
+                  : member,
+              ),
+            },
+          };
+        },
+      );
+      void queryClient.invalidateQueries({
+        queryKey: teamMembersQueryKey(workspaceId),
+      });
+      toast.success("Assignment availability updated.");
+    },
   });
 }
 

@@ -6,6 +6,7 @@ import {
   removeMemberResponseSchema,
   revokeWorkspaceInviteResponseSchema,
   teamMembersResponseSchema,
+  updateMemberAssignmentAvailabilityResponseSchema,
   updateMemberRolesResponseSchema,
 } from "./team.schemas";
 import type {
@@ -15,6 +16,8 @@ import type {
   RemoveMemberResponse,
   RevokeWorkspaceInviteResponse,
   TeamMembersResponse,
+  UpdateMemberAssignmentAvailabilityInput,
+  UpdateMemberAssignmentAvailabilityResponse,
   UpdateMemberRolesInput,
   UpdateMemberRolesResponse,
 } from "./team.types";
@@ -130,6 +133,27 @@ export async function updateMemberRoles(
 
   if (!parsedResponse.success) {
     throw new ApiError(502, "The service returned an unexpected member update response.");
+  }
+
+  return parsedResponse.data;
+}
+
+export async function updateMemberAssignmentAvailability(
+  workspaceId: string,
+  userId: string,
+  input: UpdateMemberAssignmentAvailabilityInput,
+): Promise<UpdateMemberAssignmentAvailabilityResponse> {
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/members/${encodeURIComponent(userId)}/assignment-availability`,
+    {
+      json: input,
+      method: "PATCH",
+    },
+  );
+  const parsedResponse = updateMemberAssignmentAvailabilityResponseSchema.safeParse(response);
+
+  if (!parsedResponse.success) {
+    throw new ApiError(502, "The service returned an unexpected assignment availability response.");
   }
 
   return parsedResponse.data;

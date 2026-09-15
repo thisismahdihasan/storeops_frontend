@@ -1,6 +1,6 @@
 "use client";
 
-import { Ellipsis, Pencil, UserRoundMinus } from "lucide-react";
+import { CalendarClock, Ellipsis, Pencil, UserRoundMinus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,12 +15,14 @@ import type { TeamMember } from "./team.types";
 
 type TeamMemberActionsProps = {
   member: TeamMember;
+  onAssignmentAvailability: (member: TeamMember) => void;
   onEditRoles: (member: TeamMember) => void;
   onRemove: (member: TeamMember) => void;
 };
 
-export function TeamMemberActions({ member, onEditRoles, onRemove }: TeamMemberActionsProps) {
+export function TeamMemberActions({ member, onAssignmentAvailability, onEditRoles, onRemove }: TeamMemberActionsProps) {
   const memberLabel = member.name ?? member.email;
+  const hasWorkerRole = member.roles.includes("DESIGNER") || member.roles.includes("LISTER");
 
   return (
     <DropdownMenu>
@@ -32,6 +34,12 @@ export function TeamMemberActions({ member, onEditRoles, onRemove }: TeamMemberA
           <Pencil />
           Edit roles
         </DropdownMenuItem>
+        {hasWorkerRole && (
+          <DropdownMenuItem onClick={() => onAssignmentAvailability(member)}>
+            <CalendarClock />
+            Assignment availability
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => onRemove(member)} variant="destructive">
           <UserRoundMinus />

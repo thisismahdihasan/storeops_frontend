@@ -28,6 +28,8 @@ const ROLE_OPTIONS: Array<{
   { description: "Prepare approved designs for listing.", label: "Lister", value: "LISTER" },
 ];
 
+const ASSIGNMENT_WORKER_ROLES: WorkspaceRole[] = ["DESIGNER", "LISTER"];
+
 type EditMemberRolesDialogProps = {
   member: TeamMember | null;
   onOpenChange: (open: boolean) => void;
@@ -53,6 +55,9 @@ export function EditMemberRolesDialog({
   const isUnchanged = useMemo(
     () => (member ? sameRoles(roles, member.roles) : true),
     [member, roles],
+  );
+  const hasNewWorkerRole = ASSIGNMENT_WORKER_ROLES.some(
+    (role) => roles.includes(role) && !member?.roles.includes(role),
   );
 
   if (!member) {
@@ -140,6 +145,11 @@ export function EditMemberRolesDialog({
                 );
               })}
             </div>
+            {hasNewWorkerRole && (
+              <p className="pt-1 text-xs text-muted-foreground" role="status">
+                New Designer and Lister roles start with automatic assignments enabled.
+              </p>
+            )}
           </fieldset>
           <DialogFooter>
             <Button disabled={submitting} onClick={() => handleOpenChange(false)} type="button" variant="outline">
