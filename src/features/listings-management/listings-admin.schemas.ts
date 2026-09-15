@@ -121,3 +121,12 @@ export const assignListerResponseSchema = z.object({
   message: z.string(),
   success: z.literal(true),
 });
+
+export const bulkAssignListingsResponseSchema = z.object({
+  data: z.object({
+    assignedCount: z.number().int().nonnegative(),
+    assignedItemIds: z.array(z.string()),
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});

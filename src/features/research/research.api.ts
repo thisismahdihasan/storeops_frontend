@@ -1,6 +1,7 @@
 import { ApiError, apiRequest } from "@/lib/api";
 
 import {
+  bulkAssignResearchResponseSchema,
   createResearchResponseSchema,
   deleteResearchItemResponseSchema,
   duplicateResearchDataSchema,
@@ -13,6 +14,8 @@ import {
   uploadReferenceImageResponseSchema,
 } from "./research.schemas";
 import type {
+  BulkAssignResearchInput,
+  BulkAssignResearchResponse,
   CreateResearchInput,
   CreateResearchResponse,
   DeleteResearchItemResponse,
@@ -209,6 +212,26 @@ export async function reassignResearchDesigner(
   const parsed = reassignResearchResponseSchema.safeParse(response);
   if (!parsed.success) {
     throw new ApiError(502, "Unexpected designer reassignment response format.");
+  }
+
+  return parsed.data;
+}
+
+export async function bulkAssignResearchDesigners(
+  workspaceId: string,
+  input: BulkAssignResearchInput,
+): Promise<BulkAssignResearchResponse> {
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${workspaceId}/research-items/bulk-assign`,
+    {
+      json: input,
+      method: "POST",
+    },
+  );
+  const parsed = bulkAssignResearchResponseSchema.safeParse(response);
+
+  if (!parsed.success) {
+    throw new ApiError(502, "Unexpected bulk Designer assignment response format.");
   }
 
   return parsed.data;

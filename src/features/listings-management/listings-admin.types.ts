@@ -71,3 +71,23 @@ export type AssignListerResponse = {
   message: string;
   success: true;
 };
+
+export type BulkAssignListingsInput =
+  | {
+      listerId: string;
+      mode: "TARGET";
+      researchItemIds: string[];
+    }
+  | {
+      mode: "DISTRIBUTE";
+      researchItemIds: string[];
+    };
+
+export type BulkAssignListingsResponse = {
+  data: {
+    assignedCount: number;
+    assignedItemIds: string[];
+  };
+  message: string;
+  success: true;
+};

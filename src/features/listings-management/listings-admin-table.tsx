@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, ExternalLink, ImageIcon, Tag } from "lucide-react";
 
@@ -13,14 +13,18 @@ import type { ResearchStatus } from "@/features/research/research.types";
 export type ListingsAdminTableProps = {
   data?: AdminListingListResult;
   emptyStateTitle?: string;
+  eligibleResearchItemIds: string[];
   hasActiveFilters: boolean;
   isError: boolean;
   isLoading: boolean;
+  onToggleAllEligible: () => void;
+  onToggleSelection: (researchItemId: string) => void;
   canAssignListers: boolean;
   onAssignLister: (item: AdminListingItem) => void;
   onPageChange: (newPage: number) => void;
   onResetFilters: () => void;
   onRetry: () => void;
+  selectedResearchItemIds: string[];
   workspaceId: string;
 };
 
@@ -56,17 +60,36 @@ function formatDate(dateStr: string): string {
 export function ListingsAdminTable({
   data,
   emptyStateTitle,
+  eligibleResearchItemIds,
   hasActiveFilters,
   isError,
   isLoading,
+  onToggleAllEligible,
+  onToggleSelection,
   canAssignListers,
   onAssignLister,
   onPageChange,
   onResetFilters,
   onRetry,
+  selectedResearchItemIds,
   workspaceId,
 }: ListingsAdminTableProps) {
   const [selectedDetailItemId, setSelectedDetailItemId] = useState<string | null>(null);
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  const selectedEligibleCount = eligibleResearchItemIds.filter((itemId) =>
+    selectedResearchItemIds.includes(itemId),
+  ).length;
+  const hasSelectedEligibleItems = selectedEligibleCount > 0;
+  const areAllEligibleItemsSelected =
+    eligibleResearchItemIds.length > 0 &&
+    selectedEligibleCount === eligibleResearchItemIds.length;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate =
+        hasSelectedEligibleItems && !areAllEligibleItemsSelected;
+    }
+  }, [areAllEligibleItemsSelected, hasSelectedEligibleItems]);
 
   if (isLoading) {
     return (
@@ -139,6 +162,19 @@ export function ListingsAdminTable({
           <table className="w-full text-left text-xs">
             <thead className="border-b border-border bg-muted/40 font-medium text-muted-foreground">
               <tr>
+                {canAssignListers && (
+                  <th className="w-10 px-3 py-3">
+                    <input
+                      aria-label="Select all eligible listing items on this page"
+                      checked={areAllEligibleItemsSelected}
+                      className="size-4 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      disabled={eligibleResearchItemIds.length === 0}
+                      onChange={onToggleAllEligible}
+                      ref={selectAllRef}
+                      type="checkbox"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3 w-14">Reference</th>
                 <th className="px-4 py-3 min-w-48">Etsy Listing / Title</th>
                 <th className="px-4 py-3 min-w-36">Lister</th>
@@ -155,12 +191,27 @@ export function ListingsAdminTable({
                   canAssignListers &&
                   item.status === "READY_FOR_LISTING" &&
                   item.currentAssignment === null;
+                const isSelected = selectedResearchItemIds.includes(item.id);
+                const isSelectionEligible = eligibleResearchItemIds.includes(item.id);
 
                 return (
                   <tr
                     key={item.id}
                     className="hover:bg-muted/20 transition-colors"
                   >
+                    {canAssignListers && (
+                      <td className="px-3 py-3">
+                        {isSelectionEligible && (
+                          <input
+                            aria-label={`Select ${item.title || `listing item ${item.etsyListingId}`}`}
+                            checked={isSelected}
+                            className="size-4 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onChange={() => onToggleSelection(item.id)}
+                            type="checkbox"
+                          />
+                        )}
+                      </td>
+                    )}
                     {/* Reference Thumbnail */}
                     <td className="px-4 py-3">
                       {item.referenceImageUrl ? (

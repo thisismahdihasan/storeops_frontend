@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api";
 import { notificationKeys } from "@/features/notifications/notifications.keys";
 
 import {
+  bulkAssignResearchDesigners,
   createResearchItem,
   deleteResearchItem,
   getResearchItemById,
@@ -18,6 +19,7 @@ import {
   uploadResearchReferenceImage,
 } from "./research.api";
 import type {
+  BulkAssignResearchInput,
   CreateResearchInput,
   ResearchListFilterParams,
 } from "./research.types";
@@ -220,6 +222,32 @@ export function useAssignResearchDesigner(workspaceId: string) {
       });
       void queryClient.invalidateQueries({
         queryKey: researchKeys.detail(workspaceId, variables.researchItemId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["designer-work", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboard", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: notificationKeys.all(workspaceId),
+      });
+    },
+  });
+}
+
+export function useBulkAssignResearchDesigners(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: BulkAssignResearchInput) =>
+      bulkAssignResearchDesigners(workspaceId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.lists(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.details(workspaceId),
       });
       void queryClient.invalidateQueries({
         queryKey: ["designer-work", workspaceId],

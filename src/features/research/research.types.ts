@@ -141,6 +141,26 @@ export type ReassignResearchResponse = {
   success: true;
 };
 
+export type BulkAssignResearchInput =
+  | {
+      designerId: string;
+      mode: "TARGET";
+      researchItemIds: string[];
+    }
+  | {
+      mode: "DISTRIBUTE";
+      researchItemIds: string[];
+    };
+
+export type BulkAssignResearchResponse = {
+  data: {
+    assignedCount: number;
+    assignedItemIds: string[];
+  };
+  message: string;
+  success: true;
+};
+
 export type CreateResearchInput = {
   etsyUrl: string;
   image?: File;

@@ -5,8 +5,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listingKeys } from "@/features/listing/listing.keys";
 import { notificationKeys } from "@/features/notifications/notifications.keys";
 
-import { assignLister, getAdminListingList } from "./listings-admin.api";
-import type { AdminListingFilterParams } from "./listings-admin.types";
+import {
+  assignLister,
+  bulkAssignListers,
+  getAdminListingList,
+} from "./listings-admin.api";
+import type {
+  AdminListingFilterParams,
+  BulkAssignListingsInput,
+} from "./listings-admin.types";
 
 export const listingAdminKeys = {
   adminList: (workspaceId: string, filters?: AdminListingFilterParams) =>
@@ -45,6 +52,32 @@ export function useAssignLister(workspaceId: string) {
       });
       void queryClient.invalidateQueries({
         queryKey: listingKeys.detail(workspaceId, variables.researchItemId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: listingKeys.queues(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboard", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: notificationKeys.all(workspaceId),
+      });
+    },
+  });
+}
+
+export function useBulkAssignListers(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: BulkAssignListingsInput) =>
+      bulkAssignListers(workspaceId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: listingAdminKeys.lists(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: listingKeys.details(workspaceId),
       });
       void queryClient.invalidateQueries({
         queryKey: listingKeys.queues(workspaceId),

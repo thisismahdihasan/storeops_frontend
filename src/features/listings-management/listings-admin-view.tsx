@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tag } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { useTeamMembers } from "@/features/team/use-team";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
 import { AssignListerDialog } from "./assign-lister-dialog";
+import { BulkAssignListersDialog } from "./bulk-assign-listers-dialog";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { parseListingAdminFiltersFromParams } from "./listings-admin.schemas";
 import type { AdminListingItem } from "./listings-admin.types";
@@ -19,6 +20,67 @@ import { ListingsAdminTable } from "./listings-admin-table";
 type ListingsAdminViewProps = {
   workspaceId: string;
 };
+
+type ListingSelectionState = {
+  ids: string[];
+  scopeKey: string;
+};
+
+type ListingBulkAssignmentControllerProps = {
+  onStaleConflict: () => Promise<void>;
+  onSuccess: () => void;
+  researchItemIds: string[];
+  workspaceId: string;
+};
+
+function ListingBulkAssignmentController({
+  onStaleConflict,
+  onSuccess,
+  researchItemIds,
+  workspaceId,
+}: ListingBulkAssignmentControllerProps) {
+  const [isBulkAssignDialogOpen, setIsBulkAssignDialogOpen] = useState(false);
+  const isBulkAssignmentDialogOpen =
+    isBulkAssignDialogOpen && researchItemIds.length > 0;
+
+  return (
+    <>
+      {researchItemIds.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-foreground">
+            {researchItemIds.length} selected
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onClick={() => setIsBulkAssignDialogOpen(true)}
+              type="button"
+            >
+              Assign selected
+            </button>
+            <button
+              className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onClick={onSuccess}
+              type="button"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
+      <BulkAssignListersDialog
+        key={isBulkAssignmentDialogOpen ? researchItemIds.join(",") : "closed"}
+        onOpenChange={setIsBulkAssignDialogOpen}
+        onStaleConflict={onStaleConflict}
+        onSuccess={onSuccess}
+        open={isBulkAssignmentDialogOpen}
+        researchItemIds={researchItemIds}
+        workspaceId={workspaceId}
+      />
+    </>
+  );
+}
 
 export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
   const router = useRouter();
@@ -51,6 +113,25 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
   const assignListerMutation = useAssignLister(workspaceId);
   const [assignListerItem, setAssignListerItem] =
     useState<AdminListingItem | null>(null);
+  const [listingSelection, setListingSelection] = useState<ListingSelectionState>({
+    ids: [],
+    scopeKey: "",
+  });
+  const listingItems = listingsQuery.data?.items;
+  const eligibleResearchItemIds = useMemo(
+    () => (listingItems ?? [])
+      .filter((item) =>
+        item.status === "READY_FOR_LISTING" && item.currentAssignment === null,
+      )
+      .map((item) => item.id),
+    [listingItems],
+  );
+  const selectionScopeKey = `${workspaceId}:${searchParams.toString()}`;
+  const selectedResearchItemIds = useMemo(() => {
+    if (listingSelection.scopeKey !== selectionScopeKey) return [];
+    const eligibleItemIds = new Set(eligibleResearchItemIds);
+    return listingSelection.ids.filter((itemId) => eligibleItemIds.has(itemId));
+  }, [eligibleResearchItemIds, listingSelection, selectionScopeKey]);
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -96,6 +177,53 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
     }
   };
 
+  const toggleResearchItemSelection = (researchItemId: string) => {
+    setListingSelection((selection) => {
+      const currentSelectedIds = selection.scopeKey === selectionScopeKey
+        ? selection.ids.filter((itemId) => eligibleResearchItemIds.includes(itemId))
+        : [];
+      return {
+        ids: currentSelectedIds.includes(researchItemId)
+          ? currentSelectedIds.filter((itemId) => itemId !== researchItemId)
+          : [...currentSelectedIds, researchItemId],
+        scopeKey: selectionScopeKey,
+      };
+    });
+  };
+
+  const toggleAllEligibleResearchItems = () => {
+    setListingSelection((selection) => {
+      const currentSelectedIds = selection.scopeKey === selectionScopeKey
+        ? selection.ids.filter((itemId) => eligibleResearchItemIds.includes(itemId))
+        : [];
+      const selectedItemIds = new Set(currentSelectedIds);
+      const areAllEligibleItemsSelected = eligibleResearchItemIds.every((itemId) =>
+        selectedItemIds.has(itemId),
+      );
+
+      if (areAllEligibleItemsSelected) {
+        return {
+          ids: currentSelectedIds.filter((itemId) => !eligibleResearchItemIds.includes(itemId)),
+          scopeKey: selectionScopeKey,
+        };
+      }
+
+      return {
+        ids: Array.from(new Set([...currentSelectedIds, ...eligibleResearchItemIds])),
+        scopeKey: selectionScopeKey,
+      };
+    });
+  };
+
+  const handleBulkAssignmentSuccess = () => {
+    setListingSelection({ ids: [], scopeKey: selectionScopeKey });
+  };
+
+  const handleBulkAssignmentConflict = async () => {
+    setListingSelection({ ids: [], scopeKey: selectionScopeKey });
+    await listingsQuery.refetch();
+  };
+
   return (
     <div className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
       {/* Header */}
@@ -138,6 +266,16 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
         listers={listers}
       />
 
+      {isAdmin && (
+        <ListingBulkAssignmentController
+          key={selectionScopeKey}
+          onStaleConflict={handleBulkAssignmentConflict}
+          onSuccess={handleBulkAssignmentSuccess}
+          researchItemIds={selectedResearchItemIds}
+          workspaceId={workspaceId}
+        />
+      )}
+
       {/* Operational Table */}
       <ListingsAdminTable
         data={listingsQuery.data}
@@ -156,6 +294,10 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
         onRetry={() => void listingsQuery.refetch()}
         onAssignLister={(item) => setAssignListerItem(item)}
         canAssignListers={isAdmin}
+        eligibleResearchItemIds={eligibleResearchItemIds}
+        onToggleAllEligible={toggleAllEligibleResearchItems}
+        onToggleSelection={toggleResearchItemSelection}
+        selectedResearchItemIds={selectedResearchItemIds}
         workspaceId={workspaceId}
       />
 
@@ -168,6 +310,7 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
         onOpenChange={(open) => !open && setAssignListerItem(null)}
         open={assignListerItem !== null}
       />
+
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ import { useTeamMembers } from "@/features/team/use-team";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
 import { AssignDesignerDialog } from "./assign-designer-dialog";
+import { BulkAssignDesignersDialog } from "./bulk-assign-designers-dialog";
 import { SyncListingsButton } from "@/features/listing/sync-listings-button";
 import { AddResearchModal } from "./add-research-modal";
 import { parseResearchFiltersFromParams, ResearchFilters } from "./research-filters";
@@ -23,6 +24,67 @@ import { useAssignResearchDesigner, useResearchItems } from "./use-research";
 type ResearchViewProps = {
   workspaceId: string;
 };
+
+type ResearchSelectionState = {
+  ids: string[];
+  scopeKey: string;
+};
+
+type ResearchBulkAssignmentControllerProps = {
+  onStaleConflict: () => Promise<void>;
+  onSuccess: () => void;
+  researchItemIds: string[];
+  workspaceId: string;
+};
+
+function ResearchBulkAssignmentController({
+  onStaleConflict,
+  onSuccess,
+  researchItemIds,
+  workspaceId,
+}: ResearchBulkAssignmentControllerProps) {
+  const [isBulkAssignDialogOpen, setIsBulkAssignDialogOpen] = useState(false);
+  const isBulkAssignmentDialogOpen =
+    isBulkAssignDialogOpen && researchItemIds.length > 0;
+
+  return (
+    <>
+      {researchItemIds.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-foreground">
+            {researchItemIds.length} selected
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onClick={() => setIsBulkAssignDialogOpen(true)}
+              type="button"
+            >
+              Assign selected
+            </button>
+            <button
+              className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onClick={onSuccess}
+              type="button"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
+      <BulkAssignDesignersDialog
+        key={isBulkAssignmentDialogOpen ? researchItemIds.join(",") : "closed"}
+        onOpenChange={setIsBulkAssignDialogOpen}
+        onStaleConflict={onStaleConflict}
+        onSuccess={onSuccess}
+        open={isBulkAssignmentDialogOpen}
+        researchItemIds={researchItemIds}
+        workspaceId={workspaceId}
+      />
+    </>
+  );
+}
 
 export function ResearchView({ workspaceId }: ResearchViewProps) {
   const router = useRouter();
@@ -55,6 +117,10 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [assignDesignerItem, setAssignDesignerItem] =
     useState<ResearchItemListItem | null>(null);
+  const [researchSelection, setResearchSelection] = useState<ResearchSelectionState>({
+    ids: [],
+    scopeKey: "",
+  });
 
   const canCreate = isMyResearchContext;
   const isManagementContext = !isMyResearchContext;
@@ -71,6 +137,21 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
     (member) => member.roles.includes("DESIGNER"),
   );
   const assignDesignerMutation = useAssignResearchDesigner(workspaceId);
+  const researchItems = researchQuery.data?.data.items;
+  const eligibleResearchItemIds = useMemo(
+    () => (researchItems ?? [])
+      .filter((item) =>
+        item.status === "RESEARCHED" && item.currentDesignAssignment === null,
+      )
+      .map((item) => item.id),
+    [researchItems],
+  );
+  const selectionScopeKey = `${workspaceId}:${searchParams.toString()}`;
+  const selectedResearchItemIds = useMemo(() => {
+    if (researchSelection.scopeKey !== selectionScopeKey) return [];
+    const eligibleItemIds = new Set(eligibleResearchItemIds);
+    return researchSelection.ids.filter((itemId) => eligibleItemIds.has(itemId));
+  }, [eligibleResearchItemIds, researchSelection, selectionScopeKey]);
   const scopedResearchCount = researchQuery.data?.data.pagination.total;
 
   const handlePageChange = (newPage: number) => {
@@ -115,6 +196,55 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
       }
       toast.error("Unable to assign Designer.");
     }
+  };
+
+  const toggleResearchItemSelection = (researchItemId: string) => {
+    setResearchSelection((selection) => {
+      const currentSelectedIds = selection.scopeKey === selectionScopeKey
+        ? selection.ids.filter((itemId) => eligibleResearchItemIds.includes(itemId))
+        : [];
+      return {
+        ids: currentSelectedIds.includes(researchItemId)
+          ? currentSelectedIds.filter((itemId) => itemId !== researchItemId)
+          : [...currentSelectedIds, researchItemId],
+        scopeKey: selectionScopeKey,
+      };
+    });
+  };
+
+  const toggleAllEligibleResearchItems = () => {
+    setResearchSelection((selection) => {
+      const currentSelectedIds = selection.scopeKey === selectionScopeKey
+        ? selection.ids.filter((itemId) => eligibleResearchItemIds.includes(itemId))
+        : [];
+      const selectedItemIds = new Set(currentSelectedIds);
+      const areAllEligibleItemsSelected = eligibleResearchItemIds.every((itemId) =>
+        selectedItemIds.has(itemId),
+      );
+
+      if (areAllEligibleItemsSelected) {
+        return {
+          ids: currentSelectedIds.filter(
+            (itemId) => !eligibleResearchItemIds.includes(itemId),
+          ),
+          scopeKey: selectionScopeKey,
+        };
+      }
+
+      return {
+        ids: Array.from(new Set([...currentSelectedIds, ...eligibleResearchItemIds])),
+        scopeKey: selectionScopeKey,
+      };
+    });
+  };
+
+  const handleBulkAssignmentSuccess = () => {
+    setResearchSelection({ ids: [], scopeKey: selectionScopeKey });
+  };
+
+  const handleBulkAssignmentConflict = async () => {
+    setResearchSelection({ ids: [], scopeKey: selectionScopeKey });
+    await researchQuery.refetch();
   };
 
   return (
@@ -170,6 +300,16 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
         </p>
       )}
 
+      {canManageResearch && (
+        <ResearchBulkAssignmentController
+          key={selectionScopeKey}
+          onStaleConflict={handleBulkAssignmentConflict}
+          onSuccess={handleBulkAssignmentSuccess}
+          researchItemIds={selectedResearchItemIds}
+          workspaceId={workspaceId}
+        />
+      )}
+
       {/* Research Table */}
       <ResearchTable
         data={researchQuery.data?.data}
@@ -198,6 +338,10 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
           }
         }}
         onAssignDesigner={(item) => setAssignDesignerItem(item)}
+        eligibleResearchItemIds={eligibleResearchItemIds}
+        onToggleAllEligible={toggleAllEligibleResearchItems}
+        onToggleSelection={toggleResearchItemSelection}
+        selectedResearchItemIds={selectedResearchItemIds}
       />
 
       {/* Item Detail Modal */}
@@ -219,6 +363,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
         onOpenChange={(open) => !open && setAssignDesignerItem(null)}
         open={assignDesignerItem !== null}
       />
+
     </div>
   );
 }

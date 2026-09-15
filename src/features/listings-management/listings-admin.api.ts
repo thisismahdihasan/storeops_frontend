@@ -2,11 +2,14 @@ import { ApiError, apiRequest } from "@/lib/api";
 import {
   adminListingListResponseSchema,
   assignListerResponseSchema,
+  bulkAssignListingsResponseSchema,
 } from "./listings-admin.schemas";
 import type {
   AdminListingFilterParams,
   AdminListingListResult,
   AssignListerResponse,
+  BulkAssignListingsInput,
+  BulkAssignListingsResponse,
 } from "./listings-admin.types";
 
 export async function getAdminListingList(
@@ -66,6 +69,26 @@ export async function assignLister(
   if (!parsed.success) {
     console.error("Lister assignment API parse error:", parsed.error.format());
     throw new ApiError(502, "Unexpected lister assignment response format.");
+  }
+
+  return parsed.data;
+}
+
+export async function bulkAssignListers(
+  workspaceId: string,
+  input: BulkAssignListingsInput,
+): Promise<BulkAssignListingsResponse> {
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${workspaceId}/listing/bulk-assign`,
+    {
+      json: input,
+      method: "POST",
+    },
+  );
+  const parsed = bulkAssignListingsResponseSchema.safeParse(response);
+
+  if (!parsed.success) {
+    throw new ApiError(502, "Unexpected bulk Lister assignment response format.");
   }
 
   return parsed.data;

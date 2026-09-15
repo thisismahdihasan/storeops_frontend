@@ -195,6 +195,15 @@ export const createResearchFormSchema = z.object({
   etsyUrl: etsyListingUrlSchema,
 });
 
+export const bulkAssignResearchResponseSchema = z.object({
+  data: z.object({
+    assignedCount: z.number().int().nonnegative(),
+    assignedItemIds: z.array(z.string()),
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});
+
 export const previewDuplicateDataSchema = z.object({
   createdAt: z.string(),
   createdBy: userSummarySchema,

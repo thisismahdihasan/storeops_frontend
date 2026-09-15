@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -28,16 +29,20 @@ import type {
 export type ResearchTableProps = {
   data?: ResearchListResult;
   emptyStateTitle?: string;
+  eligibleResearchItemIds: string[];
   hasActiveFilters: boolean;
   isError: boolean;
   isLoading: boolean;
   isManagementContext: boolean;
   onOpenAddModal: () => void;
   onAssignDesigner: (item: ResearchItemListItem) => void;
+  onToggleAllEligible: () => void;
+  onToggleSelection: (researchItemId: string) => void;
   onOpenDetail: (researchItemId: string) => void;
   onPageChange: (newPage: number) => void;
   onResetFilters: () => void;
   onRetry: () => void;
+  selectedResearchItemIds: string[];
   userRoles: WorkspaceRole[];
   workspaceId: string;
 };
@@ -73,25 +78,44 @@ function formatStatusLabel(status: ResearchStatus): string {
 export function ResearchTable({
   data,
   emptyStateTitle,
+  eligibleResearchItemIds,
   hasActiveFilters,
   isError,
   isLoading,
   isManagementContext,
   onOpenAddModal,
   onAssignDesigner,
+  onToggleAllEligible,
+  onToggleSelection,
   onOpenDetail,
   onPageChange,
   onResetFilters,
   onRetry,
+  selectedResearchItemIds,
   userRoles,
   workspaceId,
 }: ResearchTableProps) {
   const isAdmin = isManagementContext && userRoles.includes("ADMIN");
   const canCreate = !isManagementContext && userRoles.includes("RESEARCHER");
   const showStatus = isAdmin || canCreate;
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  const selectedEligibleCount = eligibleResearchItemIds.filter((itemId) =>
+    selectedResearchItemIds.includes(itemId),
+  ).length;
+  const hasSelectedEligibleItems = selectedEligibleCount > 0;
+  const areAllEligibleItemsSelected =
+    eligibleResearchItemIds.length > 0 &&
+    selectedEligibleCount === eligibleResearchItemIds.length;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate =
+        hasSelectedEligibleItems && !areAllEligibleItemsSelected;
+    }
+  }, [areAllEligibleItemsSelected, hasSelectedEligibleItems]);
 
   if (isLoading) {
-    return <TableSkeleton columnCount={isAdmin ? 7 : showStatus ? 5 : 4} />;
+    return <TableSkeleton columnCount={isAdmin ? 8 : showStatus ? 5 : 4} />;
   }
 
   if (isError) {
@@ -165,6 +189,19 @@ export function ResearchTable({
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-border bg-muted/30 font-medium text-muted-foreground">
+                {isAdmin && (
+                  <th scope="col" className="w-10 px-3 py-3">
+                    <input
+                      aria-label="Select all eligible research items on this page"
+                      checked={areAllEligibleItemsSelected}
+                      className="size-4 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      disabled={eligibleResearchItemIds.length === 0}
+                      onChange={onToggleAllEligible}
+                      ref={selectAllRef}
+                      type="checkbox"
+                    />
+                  </th>
+                )}
                 <th scope="col" className="w-16 px-3 py-3">
                   Reference
                 </th>
@@ -200,7 +237,10 @@ export function ResearchTable({
                   key={item.id}
                   item={item}
                   isAdmin={isAdmin}
+                  isSelected={selectedResearchItemIds.includes(item.id)}
+                  isSelectionEligible={eligibleResearchItemIds.includes(item.id)}
                   onAssignDesigner={onAssignDesigner}
+                  onToggleSelection={onToggleSelection}
                   onOpenDetail={onOpenDetail}
                   showStatus={showStatus}
                   userCanUpload={canCreate}
@@ -255,7 +295,10 @@ export function ResearchTable({
 function ResearchTableRow({
   item,
   isAdmin,
+  isSelected,
+  isSelectionEligible,
   onAssignDesigner,
+  onToggleSelection,
   onOpenDetail,
   showStatus,
   userCanUpload,
@@ -263,7 +306,10 @@ function ResearchTableRow({
 }: {
   item: ResearchItemListItem;
   isAdmin: boolean;
+  isSelected: boolean;
+  isSelectionEligible: boolean;
   onAssignDesigner: (item: ResearchItemListItem) => void;
+  onToggleSelection: (researchItemId: string) => void;
   onOpenDetail: (id: string) => void;
   showStatus: boolean;
   userCanUpload: boolean;
@@ -283,6 +329,19 @@ function ResearchTableRow({
 
   return (
     <tr className="transition-colors hover:bg-muted/20">
+      {isAdmin && (
+        <td className="px-3 py-3">
+          {isSelectionEligible && (
+            <input
+              aria-label={`Select ${item.title || `research item ${item.etsyListingId}`}`}
+              checked={isSelected}
+              className="size-4 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onChange={() => onToggleSelection(item.id)}
+              type="checkbox"
+            />
+          )}
+        </td>
+      )}
       {/* Reference Thumbnail (Enlarged to size-12 / 48px) */}
       <td className="px-3 py-3">
         <ReferencePreview
