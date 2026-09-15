@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -14,11 +14,14 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Trash2,
+  UserPlus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
+import { DeleteResearchItemDialog } from "./delete-research-item-dialog";
 import { ReferencePreview } from "./reference-preview";
 import type {
   ResearchItemListItem,
@@ -98,6 +101,8 @@ export function ResearchTable({
   const isAdmin = isManagementContext && userRoles.includes("ADMIN");
   const canCreate = !isManagementContext && userRoles.includes("RESEARCHER");
   const showStatus = isAdmin || canCreate;
+  const [deleteTarget, setDeleteTarget] =
+    useState<ResearchItemListItem | null>(null);
   const selectAllRef = useRef<HTMLInputElement>(null);
   const selectedEligibleCount = eligibleResearchItemIds.filter((itemId) =>
     selectedResearchItemIds.includes(itemId),
@@ -240,6 +245,7 @@ export function ResearchTable({
                   isSelected={selectedResearchItemIds.includes(item.id)}
                   isSelectionEligible={eligibleResearchItemIds.includes(item.id)}
                   onAssignDesigner={onAssignDesigner}
+                  onDeleteItem={(target) => setDeleteTarget(target)}
                   onToggleSelection={onToggleSelection}
                   onOpenDetail={onOpenDetail}
                   showStatus={showStatus}
@@ -288,6 +294,19 @@ export function ResearchTable({
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog (Admin only) */}
+      <DeleteResearchItemDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+          }
+        }}
+        workspaceId={workspaceId}
+        item={deleteTarget}
+        onSuccess={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
@@ -298,6 +317,7 @@ function ResearchTableRow({
   isSelected,
   isSelectionEligible,
   onAssignDesigner,
+  onDeleteItem,
   onToggleSelection,
   onOpenDetail,
   showStatus,
@@ -309,6 +329,7 @@ function ResearchTableRow({
   isSelected: boolean;
   isSelectionEligible: boolean;
   onAssignDesigner: (item: ResearchItemListItem) => void;
+  onDeleteItem: (item: ResearchItemListItem) => void;
   onToggleSelection: (researchItemId: string) => void;
   onOpenDetail: (id: string) => void;
   showStatus: boolean;
@@ -485,14 +506,14 @@ function ResearchTableRow({
         <div className="flex items-center justify-end gap-1.5">
           {isAdmin ? (
             <Button
-              size="xs"
+              size="icon-sm"
               variant="ghost"
               onClick={() => onOpenDetail(item.id)}
-              title="Open Details"
-              className="h-7 px-2 text-xs"
+              title="Open details"
+              aria-label={`Open details for ${item.title || `listing #${item.etsyListingId}`}`}
+              className="size-7 text-muted-foreground hover:text-foreground"
             >
-              <Eye className="size-3" />
-              <span>Open</span>
+              <Eye className="size-3.5" />
             </Button>
           ) : (
             <Button
@@ -509,12 +530,27 @@ function ResearchTableRow({
           {canAssignDesigner && (
             <Button
               type="button"
-              size="xs"
+              size="icon-sm"
               variant="ghost"
               onClick={() => onAssignDesigner(item)}
-              className="h-7 px-2 text-xs"
+              title="Assign Designer"
+              aria-label={`Assign Designer for ${item.title || `listing #${item.etsyListingId}`}`}
+              className="size-7 text-muted-foreground hover:text-foreground"
             >
-              Assign Designer
+              <UserPlus className="size-3.5" />
+            </Button>
+          )}
+          {isAdmin && (
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              onClick={() => onDeleteItem(item)}
+              title="Delete research item"
+              aria-label={`Delete ${item.title || `research item #${item.etsyListingId}`}`}
+              className="size-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="size-3.5" />
             </Button>
           )}
         </div>

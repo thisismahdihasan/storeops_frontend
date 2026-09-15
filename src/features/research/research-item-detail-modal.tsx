@@ -23,7 +23,6 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -33,14 +32,14 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge, STATUS_TONE_TEXT_CLASSES } from "@/components/ui/status-badge";
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
-import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { AuthenticatedReferenceImage } from "./authenticated-reference-image";
+import { DeleteResearchItemDialog } from "./delete-research-item-dialog";
 import { EditTitleDialog } from "./edit-title-dialog";
 import { ReferenceImageUploadModal } from "./reference-image-upload-modal";
 import { downloadResearchReferenceImage } from "./research.api";
 import type { ResearchStatus } from "./research.types";
-import { useDeleteResearchItem, useResearchItemDetail } from "./use-research";
+import { useResearchItemDetail } from "./use-research";
 
 type ResearchItemDetailModalProps = {
   isManagementContext?: boolean;
@@ -89,7 +88,7 @@ export function ResearchItemDetailModal({
 }: ResearchItemDetailModalProps) {
   const [isEditTitleOpen, setIsEditTitleOpen] = useState(false);
   const [isUploadImageOpen, setIsUploadImageOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const isAdmin = isManagementContext && userRoles.includes("ADMIN");
@@ -102,12 +101,7 @@ export function ResearchItemDetailModal({
     open && Boolean(researchItemId),
   );
 
-  const deleteMutation = useDeleteResearchItem(workspaceId);
-
   const item = detailQuery.data?.data.researchItem;
-
-  const isEarlyStage =
-    item?.status === "RESEARCHED" || item?.status === "ASSIGNED";
 
   const handleDownload = async () => {
     if (!researchItemId) return;
@@ -122,32 +116,6 @@ export function ResearchItemDetailModal({
       );
     } finally {
       setIsDownloading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!researchItemId) return;
-    setIsDeleting(true);
-
-    try {
-      await deleteMutation.mutateAsync(researchItemId);
-      toast.success("Research item deleted successfully.");
-      onClose();
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
-        toast.error(
-          error.message ||
-            "This item has already entered production and can no longer be deleted.",
-        );
-      } else {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to delete research item.",
-        );
-      }
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -493,34 +461,20 @@ export function ResearchItemDetailModal({
                       Admin Actions
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      {isEarlyStage
-                        ? "Permanently delete this early-stage research item."
-                        : "Items that have entered production cannot be deleted."}
+                      Permanently delete this research item and its associated data.
                     </p>
                   </div>
 
-                  <ConfirmDialog
-                    title="Delete Research Item"
-                    description="This permanently removes this early-stage research item. Items that have entered production cannot be deleted."
-                    confirmLabel="Delete Item"
-                    onConfirm={handleDelete}
-                    trigger={
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="xs"
-                        disabled={!isEarlyStage || isDeleting}
-                        className="gap-1 text-xs"
-                      >
-                        {isDeleting ? (
-                          <Loader2 className="size-3 animate-spin" />
-                        ) : (
-                          <Trash2 className="size-3" />
-                        )}
-                        <span>Delete Item</span>
-                      </Button>
-                    }
-                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="xs"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="gap-1 text-xs"
+                  >
+                    <Trash2 className="size-3" />
+                    <span>Delete Item</span>
+                  </Button>
                 </div>
               )}
             </div>
@@ -556,6 +510,17 @@ export function ResearchItemDetailModal({
               ? "Upload a new JPEG, PNG, or WebP image to replace the current reference image."
               : "Upload a JPEG, PNG, or WebP image (up to 10MB) to attach as reference for designers."
           }
+        />
+      )}
+
+      {/* Delete Confirmation Dialog (ADMIN only) */}
+      {item && (
+        <DeleteResearchItemDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          workspaceId={workspaceId}
+          item={item}
+          onSuccess={onClose}
         />
       )}
     </>

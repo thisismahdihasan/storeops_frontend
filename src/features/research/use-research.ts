@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api";
 import { notificationKeys } from "@/features/notifications/notifications.keys";
+import { reviewsKeys } from "@/features/reviews/reviews.keys";
+import { listingKeys } from "@/features/listing/listing.keys";
 
 import {
   bulkAssignResearchDesigners,
@@ -165,6 +167,27 @@ export function useDeleteResearchItem(workspaceId: string) {
       });
       void queryClient.invalidateQueries({
         queryKey: ["dashboard", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["designer-work", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["design-workspace", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["designs", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: reviewsKeys.workspace(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["listings", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: listingKeys.all(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: notificationKeys.all(workspaceId),
       });
     },
   });
