@@ -59,7 +59,11 @@ export function useCreateWorkspace() {
         id: createdWorkspace.id,
         membership: {
           createdAt: createdMembership.createdAt,
+          designerAssignmentEnabled: true,
+          designerAssignmentPausedUntil: null,
           id: createdMembership.id,
+          listerAssignmentEnabled: true,
+          listerAssignmentPausedUntil: null,
           roles: createdMembership.roles,
         },
         name: createdWorkspace.name,

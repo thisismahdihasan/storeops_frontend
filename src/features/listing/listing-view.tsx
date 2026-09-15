@@ -7,6 +7,7 @@ import { Tag } from "lucide-react";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
 
+import { WorkerAssignmentStatusBanner } from "@/features/workspace/worker-assignment-status-banner";
 import { ListingAccessState } from "./listing-access-state";
 import { ListingFilters } from "./listing-filters";
 import { ListingList } from "./listing-list";
@@ -97,6 +98,13 @@ export function ListingView({ workspaceId }: ListingViewProps) {
           </p>
         ) : null}
       </header>
+
+      {workspace ? (
+        <WorkerAssignmentStatusBanner
+          membership={workspace.membership}
+          role="LISTER"
+        />
+      ) : null}
 
       <ListingFilters
         filters={filters}

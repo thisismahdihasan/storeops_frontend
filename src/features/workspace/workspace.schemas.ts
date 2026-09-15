@@ -9,6 +9,10 @@ export const workspaceRoleSchema = z.enum([
 
 export const workspaceMembershipSummarySchema = z.object({
   createdAt: z.string(),
+  designerAssignmentEnabled: z.boolean(),
+  designerAssignmentPausedUntil: z.string().nullable(),
+  listerAssignmentEnabled: z.boolean(),
+  listerAssignmentPausedUntil: z.string().nullable(),
   id: z.string(),
   roles: z.array(workspaceRoleSchema),
 });

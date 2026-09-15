@@ -4,6 +4,10 @@ export type WorkspaceMembershipSummary = {
   createdAt: string;
   id: string;
   roles: WorkspaceRole[];
+  designerAssignmentEnabled: boolean;
+  designerAssignmentPausedUntil: string | null;
+  listerAssignmentEnabled: boolean;
+  listerAssignmentPausedUntil: string | null;
 };
 
 export type WorkspaceWithMembership = {
