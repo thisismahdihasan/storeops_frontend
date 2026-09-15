@@ -56,6 +56,8 @@ export function useCreateWorkspace() {
 
       const newWorkspaceItem: WorkspaceWithMembership = {
         createdAt: createdWorkspace.createdAt,
+        designerAutoAssignmentEnabled: true,
+        listerAutoAssignmentEnabled: true,
         id: createdWorkspace.id,
         membership: {
           createdAt: createdMembership.createdAt,

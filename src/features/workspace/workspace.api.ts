@@ -2,11 +2,14 @@ import { ApiError, apiRequest } from "@/lib/api";
 
 import {
   createWorkspaceResponseSchema,
+  updateWorkspaceSettingsResponseSchema,
   workspacesResponseSchema,
 } from "./workspace.schemas";
 import type {
   CreateWorkspaceInput,
   CreateWorkspaceResponse,
+  UpdateWorkspaceSettingsInput,
+  UpdateWorkspaceSettingsResponse,
   WorkspacesResponse,
 } from "./workspace.types";
 
@@ -34,6 +37,24 @@ export async function createWorkspace(
 
   if (!parsedResponse.success) {
     throw new ApiError(502, "The service returned an unexpected workspace creation response.");
+  }
+
+  return parsedResponse.data;
+}
+
+export async function updateWorkspaceSettings(
+  workspaceId: string,
+  input: UpdateWorkspaceSettingsInput,
+): Promise<UpdateWorkspaceSettingsResponse> {
+  const response = await apiRequest<unknown>(`/api/v1/workspaces/${workspaceId}/settings`, {
+    json: input,
+    method: "PATCH",
+  });
+  
+  const parsedResponse = updateWorkspaceSettingsResponseSchema.safeParse(response);
+
+  if (!parsedResponse.success) {
+    throw new ApiError(502, "The service returned an unexpected settings update response.");
   }
 
   return parsedResponse.data;

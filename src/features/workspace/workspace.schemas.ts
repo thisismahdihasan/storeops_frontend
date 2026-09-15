@@ -19,6 +19,8 @@ export const workspaceMembershipSummarySchema = z.object({
 
 export const workspaceWithMembershipSchema = z.object({
   createdAt: z.string(),
+  designerAutoAssignmentEnabled: z.boolean(),
+  listerAutoAssignmentEnabled: z.boolean(),
   id: z.string(),
   membership: workspaceMembershipSummarySchema,
   name: z.string(),
@@ -62,6 +64,30 @@ export const createWorkspaceResponseSchema = z.object({
   data: z.object({
     membership: workspaceMembershipSchema,
     workspace: workspaceSchema,
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});
+
+export const updateWorkspaceSettingsInputSchema = z.object({
+  designerAutoAssignmentEnabled: z.boolean().optional(),
+  listerAutoAssignmentEnabled: z.boolean().optional(),
+}).strict().refine(
+  (data) => data.designerAutoAssignmentEnabled !== undefined || data.listerAutoAssignmentEnabled !== undefined,
+  "At least one setting must be provided"
+);
+
+export const updateWorkspaceSettingsResponseSchema = z.object({
+  data: z.object({
+    workspace: workspaceWithMembershipSchema.pick({
+      id: true,
+      name: true,
+      ownerId: true,
+      designerAutoAssignmentEnabled: true,
+      listerAutoAssignmentEnabled: true,
+      createdAt: true,
+      updatedAt: true,
+    }),
   }),
   message: z.string(),
   success: z.literal(true),

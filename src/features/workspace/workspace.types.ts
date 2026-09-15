@@ -12,6 +12,8 @@ export type WorkspaceMembershipSummary = {
 
 export type WorkspaceWithMembership = {
   createdAt: string;
+  designerAutoAssignmentEnabled: boolean;
+  listerAutoAssignmentEnabled: boolean;
   id: string;
   membership: WorkspaceMembershipSummary;
   name: string;
@@ -56,6 +58,19 @@ export type CreateWorkspaceData = {
 
 export type CreateWorkspaceResponse = {
   data: CreateWorkspaceData;
+  message: string;
+  success: true;
+};
+
+export type UpdateWorkspaceSettingsInput = {
+  designerAutoAssignmentEnabled?: boolean;
+  listerAutoAssignmentEnabled?: boolean;
+};
+
+export type UpdateWorkspaceSettingsResponse = {
+  data: {
+    workspace: Omit<WorkspaceWithMembership, "membership">;
+  };
   message: string;
   success: true;
 };

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useNavigationContext } from "@/components/layout/navigation-context";
+import { InlineNotice } from "@/components/ui/inline-notice";
 import { useCurrentSession } from "@/features/auth/use-current-session";
 import { useTeamMembers } from "@/features/team/use-team";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
@@ -112,6 +113,17 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
           </div>
         )}
       </div>
+
+      {canManageResearch && activeWorkspace && !activeWorkspace.designerAutoAssignmentEnabled && (
+        <InlineNotice variant="warning">
+          <p className="font-semibold text-[13px] leading-tight mb-0.5">
+            Designer auto-assignment is off
+          </p>
+          <p className="text-xs leading-relaxed">
+            New research items will remain unassigned until an admin assigns them manually or runs Sync Unassigned.
+          </p>
+        </InlineNotice>
+      )}
 
       {/* Filters Bar */}
       <ResearchFilters

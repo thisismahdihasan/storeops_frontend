@@ -4,6 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tag } from "lucide-react";
 
 import { useTeamMembers } from "@/features/team/use-team";
+import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { InlineNotice } from "@/components/ui/inline-notice";
 import { parseListingAdminFiltersFromParams } from "./listings-admin.schemas";
 import { useAdminListingList } from "./use-admin-listings";
 import { ListingsAdminFilters } from "./listings-admin-filters";
@@ -17,6 +19,11 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const workspacesQuery = useWorkspaces();
+  const activeWorkspace = workspacesQuery.data?.data.workspaces.find(
+    (ws) => ws.id === workspaceId
+  );
 
   const currentFilters = parseListingAdminFiltersFromParams(searchParams);
   const listingsQuery = useAdminListingList(workspaceId, currentFilters);
@@ -81,6 +88,17 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
           </p>
         )}
       </div>
+
+      {activeWorkspace && !activeWorkspace.listerAutoAssignmentEnabled && (
+        <InlineNotice variant="warning">
+          <p className="font-semibold text-[13px] leading-tight mb-0.5">
+            Lister auto-assignment is off
+          </p>
+          <p className="text-xs leading-relaxed">
+            New listing-ready items will remain unassigned until an admin assigns them manually or runs Sync Listings.
+          </p>
+        </InlineNotice>
+      )}
 
       {/* Toolbar Filters */}
       <ListingsAdminFilters

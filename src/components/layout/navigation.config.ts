@@ -7,6 +7,7 @@ import {
   Palette,
   RotateCcw,
   Search,
+  Settings,
   Tag,
   Users,
 } from "lucide-react";
@@ -113,6 +114,15 @@ const NAVIGATION_DEFINITIONS: NavigationDefinition[] = [
     title: "Team",
   },
   {
+    group: "MANAGEMENT",
+    icon: Settings,
+    id: "settings",
+    mode: "management",
+    roles: ["ADMIN"],
+    segment: "settings",
+    title: "Workspace Settings",
+  },
+  {
     badgeKey: "unreadNotifications",
     group: "MANAGEMENT",
     icon: Bell,
@@ -192,6 +202,7 @@ const ROUTE_ACCESS_ROLES: Record<string, WorkspaceRole[]> = {
   notifications: ["ADMIN", "RESEARCHER", "DESIGNER", "LISTER"],
   research: ["ADMIN", "RESEARCHER"],
   reviews: ["ADMIN"],
+  settings: ["ADMIN"],
   team: ["ADMIN"],
 };
 
@@ -224,6 +235,7 @@ export function resolveNavigationModeForRouteSegments(
     segment === "designs" ||
     segment === "issues" ||
     segment === "listings" ||
+    segment === "settings" ||
     segment === "team" ||
     (segment === "reviews" && !nestedSegment)
   ) {
