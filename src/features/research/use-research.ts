@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api";
+import { notificationKeys } from "@/features/notifications/notifications.keys";
 
 import {
   createResearchItem,
@@ -10,6 +11,7 @@ import {
   getResearchItemById,
   getResearchItems,
   getResearchReferenceImageBlob,
+  reassignResearchDesigner,
   previewResearchItem,
   syncResearchAssignments,
   updateResearchItemTitle,
@@ -196,6 +198,37 @@ export function useSyncResearchAssignments(workspaceId: string) {
       });
       void queryClient.invalidateQueries({
         queryKey: ["designer-work", workspaceId],
+      });
+    },
+  });
+}
+
+export function useAssignResearchDesigner(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      designerId,
+      researchItemId,
+    }: {
+      designerId: string;
+      researchItemId: string;
+    }) => reassignResearchDesigner(workspaceId, researchItemId, designerId),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.lists(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.detail(workspaceId, variables.researchItemId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["designer-work", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboard", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: notificationKeys.all(workspaceId),
       });
     },
   });

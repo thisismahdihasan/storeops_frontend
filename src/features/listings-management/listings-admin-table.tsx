@@ -16,6 +16,8 @@ export type ListingsAdminTableProps = {
   hasActiveFilters: boolean;
   isError: boolean;
   isLoading: boolean;
+  canAssignListers: boolean;
+  onAssignLister: (item: AdminListingItem) => void;
   onPageChange: (newPage: number) => void;
   onResetFilters: () => void;
   onRetry: () => void;
@@ -57,6 +59,8 @@ export function ListingsAdminTable({
   hasActiveFilters,
   isError,
   isLoading,
+  canAssignListers,
+  onAssignLister,
   onPageChange,
   onResetFilters,
   onRetry,
@@ -147,6 +151,10 @@ export function ListingsAdminTable({
               {items.map((item: AdminListingItem) => {
                 const statusMeta = formatStatus(item.status);
                 const publishedUrl = item.listingResult?.etsyListingUrl;
+                const canAssignLister =
+                  canAssignListers &&
+                  item.status === "READY_FOR_LISTING" &&
+                  item.currentAssignment === null;
 
                 return (
                   <tr
@@ -260,6 +268,16 @@ export function ListingsAdminTable({
                         >
                           Details
                         </Button>
+                        {canAssignLister && (
+                          <Button
+                            size="xs"
+                            variant="ghost"
+                            onClick={() => onAssignLister(item)}
+                            className="h-7 px-2 text-xs"
+                          >
+                            Assign Lister
+                          </Button>
+                        )}
                         {publishedUrl ? (
                           <a
                             href={publishedUrl}

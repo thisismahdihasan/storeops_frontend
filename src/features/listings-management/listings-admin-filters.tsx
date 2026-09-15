@@ -22,11 +22,13 @@ const LISTING_STATUS_OPTIONS: Array<{ label: string; value: ResearchStatus }> = 
 
 type ListingsAdminFiltersProps = {
   currentFilters: AdminListingFilterParams;
+  isAdmin: boolean;
   listers?: MemberFilterOption[];
 };
 
 export function ListingsAdminFilters({
   currentFilters,
+  isAdmin,
   listers = [],
 }: ListingsAdminFiltersProps) {
   const router = useRouter();
@@ -65,8 +67,21 @@ export function ListingsAdminFilters({
     const params = new URLSearchParams(searchParams.toString());
     if (selected && selected !== "ALL") {
       params.set("status", selected);
+      params.delete("assignment");
     } else {
       params.delete("status");
+    }
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleAssignmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (e.target.value === "UNASSIGNED") {
+      params.set("assignment", "UNASSIGNED");
+      params.delete("status");
+    } else {
+      params.delete("assignment");
     }
     params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
@@ -100,7 +115,8 @@ export function ListingsAdminFilters({
   };
 
   const hasActiveFilters = Boolean(
-    currentFilters.status ||
+    currentFilters.assignment ||
+      currentFilters.status ||
       currentFilters.search ||
       currentFilters.date ||
       currentFilters.listerId ||
@@ -135,29 +151,45 @@ export function ListingsAdminFilters({
       }
     >
       {/* Lister Combobox Selector */}
-      <MemberFilterSelect
-        allLabel="All Listers"
-        emptyMessage="No listers found."
-        label="Lister"
-        onValueChange={handleListerChange}
-        options={listers}
-        value={currentFilters.listerId}
-      />
+      {isAdmin && (
+        <MemberFilterSelect
+          allLabel="All Listers"
+          emptyMessage="No listers found."
+          label="Lister"
+          onValueChange={handleListerChange}
+          options={listers}
+          value={currentFilters.listerId}
+        />
+      )}
 
       {/* Status Filter */}
-      <select
-        value={currentFilters.status ?? "ALL"}
-        onChange={handleStatusChange}
-        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
-        aria-label="Filter by listing status"
-      >
-        <option value="ALL">All Statuses</option>
-        {LISTING_STATUS_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      {isAdmin && (
+        <select
+          aria-label="Filter by listing status"
+          className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+          onChange={handleStatusChange}
+          value={currentFilters.status ?? "ALL"}
+        >
+          <option value="ALL">All Statuses</option>
+          {LISTING_STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {isAdmin && (
+        <select
+          aria-label="Filter by assignment"
+          className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+          onChange={handleAssignmentChange}
+          value={currentFilters.assignment ?? "ALL"}
+        >
+          <option value="ALL">All assignments</option>
+          <option value="UNASSIGNED">Unassigned</option>
+        </select>
+      )}
 
       {/* Date Filter */}
       <DateFilterPicker

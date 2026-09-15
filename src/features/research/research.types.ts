@@ -175,6 +175,7 @@ export type DuplicateResearchData =
     };
 
 export type ResearchListFilterParams = {
+  assignment?: "UNASSIGNED";
   createdBy?: string;
   date?: string;
   limit?: number;

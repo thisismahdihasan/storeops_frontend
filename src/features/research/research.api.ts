@@ -53,6 +53,10 @@ function buildResearchListQueryString(filter?: ResearchListFilterParams): string
     searchParams.set("status", filter.status);
   }
 
+  if (filter.assignment === "UNASSIGNED") {
+    searchParams.set("assignment", filter.assignment);
+  }
+
   if (filter.search && filter.search.trim().length > 0) {
     searchParams.set("search", filter.search.trim());
   }

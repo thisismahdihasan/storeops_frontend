@@ -2,19 +2,23 @@
 
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 import { useNavigationContext } from "@/components/layout/navigation-context";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { useCurrentSession } from "@/features/auth/use-current-session";
 import { useTeamMembers } from "@/features/team/use-team";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { ApiError } from "@/lib/api";
+import { AssignDesignerDialog } from "./assign-designer-dialog";
 import { SyncListingsButton } from "@/features/listing/sync-listings-button";
 import { AddResearchModal } from "./add-research-modal";
 import { parseResearchFiltersFromParams, ResearchFilters } from "./research-filters";
 import { ResearchItemDetailModal } from "./research-item-detail-modal";
 import { ResearchTable } from "./research-table";
 import { SyncUnassignedButton } from "./sync-unassigned-button";
-import { useResearchItems } from "./use-research";
+import type { ResearchItemListItem } from "./research.types";
+import { useAssignResearchDesigner, useResearchItems } from "./use-research";
 
 type ResearchViewProps = {
   workspaceId: string;
@@ -49,6 +53,8 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
   );
 
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [assignDesignerItem, setAssignDesignerItem] =
+    useState<ResearchItemListItem | null>(null);
 
   const canCreate = isMyResearchContext;
   const isManagementContext = !isMyResearchContext;
@@ -61,6 +67,10 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
       name: member.name,
       userId: member.userId,
     }));
+  const designers = (teamMembersQuery.data?.data.members ?? []).filter(
+    (member) => member.roles.includes("DESIGNER"),
+  );
+  const assignDesignerMutation = useAssignResearchDesigner(workspaceId);
   const scopedResearchCount = researchQuery.data?.data.pagination.total;
 
   const handlePageChange = (newPage: number) => {
@@ -78,12 +88,34 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
   };
 
   const hasActiveFilters = Boolean(
-    currentFilters.status ||
+    currentFilters.assignment ||
+      currentFilters.status ||
       currentFilters.search ||
       currentFilters.date ||
       (isManagementContext && currentFilters.createdBy) ||
       (currentFilters.page && currentFilters.page > 1),
   );
+
+  const handleAssignDesigner = async (designerId: string) => {
+    if (!assignDesignerItem) return;
+
+    try {
+      await assignDesignerMutation.mutateAsync({
+        designerId,
+        researchItemId: assignDesignerItem.id,
+      });
+      toast.success("Designer assigned");
+      setAssignDesignerItem(null);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        toast.error("This item is no longer available for assignment. The list has been refreshed.");
+        await researchQuery.refetch();
+        setAssignDesignerItem(null);
+        return;
+      }
+      toast.error("Unable to assign Designer.");
+    }
+  };
 
   return (
     <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
@@ -165,6 +197,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
             addBtn.click();
           }
         }}
+        onAssignDesigner={(item) => setAssignDesignerItem(item)}
       />
 
       {/* Item Detail Modal */}
@@ -175,6 +208,16 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
         workspaceId={workspaceId}
         userRoles={userRoles}
         isManagementContext={isManagementContext}
+      />
+
+      <AssignDesignerDialog
+        designers={designers}
+        isLoadingDesigners={teamMembersQuery.isLoading || teamMembersQuery.isError}
+        isSubmitting={assignDesignerMutation.isPending}
+        item={assignDesignerItem}
+        onAssign={handleAssignDesigner}
+        onOpenChange={(open) => !open && setAssignDesignerItem(null)}
+        open={assignDesignerItem !== null}
       />
     </div>
   );

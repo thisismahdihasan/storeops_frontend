@@ -15,6 +15,7 @@ export function parseListingAdminFiltersFromParams(
   const searchParam = searchParams.get("search") ?? undefined;
   const dateParam = searchParams.get("date") ?? undefined;
   const listerIdParam = searchParams.get("listerId") ?? undefined;
+  const assignmentParam = searchParams.get("assignment");
   const pageParam = searchParams.get("page");
 
   const parsedStatus =
@@ -28,8 +29,10 @@ export function parseListingAdminFiltersFromParams(
       : 1;
 
   const isValidDate = dateParam ? /^\d{4}-\d{2}-\d{2}$/.test(dateParam) : false;
+  const assignment = assignmentParam === "UNASSIGNED" ? assignmentParam : undefined;
 
   return {
+    assignment,
     date: isValidDate ? dateParam : undefined,
     limit: 20,
     listerId: listerIdParam,
@@ -38,7 +41,7 @@ export function parseListingAdminFiltersFromParams(
       searchParam && searchParam.trim().length > 0
         ? searchParam.trim()
         : undefined,
-    status: parsedStatus,
+    status: assignment ? undefined : parsedStatus,
   };
 }
 
@@ -100,4 +103,21 @@ export const adminListingListResponseSchema = z.object({
   message: z.string(),
   statusCode: z.number().optional(),
   success: z.boolean(),
+});
+
+export const assignListerResponseSchema = z.object({
+  data: z.object({
+    assignment: z.object({
+      assignedAt: z.string(),
+      id: z.string(),
+      isCurrent: z.boolean(),
+      listerId: z.string(),
+    }),
+    researchItem: z.object({
+      id: z.string(),
+      status: adminListingWorkflowStatusSchema,
+    }),
+  }),
+  message: z.string(),
+  success: z.literal(true),
 });

@@ -33,6 +33,7 @@ export function parseResearchFiltersFromParams(
   const searchParam = searchParams.get("search") ?? undefined;
   const dateParam = searchParams.get("date") ?? undefined;
   const createdByParam = searchParams.get("createdBy") ?? undefined;
+  const assignmentParam = searchParams.get("assignment");
   const pageParam = searchParams.get("page");
 
   const validStatuses = new Set<string>([
@@ -57,6 +58,7 @@ export function parseResearchFiltersFromParams(
     pageParam && !Number.isNaN(Number(pageParam)) && Number(pageParam) > 0
       ? Number(pageParam)
       : 1;
+  const assignment = assignmentParam === "UNASSIGNED" ? assignmentParam : undefined;
 
   // Validate date regex YYYY-MM-DD if present
   const isValidDate = dateParam ? /^\d{4}-\d{2}-\d{2}$/.test(dateParam) : false;
@@ -67,7 +69,8 @@ export function parseResearchFiltersFromParams(
     limit: 20,
     page: parsedPage,
     search: searchParam && searchParam.trim().length > 0 ? searchParam.trim() : undefined,
-    status: parsedStatus,
+    assignment,
+    status: assignment ? undefined : parsedStatus,
   };
 }
 
@@ -121,8 +124,21 @@ export function ResearchFilters({
     const params = new URLSearchParams(searchParams.toString());
     if (selected && selected !== "ALL") {
       params.set("status", selected);
+      params.delete("assignment");
     } else {
       params.delete("status");
+    }
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleAssignmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (e.target.value === "UNASSIGNED") {
+      params.set("assignment", "UNASSIGNED");
+      params.delete("status");
+    } else {
+      params.delete("assignment");
     }
     params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
@@ -156,7 +172,8 @@ export function ResearchFilters({
   };
 
   const hasActiveFilters = Boolean(
-    currentFilters.status ||
+    currentFilters.assignment ||
+      currentFilters.status ||
       currentFilters.search ||
       currentFilters.date ||
       (isAdmin && currentFilters.createdBy) ||
@@ -216,6 +233,18 @@ export function ResearchFilters({
               {option.label}
             </option>
           ))}
+        </select>
+      )}
+
+      {isAdmin && (
+        <select
+          aria-label="Filter by assignment"
+          className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+          onChange={handleAssignmentChange}
+          value={currentFilters.assignment ?? "ALL"}
+        >
+          <option value="ALL">All assignments</option>
+          <option value="UNASSIGNED">Unassigned</option>
         </select>
       )}
 

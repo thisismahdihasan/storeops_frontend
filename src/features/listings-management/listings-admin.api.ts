@@ -1,8 +1,12 @@
 import { ApiError, apiRequest } from "@/lib/api";
-import { adminListingListResponseSchema } from "./listings-admin.schemas";
+import {
+  adminListingListResponseSchema,
+  assignListerResponseSchema,
+} from "./listings-admin.schemas";
 import type {
   AdminListingFilterParams,
   AdminListingListResult,
+  AssignListerResponse,
 } from "./listings-admin.types";
 
 export async function getAdminListingList(
@@ -21,6 +25,9 @@ export async function getAdminListingList(
   }
   if (filters.status) {
     params.set("status", filters.status);
+  }
+  if (filters.assignment === "UNASSIGNED") {
+    params.set("assignment", filters.assignment);
   }
   if (filters.date) {
     params.set("date", filters.date);
@@ -42,3 +49,24 @@ export async function getAdminListingList(
   return parsed.data.data;
 }
 
+export async function assignLister(
+  workspaceId: string,
+  researchItemId: string,
+  listerId: string,
+): Promise<AssignListerResponse> {
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${workspaceId}/listing/${researchItemId}/lister`,
+    {
+      json: { listerId },
+      method: "PATCH",
+    },
+  );
+  const parsed = assignListerResponseSchema.safeParse(response);
+
+  if (!parsed.success) {
+    console.error("Lister assignment API parse error:", parsed.error.format());
+    throw new ApiError(502, "Unexpected lister assignment response format.");
+  }
+
+  return parsed.data;
+}

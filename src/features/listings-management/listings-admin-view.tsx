@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tag } from "lucide-react";
+import { toast } from "sonner";
 
 import { useTeamMembers } from "@/features/team/use-team";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { ApiError } from "@/lib/api";
+import { AssignListerDialog } from "./assign-lister-dialog";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { parseListingAdminFiltersFromParams } from "./listings-admin.schemas";
-import { useAdminListingList } from "./use-admin-listings";
+import type { AdminListingItem } from "./listings-admin.types";
+import { useAdminListingList, useAssignLister } from "./use-admin-listings";
 import { ListingsAdminFilters } from "./listings-admin-filters";
 import { ListingsAdminTable } from "./listings-admin-table";
 
@@ -24,24 +29,28 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
   const activeWorkspace = workspacesQuery.data?.data.workspaces.find(
     (ws) => ws.id === workspaceId
   );
+  const isAdmin = activeWorkspace?.membership.roles.includes("ADMIN") ?? false;
 
   const currentFilters = parseListingAdminFiltersFromParams(searchParams);
   const listingsQuery = useAdminListingList(workspaceId, currentFilters);
 
-  const teamMembersQuery = useTeamMembers(workspaceId, true);
-  const listers = (teamMembersQuery.data?.data.members ?? [])
-    .filter((member) => member.roles.includes("LISTER"))
-    .map((member) => ({
-      email: member.email,
-      name: member.name,
-      userId: member.userId,
-    }));
+  const teamMembersQuery = useTeamMembers(workspaceId, isAdmin);
+  const listerMembers = (teamMembersQuery.data?.data.members ?? [])
+    .filter((member) => member.roles.includes("LISTER"));
+  const listers = listerMembers.map((member) => ({
+    email: member.email,
+    name: member.name,
+    userId: member.userId,
+  }));
 
   const selectedLister = listers.find(
     (lister) => lister.userId === currentFilters.listerId,
   );
 
   const totalCount = listingsQuery.data?.pagination.total;
+  const assignListerMutation = useAssignLister(workspaceId);
+  const [assignListerItem, setAssignListerItem] =
+    useState<AdminListingItem | null>(null);
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -58,12 +67,34 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
   };
 
   const hasActiveFilters = Boolean(
-    currentFilters.status ||
+    currentFilters.assignment ||
+      currentFilters.status ||
       currentFilters.search ||
       currentFilters.date ||
       currentFilters.listerId ||
       (currentFilters.page && currentFilters.page > 1),
   );
+
+  const handleAssignLister = async (listerId: string) => {
+    if (!assignListerItem) return;
+
+    try {
+      await assignListerMutation.mutateAsync({
+        listerId,
+        researchItemId: assignListerItem.id,
+      });
+      toast.success("Lister assigned");
+      setAssignListerItem(null);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        toast.error("This item is no longer available for assignment. The list has been refreshed.");
+        await listingsQuery.refetch();
+        setAssignListerItem(null);
+        return;
+      }
+      toast.error("Unable to assign Lister.");
+    }
+  };
 
   return (
     <div className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
@@ -103,6 +134,7 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
       {/* Toolbar Filters */}
       <ListingsAdminFilters
         currentFilters={currentFilters}
+        isAdmin={isAdmin}
         listers={listers}
       />
 
@@ -122,7 +154,19 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
         onPageChange={handlePageChange}
         onResetFilters={handleResetFilters}
         onRetry={() => void listingsQuery.refetch()}
+        onAssignLister={(item) => setAssignListerItem(item)}
+        canAssignListers={isAdmin}
         workspaceId={workspaceId}
+      />
+
+      <AssignListerDialog
+        isLoadingListers={teamMembersQuery.isLoading || teamMembersQuery.isError}
+        isSubmitting={assignListerMutation.isPending}
+        item={assignListerItem}
+        listers={listerMembers}
+        onAssign={handleAssignLister}
+        onOpenChange={(open) => !open && setAssignListerItem(null)}
+        open={assignListerItem !== null}
       />
     </div>
   );

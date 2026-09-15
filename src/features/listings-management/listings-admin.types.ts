@@ -46,10 +46,28 @@ export type AdminListingListResult = {
 };
 
 export type AdminListingFilterParams = {
+  assignment?: "UNASSIGNED";
   date?: string;
   limit?: number;
   listerId?: string;
   page?: number;
   search?: string;
   status?: ResearchStatus;
+};
+
+export type AssignListerResponse = {
+  data: {
+    assignment: {
+      assignedAt: string;
+      id: string;
+      isCurrent: boolean;
+      listerId: string;
+    };
+    researchItem: {
+      id: string;
+      status: ResearchStatus;
+    };
+  };
+  message: string;
+  success: true;
 };

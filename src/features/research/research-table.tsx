@@ -1,29 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  Download,
   ExternalLink,
   Eye,
-  Loader2,
   MessageSquare,
   Pencil,
   Plus,
   RefreshCw,
   Search,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
 import { ReferencePreview } from "./reference-preview";
-import { downloadResearchReferenceImage } from "./research.api";
 import type {
   ResearchItemListItem,
   ResearchListResult,
@@ -38,6 +33,7 @@ export type ResearchTableProps = {
   isLoading: boolean;
   isManagementContext: boolean;
   onOpenAddModal: () => void;
+  onAssignDesigner: (item: ResearchItemListItem) => void;
   onOpenDetail: (researchItemId: string) => void;
   onPageChange: (newPage: number) => void;
   onResetFilters: () => void;
@@ -82,6 +78,7 @@ export function ResearchTable({
   isLoading,
   isManagementContext,
   onOpenAddModal,
+  onAssignDesigner,
   onOpenDetail,
   onPageChange,
   onResetFilters,
@@ -203,6 +200,7 @@ export function ResearchTable({
                   key={item.id}
                   item={item}
                   isAdmin={isAdmin}
+                  onAssignDesigner={onAssignDesigner}
                   onOpenDetail={onOpenDetail}
                   showStatus={showStatus}
                   userCanUpload={canCreate}
@@ -257,6 +255,7 @@ export function ResearchTable({
 function ResearchTableRow({
   item,
   isAdmin,
+  onAssignDesigner,
   onOpenDetail,
   showStatus,
   userCanUpload,
@@ -264,13 +263,12 @@ function ResearchTableRow({
 }: {
   item: ResearchItemListItem;
   isAdmin: boolean;
+  onAssignDesigner: (item: ResearchItemListItem) => void;
   onOpenDetail: (id: string) => void;
   showStatus: boolean;
   userCanUpload: boolean;
   workspaceId: string;
 }) {
-  const [isDownloading, setIsDownloading] = useState(false);
-
   const { designerReplyCount, latestReviewId } = item.reviewActivity ?? {
     designerReplyCount: 0,
     latestDesignerReplyAt: null,
@@ -280,21 +278,8 @@ function ResearchTableRow({
   const replyCountLabel = `${designerReplyCount} Designer ${designerReplyCount === 1 ? "reply" : "replies"}`;
   const replyCountTooltip = `${replyCountLabel} on review annotations`;
 
-  const handleDownload = async () => {
-    if (!item.referenceImageUrl) return;
-    setIsDownloading(true);
-    try {
-      await downloadResearchReferenceImage(workspaceId, item.id);
-    } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Failed to download reference image."
-      );
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+  const canAssignDesigner =
+    isAdmin && item.status === "RESEARCHED" && item.currentDesignAssignment === null;
 
   return (
     <tr className="transition-colors hover:bg-muted/20">
@@ -462,27 +447,15 @@ function ResearchTableRow({
               <span>Edit</span>
             </Button>
           )}
-
-          {/* Download Action (Admin only) */}
-          {isAdmin && (
+          {canAssignDesigner && (
             <Button
               type="button"
               size="xs"
               variant="ghost"
-              onClick={() => void handleDownload()}
-              disabled={!item.referenceImageUrl || isDownloading}
-              title={
-                item.referenceImageUrl
-                  ? "Download Reference Image"
-                  : "No reference image available"
-              }
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => onAssignDesigner(item)}
+              className="h-7 px-2 text-xs"
             >
-              {isDownloading ? (
-                <Loader2 className="size-3 animate-spin" />
-              ) : (
-                <Download className="size-3" />
-              )}
+              Assign Designer
             </Button>
           )}
         </div>
