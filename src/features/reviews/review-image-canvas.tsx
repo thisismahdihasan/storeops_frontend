@@ -2,7 +2,7 @@
 "use client";
 
 import { MessageSquare, MessageSquarePlus, X } from "lucide-react";
-import { type MouseEvent, useRef, useState } from "react";
+import { type MouseEvent, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,11 @@ type ReviewImageAnnotation = Pick<
   ReviewAnnotationDetail,
   "comment" | "id" | "x" | "y"
 >;
+
+type ComposerPlacement = {
+  left: number;
+  top: number;
+};
 
 type ReviewImageCanvasProps = {
   annotations: ReviewImageAnnotation[];
@@ -48,10 +53,13 @@ export function ReviewImageCanvas({
   workspaceId,
 }: ReviewImageCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLDivElement>(null);
   const [activeComposer, setActiveComposer] = useState<{
     x: number;
     y: number;
   } | null>(null);
+  const [composerPlacement, setComposerPlacement] =
+    useState<ComposerPlacement | null>(null);
   const [commentText, setCommentText] = useState("");
 
   const createAnnotationMutation = useCreateReviewAnnotation(
@@ -61,6 +69,59 @@ export function ReviewImageCanvas({
   );
 
   const isImageUnavailable = !imageUrl || imageDeletedAt !== null;
+
+  useLayoutEffect(() => {
+    if (!activeComposer) return;
+    const composerCoordinates = activeComposer;
+
+    function updateComposerPlacement() {
+      const container = containerRef.current;
+      const composer = composerRef.current;
+      if (!container || !composer) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const composerRect = composer.getBoundingClientRect();
+      const viewportPadding = 16;
+      const pinOffset = 16;
+      const pinX =
+        containerRect.left + composerCoordinates.x * containerRect.width;
+      const pinY =
+        containerRect.top + composerCoordinates.y * containerRect.height;
+      const minimumLeft = viewportPadding;
+      const maximumLeft = Math.max(
+        minimumLeft,
+        window.innerWidth - viewportPadding - composerRect.width,
+      );
+      const cardLeft = Math.min(
+        Math.max(pinX - composerRect.width / 2, minimumLeft),
+        maximumLeft,
+      );
+      const belowTop = pinY + pinOffset;
+      const aboveTop = pinY - pinOffset - composerRect.height;
+      const fitsBelow =
+        belowTop + composerRect.height <= window.innerHeight - viewportPadding;
+      const fitsAbove = aboveTop >= viewportPadding;
+      const placeAbove =
+        !fitsBelow &&
+        (fitsAbove || pinY > window.innerHeight - pinY);
+      const cardTop = placeAbove ? aboveTop : belowTop;
+
+      setComposerPlacement({
+        left: cardLeft - containerRect.left,
+        top: cardTop - containerRect.top,
+      });
+    }
+
+    const frame = requestAnimationFrame(updateComposerPlacement);
+    window.addEventListener("resize", updateComposerPlacement);
+    window.addEventListener("scroll", updateComposerPlacement, true);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateComposerPlacement);
+      window.removeEventListener("scroll", updateComposerPlacement, true);
+    };
+  }, [activeComposer]);
 
   if (isImageUnavailable) {
     return (
@@ -101,6 +162,7 @@ export function ReviewImageCanvas({
     const normalizedY = Math.min(Math.max(rawY, 0), 1);
 
     setActiveComposer({ x: normalizedX, y: normalizedY });
+    setComposerPlacement(null);
     setCommentText("");
   }
 
@@ -121,6 +183,7 @@ export function ReviewImageCanvas({
       });
       toast.success("Annotation added.");
       setActiveComposer(null);
+      setComposerPlacement(null);
       setCommentText("");
     } catch (error) {
       const message =
@@ -131,6 +194,7 @@ export function ReviewImageCanvas({
 
   function handleCancelComposer() {
     setActiveComposer(null);
+    setComposerPlacement(null);
     setCommentText("");
   }
 
@@ -148,17 +212,19 @@ export function ReviewImageCanvas({
 
       {/* Main Image Container with relative positioning */}
       <div
-        className={`relative inline-block max-w-full overflow-hidden rounded-xl border border-border bg-black/5 shadow-xs dark:bg-black/20 ${
+        className={`relative inline-block max-w-full ${
           isActionable ? "cursor-crosshair" : "cursor-default"
         }`}
         onClick={handleImageClick}
         ref={containerRef}
       >
-        <img
-          alt={`Review submission round ${roundNumber}`}
-          className="block max-h-[720px] w-auto max-w-full object-contain select-none"
-          src={imageUrl}
-        />
+        <div className="overflow-hidden rounded-xl border border-border bg-black/5 shadow-xs dark:bg-black/20">
+          <img
+            alt={`Review submission round ${roundNumber}`}
+            className="block max-h-[720px] w-auto max-w-full object-contain select-none"
+            src={imageUrl}
+          />
+        </div>
 
         {/* Existing Annotation Markers */}
         {annotations.map((annotation, idx) => {
@@ -204,27 +270,36 @@ export function ReviewImageCanvas({
           );
         })}
 
-        {/* Active Annotation Composer Pin & Popover */}
+        {/* Active Annotation Composer Pin */}
         {activeComposer && (
-          <div
-            className="absolute z-40 -translate-x-1/2 -translate-y-1/2"
-            data-annotation-element="true"
-            style={{
-              left: `${activeComposer.x * 100}%`,
-              top: `${activeComposer.y * 100}%`,
-            }}
-          >
-            {/* Pulsing Pin Marker */}
-            <div className="size-6 animate-pulse rounded-full bg-primary text-center text-xs font-bold text-primary-foreground shadow-lg ring-4 ring-primary/40">
-              +
+          <>
+            <div
+              className="absolute z-40 -translate-x-1/2 -translate-y-1/2"
+              data-annotation-element="true"
+              style={{
+                left: `${activeComposer.x * 100}%`,
+                top: `${activeComposer.y * 100}%`,
+              }}
+            >
+              <div className="size-6 animate-pulse rounded-full bg-primary text-center text-xs font-bold text-primary-foreground shadow-lg ring-4 ring-primary/40">
+                +
+              </div>
             </div>
 
             {/* In-place Composer Card */}
             <div
-              className={`absolute top-full mt-2 w-72 rounded-xl border border-border bg-card p-3 shadow-xl ${
-                activeComposer.x > 0.6 ? "-right-3" : "-left-3"
-              }`}
+              className="absolute z-40 w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-border bg-card p-3 shadow-xl"
+              data-annotation-element="true"
               onClick={(e) => e.stopPropagation()}
+              ref={composerRef}
+              style={
+                composerPlacement
+                  ? {
+                      left: `${composerPlacement.left}px`,
+                      top: `${composerPlacement.top}px`,
+                    }
+                  : { left: 0, top: 0, visibility: "hidden" }
+              }
             >
               <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
                 <p className="text-xs font-semibold text-foreground">
@@ -282,7 +357,7 @@ export function ReviewImageCanvas({
                 </Button>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
