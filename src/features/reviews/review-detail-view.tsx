@@ -19,6 +19,8 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { DesignPreviewLightbox } from "@/features/design-workspace/design-preview-lightbox";
+import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 import type { ResearchStatus } from "@/features/research/research.types";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
@@ -33,6 +35,10 @@ type ReviewDetailViewProps = {
   reviewId: string;
   workspaceId: string;
 };
+
+type ReviewHistorySelection =
+  | { kind: "reference" }
+  | { kind: "review"; reviewId: string };
 
 function formatDetailTime(value: string | null): string {
   if (!value) return "Unknown";
@@ -154,6 +160,13 @@ export function ReviewDetailView({
   const [hoveredAnnotationId, setHoveredAnnotationId] = useState<
     string | null
   >(null);
+  const [historySelection, setHistorySelection] =
+    useState<ReviewHistorySelection>({ kind: "review", reviewId });
+  const [isReferenceLightboxOpen, setIsReferenceLightboxOpen] =
+    useState(false);
+  const [referencePreviewUrl, setReferencePreviewUrl] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!selectedAnnotationId) return;
@@ -201,6 +214,7 @@ export function ReviewDetailView({
     selectedReview,
   } = detailQuery.data.data;
 
+  const isReferenceSelected = historySelection.kind === "reference";
   const isLatestReview = selectedReview.id === latestReviewId;
   const isActionable =
     isAdmin && researchItem.status === "DESIGN_REVIEW" && isLatestReview;
@@ -223,6 +237,28 @@ export function ReviewDetailView({
 
   const designerDisplayName =
     currentDesigner?.name || currentDesigner?.email || "Unassigned";
+
+  function selectReference() {
+    setHistorySelection({ kind: "reference" });
+    setSelectedAnnotationId(null);
+    setHoveredAnnotationId(null);
+  }
+
+  function selectReview(nextReviewId: string) {
+    if (
+      historySelection.kind === "review" &&
+      historySelection.reviewId === nextReviewId
+    ) {
+      return;
+    }
+
+    setHistorySelection({ kind: "review", reviewId: nextReviewId });
+    setSelectedAnnotationId(null);
+    setHoveredAnnotationId(null);
+    if (nextReviewId === selectedReview.id) return;
+
+    router.push(`/w/${workspaceId}/reviews/${nextReviewId}`);
+  }
 
   return (
     <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
@@ -258,8 +294,44 @@ export function ReviewDetailView({
           </div>
           <div className="overflow-x-auto pb-1">
             <div className="flex w-max gap-3">
+              {researchItem.referenceImageUrl && (
+                <div
+                  className={`relative w-32 overflow-hidden rounded-xl border bg-card p-1.5 transition-colors focus-within:ring-2 focus-within:ring-primary/30 ${
+                    isReferenceSelected
+                      ? "border-primary ring-2 ring-primary/30"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className="pointer-events-none flex h-20 items-center justify-center overflow-hidden rounded-lg bg-muted/30">
+                    <AuthenticatedReferenceImage
+                      alt="Reference image"
+                      className="max-h-20 w-full rounded-lg object-cover"
+                      containerClassName="h-20 min-h-0 p-0"
+                      hasImage
+                      minHeightClassName="min-h-0"
+                      researchItemId={researchItem.id}
+                      workspaceId={workspaceId}
+                    />
+                  </div>
+                  <button
+                    aria-current={isReferenceSelected ? "page" : undefined}
+                    aria-label="Open reference image"
+                    className="absolute inset-0 z-10 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    onClick={selectReference}
+                    type="button"
+                  />
+                  <div className="mt-1.5 flex w-full items-center justify-between px-1 text-xs font-semibold text-foreground">
+                    <span>Reference</span>
+                    {isReferenceSelected && (
+                      <span className="text-[10px] text-primary">Selected</span>
+                    )}
+                  </div>
+                </div>
+              )}
               {reviews.map((review) => {
-                const isSelected = review.id === selectedReview.id;
+                const isSelected =
+                  historySelection.kind === "review" &&
+                  historySelection.reviewId === review.id;
                 const isLatest = review.id === latestReviewId;
                 const isImageUnavailable =
                   review.imageDeletedAt !== null || !review.imageUrl;
@@ -276,11 +348,7 @@ export function ReviewDetailView({
                         : "border-border hover:border-primary/50"
                     }`}
                     key={review.id}
-                    onClick={() => {
-                      if (!isSelected) {
-                        router.push(`/w/${workspaceId}/reviews/${review.id}`);
-                      }
-                    }}
+                    onClick={() => selectReview(review.id)}
                     type="button"
                   >
                     <div className="flex h-20 items-center justify-center overflow-hidden rounded-lg bg-muted/30">
@@ -318,13 +386,15 @@ export function ReviewDetailView({
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Design Review — Round {selectedReview.roundNumber}
+              {isReferenceSelected
+                ? "Research Reference"
+                : `Design Review — Round ${selectedReview.roundNumber}`}
             </h1>
             <StatusBadge
               label={researchItem.status.replace(/_/g, " ")}
               tone={getStatusTone(researchItem.status)}
             />
-            {!isLatestReview && (
+            {!isReferenceSelected && !isLatestReview && (
               <Badge className="bg-muted text-muted-foreground" variant="secondary">
                 Historical review
               </Badge>
@@ -350,12 +420,16 @@ export function ReviewDetailView({
               <User className="size-3.5" />
               {designerDisplayName}
             </span>
-            <span>·</span>
-            <span className="inline-flex items-center gap-1">
-              <Calendar className="size-3.5" />
-              Submitted {formatDetailTime(selectedReview.submittedAt)}
-            </span>
-            {selectedReview.approvedAt ? (
+            {!isReferenceSelected && (
+              <>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="size-3.5" />
+                  Submitted {formatDetailTime(selectedReview.submittedAt)}
+                </span>
+              </>
+            )}
+            {!isReferenceSelected && selectedReview.approvedAt ? (
               <>
                 <span>·</span>
                 <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
@@ -368,61 +442,106 @@ export function ReviewDetailView({
         </div>
 
         <div className="shrink-0 rounded-lg border border-border/80 bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
-          {reviewStateMessage}
+          {isReferenceSelected
+            ? "Viewing reference image (read-only)"
+            : reviewStateMessage}
         </div>
       </header>
 
       {/* Main Grid: Image Canvas (Left) + Feedback/Annotation Panel (Right) */}
-      <div className="grid gap-6 lg:grid-cols-12">
-        <main className="lg:col-span-7 xl:col-span-8">
-          <section
-            aria-label="Review submission image"
-            className="rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-xs"
-          >
-            <ReviewImageCanvas
-              annotations={selectedReview.annotations}
-              imageDeletedAt={selectedReview.imageDeletedAt}
-              imageUrl={selectedReview.imageUrl}
+      {isReferenceSelected ? (
+        <div className="grid gap-6 lg:grid-cols-12">
+          <main className="lg:col-span-7 xl:col-span-8">
+            <section
+              aria-label="Research reference image"
+              className="rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-xs"
+            >
+              <AuthenticatedReferenceImage
+                alt="Research reference image"
+                className="max-h-[720px] max-w-full object-contain"
+                containerClassName="min-h-[380px]"
+                hasImage
+                onOpenImage={(imageUrl) => {
+                  setReferencePreviewUrl(imageUrl);
+                  setIsReferenceLightboxOpen(true);
+                }}
+                researchItemId={researchItem.id}
+                workspaceId={workspaceId}
+              />
+            </section>
+          </main>
+          <aside className="lg:col-span-5 xl:col-span-4">
+            <section className="rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-6">
+              <h2 className="text-sm font-semibold text-foreground">
+                Reference image
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Use this original research image to compare the submitted design.
+              </p>
+              <p className="mt-4 text-xs text-muted-foreground">
+                Read-only reference asset
+              </p>
+            </section>
+          </aside>
+        </div>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-12">
+          <main className="lg:col-span-7 xl:col-span-8">
+            <section
+              aria-label="Review submission image"
+              className="min-h-[380px] rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-xs"
+            >
+              <ReviewImageCanvas
+                annotations={selectedReview.annotations}
+                imageDeletedAt={selectedReview.imageDeletedAt}
+                imageUrl={selectedReview.imageUrl}
+                isActionable={isActionable}
+                onSelectAnnotation={setSelectedAnnotationId}
+                researchItemId={researchItem.id}
+                reviewId={selectedReview.id}
+                roundNumber={selectedReview.roundNumber}
+                hoveredAnnotationId={hoveredAnnotationId}
+                onHoverAnnotation={setHoveredAnnotationId}
+                selectedAnnotationId={selectedAnnotationId}
+                workspaceId={workspaceId}
+              />
+            </section>
+          </main>
+
+          <aside className="lg:col-span-5 xl:col-span-4">
+            <AnnotationPanel
+              canReply={canReply}
               isActionable={isActionable}
               onSelectAnnotation={setSelectedAnnotationId}
               researchItemId={researchItem.id}
               reviewId={selectedReview.id}
-              roundNumber={selectedReview.roundNumber}
               hoveredAnnotationId={hoveredAnnotationId}
               onHoverAnnotation={setHoveredAnnotationId}
               selectedAnnotationId={selectedAnnotationId}
+              selectedReview={selectedReview}
               workspaceId={workspaceId}
             />
-          </section>
-        </main>
-
-        <aside className="lg:col-span-5 xl:col-span-4">
-          <AnnotationPanel
-            canReply={canReply}
-            isActionable={isActionable}
-            onSelectAnnotation={setSelectedAnnotationId}
-            researchItemId={researchItem.id}
-            reviewId={selectedReview.id}
-            hoveredAnnotationId={hoveredAnnotationId}
-            onHoverAnnotation={setHoveredAnnotationId}
-            selectedAnnotationId={selectedAnnotationId}
-            selectedReview={selectedReview}
-            workspaceId={workspaceId}
-          />
-          {isActionable ? (
-            <div className="mt-4">
-              <ReviewActions
-                annotationCount={selectedReview.annotations.length}
-                isActionable={isActionable}
-                researchItemId={researchItem.id}
-                reviewId={selectedReview.id}
-                roundNumber={selectedReview.roundNumber}
-                workspaceId={workspaceId}
-              />
-            </div>
-          ) : null}
-        </aside>
-      </div>
+            {isActionable ? (
+              <div className="mt-4">
+                <ReviewActions
+                  annotationCount={selectedReview.annotations.length}
+                  isActionable={isActionable}
+                  researchItemId={researchItem.id}
+                  reviewId={selectedReview.id}
+                  roundNumber={selectedReview.roundNumber}
+                  workspaceId={workspaceId}
+                />
+              </div>
+            ) : null}
+          </aside>
+        </div>
+      )}
+      <DesignPreviewLightbox
+        imageUrl={referencePreviewUrl}
+        onOpenChange={setIsReferenceLightboxOpen}
+        open={isReferenceLightboxOpen}
+        title="Research reference image"
+      />
     </div>
   );
 }
