@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { AlertCircle, ExternalLink, ImageIcon, Tag } from "lucide-react";
 
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
+import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { ResearchItemDetailModal } from "@/features/research/research-item-detail-modal";
 import type { AdminListingItem, AdminListingListResult } from "./listings-admin.types";
 import type { ResearchStatus } from "@/features/research/research.types";
@@ -264,17 +264,13 @@ export function ListingsAdminTable({
                     {/* Assigned Lister */}
                     <td className="px-4 py-3">
                       {item.currentLister ? (
-                        <div className="flex flex-col">
-                          <Link
-                            href={`/w/${workspaceId}/listings?listerId=${item.currentLister.id}`}
-                            className="font-medium text-foreground hover:underline"
-                          >
-                            {item.currentLister.name || "Unnamed Lister"}
-                          </Link>
-                          <span className="text-[11px] text-muted-foreground">
-                            {item.currentLister.email}
-                          </span>
-                        </div>
+                        <MemberIdentityCell
+                          email={item.currentLister.email}
+                          fallbackLabel="Unnamed Lister"
+                          href={`/w/${workspaceId}/listings?listerId=${item.currentLister.id}`}
+                          name={item.currentLister.name}
+                          profileImageUrl={item.currentLister.profileImageUrl}
+                        />
                       ) : (
                         <span className="text-muted-foreground italic">
                           Unassigned

@@ -75,6 +75,7 @@ export const adminDesignItemSchema = z.object({
       email: z.string(),
       id: z.string(),
       name: z.string().nullable(),
+      profileImageUrl: z.string().nullable(),
     })
     .nullable(),
   etsyListingId: z.string(),

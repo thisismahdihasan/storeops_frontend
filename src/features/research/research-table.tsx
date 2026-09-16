@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
 import { DeleteResearchItemDialog } from "./delete-research-item-dialog";
@@ -419,14 +420,12 @@ function ResearchTableRow({
       {/* Researcher (Management only) */}
       {isAdmin && (
         <td className="px-4 py-3">
-          <div className="flex flex-col">
-            <span className="font-medium text-foreground">
-              {item.createdBy.name || "Unnamed"}
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              {item.createdBy.email}
-            </span>
-          </div>
+          <MemberIdentityCell
+            email={item.createdBy.email}
+            fallbackLabel="Unnamed"
+            name={item.createdBy.name}
+            profileImageUrl={item.createdBy.profileImageUrl}
+          />
         </td>
       )}
 
@@ -460,38 +459,36 @@ function ResearchTableRow({
       {isAdmin && (
         <td className="px-4 py-3">
           {item.currentDesigner ? (
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="font-medium text-foreground">
-                  {item.currentDesigner.name || "Unnamed"}
-                </span>
-                {designerReplyCount > 0 && (
-                  canClickReview ? (
-                    <Link
-                      aria-label={replyCountLabel}
-                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary transition-colors hover:bg-primary/20 hover:underline"
-                      href={`/w/${workspaceId}/reviews/${latestReviewId}`}
-                      onClick={(e) => e.stopPropagation()}
-                      title={replyCountTooltip}
-                    >
-                      <MessageSquare className="size-2.5" />
-                      <span>{designerReplyCount}</span>
-                    </Link>
-                  ) : (
-                    <span
-                      aria-label={replyCountLabel}
-                      className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
-                      title={replyCountTooltip}
-                    >
-                      <MessageSquare className="size-2.5" />
-                      <span>{designerReplyCount}</span>
-                    </span>
-                  )
-                )}
-              </div>
-              <span className="text-[11px] text-muted-foreground">
-                {item.currentDesigner.email}
-              </span>
+            <div className="flex items-center gap-1.5">
+              <MemberIdentityCell
+                email={item.currentDesigner.email}
+                fallbackLabel="Unnamed Designer"
+                name={item.currentDesigner.name}
+                profileImageUrl={item.currentDesigner.profileImageUrl}
+              />
+              {designerReplyCount > 0 && (
+                canClickReview ? (
+                  <Link
+                    aria-label={replyCountLabel}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary transition-colors hover:bg-primary/20 hover:underline"
+                    href={`/w/${workspaceId}/reviews/${latestReviewId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    title={replyCountTooltip}
+                  >
+                    <MessageSquare className="size-2.5" />
+                    <span>{designerReplyCount}</span>
+                  </Link>
+                ) : (
+                  <span
+                    aria-label={replyCountLabel}
+                    className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                    title={replyCountTooltip}
+                  >
+                    <MessageSquare className="size-2.5" />
+                    <span>{designerReplyCount}</span>
+                  </span>
+                )
+              )}
             </div>
           ) : (
             <span className="text-[11px] text-muted-foreground italic">

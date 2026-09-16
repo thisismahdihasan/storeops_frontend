@@ -21,6 +21,7 @@ export type UserSummary = {
   email: string;
   id: string;
   name: string | null;
+  profileImageUrl: string | null;
 };
 
 export type CurrentDesignAssignment = {

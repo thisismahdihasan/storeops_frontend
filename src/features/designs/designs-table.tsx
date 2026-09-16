@@ -6,6 +6,7 @@ import { AlertCircle, ArrowUpRight, CheckSquare, ExternalLink, ImageIcon, Palett
 
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
+import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { ResearchItemDetailModal } from "@/features/research/research-item-detail-modal";
 import type { AdminDesignItem, AdminDesignListResult } from "./designs.types";
 import type { ResearchStatus } from "@/features/research/research.types";
@@ -218,17 +219,13 @@ export function DesignsTable({
                     {/* Assigned Designer */}
                     <td className="px-4 py-3">
                       {item.currentDesigner ? (
-                        <div className="flex flex-col">
-                          <Link
-                            href={`/w/${workspaceId}/designs?designerId=${item.currentDesigner.id}`}
-                            className="font-medium text-foreground hover:underline"
-                          >
-                            {item.currentDesigner.name || "Unnamed Designer"}
-                          </Link>
-                          <span className="text-[11px] text-muted-foreground">
-                            {item.currentDesigner.email}
-                          </span>
-                        </div>
+                        <MemberIdentityCell
+                          email={item.currentDesigner.email}
+                          fallbackLabel="Unnamed Designer"
+                          href={`/w/${workspaceId}/designs?designerId=${item.currentDesigner.id}`}
+                          name={item.currentDesigner.name}
+                          profileImageUrl={item.currentDesigner.profileImageUrl}
+                        />
                       ) : (
                         <span className="text-muted-foreground italic">
                           Unassigned

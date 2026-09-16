@@ -12,6 +12,7 @@ export type AdminDesignItem = {
     email: string;
     id: string;
     name: string | null;
+    profileImageUrl: string | null;
   } | null;
   etsyListingId: string;
   id: string;

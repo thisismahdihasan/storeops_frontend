@@ -17,6 +17,9 @@ export function useUpdateProfile() {
         response,
       );
       void queryClient.invalidateQueries({ queryKey: currentSessionQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ["research"] });
+      void queryClient.invalidateQueries({ queryKey: ["designs"] });
+      void queryClient.invalidateQueries({ queryKey: ["listings"] });
     },
   });
 }

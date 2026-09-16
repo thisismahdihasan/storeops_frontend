@@ -25,6 +25,7 @@ export const userSummarySchema = z.object({
   email: z.string().email(),
   id: z.string(),
   name: z.string().nullable(),
+  profileImageUrl: z.string().nullable(),
 });
 
 export const currentDesignAssignmentSchema = z.object({

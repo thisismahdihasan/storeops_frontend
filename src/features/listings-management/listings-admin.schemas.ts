@@ -66,6 +66,7 @@ export const adminListingItemSchema = z.object({
       email: z.string(),
       id: z.string(),
       name: z.string().nullable(),
+      profileImageUrl: z.string().nullable(),
     })
     .nullable(),
   etsyListingId: z.string(),
@@ -79,6 +80,7 @@ export const adminListingItemSchema = z.object({
         email: z.string(),
         id: z.string(),
         name: z.string().nullable(),
+        profileImageUrl: z.string().nullable(),
       }),
     })
     .nullable(),
