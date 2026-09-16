@@ -9,6 +9,7 @@ export type TeamMember = {
   listerAssignmentPausedUntil: string | null;
   membershipId: string;
   name: string | null;
+  profileImageUrl: string | null;
   roles: WorkspaceRole[];
   userId: string;
 };

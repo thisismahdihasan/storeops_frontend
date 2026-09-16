@@ -4,11 +4,13 @@ import { useId, useMemo, useState } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { Check, ChevronDown, Search, User, X } from "lucide-react";
 
+import { MemberOptionRow } from "@/components/ui/member-option-row";
 import { cn } from "@/lib/utils";
 
 export type MemberFilterOption = {
   email: string;
   name: string | null;
+  profileImageUrl: string | null;
   userId: string;
 };
 
@@ -91,8 +93,19 @@ export function MemberFilterSelect({
         )}
       >
         <div className="flex items-center gap-1.5 truncate">
-          <User className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate">{displayLabel}</span>
+          {selectedMember ? (
+            <MemberOptionRow
+              email={selectedMember.email}
+              name={selectedMember.name}
+              profileImageUrl={selectedMember.profileImageUrl}
+              showEmail={false}
+            />
+          ) : (
+            <>
+              <User className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="truncate">{displayLabel}</span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
           {value && (
@@ -169,15 +182,12 @@ export function MemberFilterSelect({
                       isSelected ? "bg-muted font-medium text-foreground" : "text-foreground",
                     )}
                   >
-                    <div className="flex flex-col min-w-0 pr-2">
-                      <span className="truncate text-xs font-medium text-foreground">
-                        {option.name || "Unnamed member"}
-                      </span>
-                      <span className="truncate text-[11px] text-muted-foreground">
-                        {option.email}
-                      </span>
-                    </div>
-                    {isSelected && <Check className="size-3.5 text-primary shrink-0" />}
+                    <MemberOptionRow
+                      email={option.email}
+                      name={option.name}
+                      profileImageUrl={option.profileImageUrl}
+                      selected={isSelected}
+                    />
                   </button>
                 );
               })}

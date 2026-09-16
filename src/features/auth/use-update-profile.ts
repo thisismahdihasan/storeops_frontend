@@ -20,6 +20,7 @@ export function useUpdateProfile() {
       void queryClient.invalidateQueries({ queryKey: ["research"] });
       void queryClient.invalidateQueries({ queryKey: ["designs"] });
       void queryClient.invalidateQueries({ queryKey: ["listings"] });
+      void queryClient.invalidateQueries({ queryKey: ["team"] });
     },
   });
 }

@@ -102,6 +102,7 @@ export function ListingsAdminView({ workspaceId }: ListingsAdminViewProps) {
   const listers = listerMembers.map((member) => ({
     email: member.email,
     name: member.name,
+    profileImageUrl: member.profileImageUrl,
     userId: member.userId,
   }));
 

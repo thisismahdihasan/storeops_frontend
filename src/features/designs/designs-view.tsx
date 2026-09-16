@@ -27,6 +27,7 @@ export function DesignsView({ workspaceId }: DesignsViewProps) {
     .map((member) => ({
       email: member.email,
       name: member.name,
+      profileImageUrl: member.profileImageUrl,
       userId: member.userId,
     }));
 

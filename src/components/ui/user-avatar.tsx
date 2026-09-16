@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { cn } from "cn";
 
-export type UserAvatarSize = "sm" | "md" | "lg" | "xl";
+export type UserAvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 export type UserAvatarProps = {
   className?: string;
@@ -16,6 +16,7 @@ export type UserAvatarProps = {
 };
 
 const avatarSizeClasses: Record<UserAvatarSize, string> = {
+  xs: "size-6 text-[10px]",
   sm: "size-8 text-xs",
   md: "size-10 text-sm",
   lg: "size-12 text-base",

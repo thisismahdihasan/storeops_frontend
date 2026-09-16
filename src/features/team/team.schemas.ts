@@ -25,6 +25,7 @@ export const teamMemberSchema = z.object({
   listerAssignmentPausedUntil: z.string().nullable(),
   membershipId: z.string(),
   name: z.string().nullable(),
+  profileImageUrl: z.string().nullable(),
   roles: z.array(workspaceRoleSchema),
   userId: z.string(),
 });

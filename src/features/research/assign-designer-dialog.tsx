@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Popover } from "@base-ui/react/popover";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { InlineNotice } from "@/components/ui/inline-notice";
 import { Label } from "@/components/ui/label";
+import { MemberOptionRow } from "@/components/ui/member-option-row";
 import type { TeamMember } from "@/features/team/team.types";
 import {
   formatPausedUntil,
@@ -32,10 +34,6 @@ type AssignDesignerDialogProps = {
   onOpenChange: (open: boolean) => void;
   open: boolean;
 };
-
-function displayName(member: TeamMember): string {
-  return member.name || member.email;
-}
 
 function availabilityLabel(member: TeamMember): string {
   const state = getAssignmentAvailabilityState(member, "DESIGNER");
@@ -102,6 +100,7 @@ function AssignDesignerForm({
   onClose,
 }: AssignDesignerFormProps) {
   const [designerId, setDesignerId] = useState("");
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const selectedDesigner = useMemo(
     () => designers.find((designer) => designer.userId === designerId),
     [designerId, designers],
@@ -110,6 +109,7 @@ function AssignDesignerForm({
     ? getAssignmentAvailabilityState(selectedDesigner, "DESIGNER")
     : "AVAILABLE";
   const hasNoDesigners = !isLoadingDesigners && designers.length === 0;
+  const selectorDisabled = isLoadingDesigners || isSubmitting || hasNoDesigners;
 
   const handleAssign = async () => {
     if (!designerId) return;
@@ -121,23 +121,71 @@ function AssignDesignerForm({
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor={`assign-designer-${itemId}`}>Designer</Label>
-          <select
-            aria-describedby={hasNoDesigners ? `assign-designer-help-${itemId}` : undefined}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isLoadingDesigners || isSubmitting || hasNoDesigners}
-            id={`assign-designer-${itemId}`}
-            onChange={(event) => setDesignerId(event.target.value)}
-            value={designerId}
-          >
-            <option value="">
-              {isLoadingDesigners ? "Loading Designers..." : "Select a Designer"}
-            </option>
-            {designers.map((designer) => (
-              <option key={designer.userId} value={designer.userId}>
-                {displayName(designer)} — {designer.email} — {availabilityLabel(designer)}
-              </option>
-            ))}
-          </select>
+          <Popover.Root open={isSelectorOpen} onOpenChange={setIsSelectorOpen}>
+            <Popover.Trigger
+              aria-describedby={hasNoDesigners ? `assign-designer-help-${itemId}` : undefined}
+              className="flex h-11 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-left text-sm outline-none transition-colors hover:bg-muted/50 focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={selectorDisabled}
+              id={`assign-designer-${itemId}`}
+            >
+              {selectedDesigner ? (
+                <MemberOptionRow
+                  email={selectedDesigner.email}
+                  name={selectedDesigner.name}
+                  profileImageUrl={selectedDesigner.profileImageUrl}
+                  showEmail={false}
+                />
+              ) : (
+                <span className="text-muted-foreground">
+                  {isLoadingDesigners ? "Loading Designers..." : "Select a Designer"}
+                </span>
+              )}
+              <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+            </Popover.Trigger>
+
+            <Popover.Portal>
+              <Popover.Positioner
+                align="start"
+                className="z-[60] outline-hidden"
+                side="bottom"
+                sideOffset={4}
+              >
+                <Popover.Popup className="z-[60] w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md outline-hidden">
+                  <div
+                    aria-label="Select a Designer"
+                    className="max-h-60 overflow-y-auto p-1"
+                    role="listbox"
+                  >
+                    {designers.map((designer) => {
+                      const isSelected = designer.userId === designerId;
+
+                      return (
+                        <button
+                          aria-selected={isSelected}
+                          className="flex w-full rounded-md px-2 py-2 text-left transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-hidden"
+                          key={designer.userId}
+                          onClick={() => {
+                            setDesignerId(designer.userId);
+                            setIsSelectorOpen(false);
+                          }}
+                          role="option"
+                          type="button"
+                        >
+                          <MemberOptionRow
+                            email={designer.email}
+                            name={designer.name}
+                            profileImageUrl={designer.profileImageUrl}
+                            selected={isSelected}
+                            statusLabel={availabilityLabel(designer)}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Popover.Popup>
+              </Popover.Positioner>
+            </Popover.Portal>
+          </Popover.Root>
           {hasNoDesigners && (
             <p className="text-xs text-muted-foreground" id={`assign-designer-help-${itemId}`}>
               No Designers are available in this workspace.
