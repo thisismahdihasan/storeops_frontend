@@ -23,6 +23,7 @@ const annotationReplySchema = z.object({
   createdBy: z.object({ id: z.string(), name: z.string().nullable() }),
   id: z.string(),
   message: z.string(),
+  updatedAt: z.string(),
 });
 
 const annotationSchema = z.object({
@@ -34,21 +35,24 @@ const annotationSchema = z.object({
   resolved: z.boolean(),
   x: z.number(),
   y: z.number(),
+  updatedAt: z.string(),
 });
 
 const workspaceReviewAnnotationSchema = z.object({
   comment: z.string(),
   createdAt: z.string(),
-  createdBy: z.object({ name: z.string().nullable() }),
+  createdBy: z.object({ id: z.string(), name: z.string().nullable() }),
   id: z.string(),
   replies: z.array(z.object({
     createdAt: z.string(),
-    createdBy: z.object({ name: z.string().nullable() }),
+    createdBy: z.object({ id: z.string(), name: z.string().nullable() }),
     id: z.string(),
     message: z.string(),
+    updatedAt: z.string(),
   })),
   x: z.number(),
   y: z.number(),
+  updatedAt: z.string(),
 });
 
 export const designWorkspaceReviewSchema = z.object({

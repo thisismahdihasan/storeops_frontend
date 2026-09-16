@@ -4,9 +4,13 @@ import {
   approveReviewResponseSchema,
   createAnnotationResponseSchema,
   createReplyResponseSchema,
+  deleteAnnotationReplyResponseSchema,
+  deleteAnnotationResponseSchema,
   requestCorrectionResponseSchema,
   reviewDetailResponseSchema,
   reviewQueueResponseSchema,
+  updateAnnotationReplyResponseSchema,
+  updateAnnotationResponseSchema,
 } from "./reviews.schemas";
 import type {
   ApproveReviewResponse,
@@ -14,9 +18,15 @@ import type {
   CreateAnnotationResponse,
   CreateReplyInput,
   CreateReplyResponse,
+  DeleteAnnotationReplyResponse,
+  DeleteAnnotationResponse,
   RequestCorrectionResponse,
   ReviewDetailResponse,
   ReviewQueueResponse,
+  UpdateAnnotationInput,
+  UpdateAnnotationReplyInput,
+  UpdateAnnotationReplyResponse,
+  UpdateAnnotationResponse,
 } from "./reviews.types";
 
 export async function getReviewQueue(
@@ -38,6 +48,34 @@ export async function getReviewQueue(
     throw new ApiError(502, "Unexpected review queue response format.");
   }
 
+  return parsed.data;
+}
+
+export async function updateReviewAnnotation(workspaceId: string, annotationId: string, input: UpdateAnnotationInput): Promise<UpdateAnnotationResponse> {
+  const response = await apiRequest<unknown>(`/api/v1/workspaces/${workspaceId}/annotations/${annotationId}`, { json: input, method: "PATCH" });
+  const parsed = updateAnnotationResponseSchema.safeParse(response);
+  if (!parsed.success) throw new ApiError(502, "Unexpected update annotation response format.");
+  return parsed.data;
+}
+
+export async function deleteReviewAnnotation(workspaceId: string, annotationId: string): Promise<DeleteAnnotationResponse> {
+  const response = await apiRequest<unknown>(`/api/v1/workspaces/${workspaceId}/annotations/${annotationId}`, { method: "DELETE" });
+  const parsed = deleteAnnotationResponseSchema.safeParse(response);
+  if (!parsed.success) throw new ApiError(502, "Unexpected delete annotation response format.");
+  return parsed.data;
+}
+
+export async function updateAnnotationReply(workspaceId: string, annotationId: string, replyId: string, input: UpdateAnnotationReplyInput): Promise<UpdateAnnotationReplyResponse> {
+  const response = await apiRequest<unknown>(`/api/v1/workspaces/${workspaceId}/annotations/${annotationId}/replies/${replyId}`, { json: input, method: "PATCH" });
+  const parsed = updateAnnotationReplyResponseSchema.safeParse(response);
+  if (!parsed.success) throw new ApiError(502, "Unexpected update reply response format.");
+  return parsed.data;
+}
+
+export async function deleteAnnotationReply(workspaceId: string, annotationId: string, replyId: string): Promise<DeleteAnnotationReplyResponse> {
+  const response = await apiRequest<unknown>(`/api/v1/workspaces/${workspaceId}/annotations/${annotationId}/replies/${replyId}`, { method: "DELETE" });
+  const parsed = deleteAnnotationReplyResponseSchema.safeParse(response);
+  if (!parsed.success) throw new ApiError(502, "Unexpected delete reply response format.");
   return parsed.data;
 }
 

@@ -1,13 +1,17 @@
 "use client";
 
-import { MessageSquare, MessageSquareText, Send } from "lucide-react";
+import { Ellipsis, MessageSquare, MessageSquareText, Pencil, Send, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useCurrentSession } from "@/features/auth/use-current-session";
 import { formatWorkDate } from "@/features/designer-work/designer-work.types";
 import { ReviewImageCanvas } from "@/features/reviews/review-image-canvas";
+import { useDeleteAnnotationReply, useUpdateAnnotationReply } from "@/features/reviews/use-reviews";
 import { ApiError } from "@/lib/api";
 
 import { DesignPreviewLightbox } from "./design-preview-lightbox";
@@ -34,6 +38,12 @@ type DesignerCorrectionFeedbackProps = {
   workspaceId: string;
 };
 
+function isEdited(createdAt: string, updatedAt: string): boolean {
+  const created = new Date(createdAt).getTime();
+  const updated = new Date(updatedAt).getTime();
+  return Number.isFinite(created) && Number.isFinite(updated) && updated > created;
+}
+
 export function DesignerCorrectionFeedback({
   canReply,
   onSelectAnnotation,
@@ -42,16 +52,35 @@ export function DesignerCorrectionFeedback({
   selectedAnnotationId,
   workspaceId,
 }: DesignerCorrectionFeedbackProps) {
+  const sessionQuery = useCurrentSession();
+  const currentUserId = sessionQuery.data?.data.user.id;
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [replyTextByAnnotationId, setReplyTextByAnnotationId] = useState<
     Record<string, string>
   >({});
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [deleteReplyTarget, setDeleteReplyTarget] = useState<{
+    annotationId: string;
+    replyId: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const replyMutation = useDesignerAnnotationReply(
     workspaceId,
     researchItemId,
     review.id,
+  );
+  const updateReplyMutation = useUpdateAnnotationReply(
+    workspaceId,
+    review.id,
+    researchItemId,
+  );
+  const deleteReplyMutation = useDeleteAnnotationReply(
+    workspaceId,
+    review.id,
+    researchItemId,
   );
 
   useEffect(() => {
@@ -89,6 +118,40 @@ export function DesignerCorrectionFeedback({
       const message =
         error instanceof ApiError ? error.message : "Failed to post reply.";
       toast.error(message);
+    }
+  }
+
+  async function saveReply(annotationId: string, replyId: string) {
+    const message = editText.trim();
+    if (!message) return;
+    try {
+      await updateReplyMutation.mutateAsync({
+        annotationId,
+        input: { message },
+        replyId,
+      });
+      toast.success("Reply updated.");
+      setEditingReplyId(null);
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : "Failed to update reply.");
+    }
+  }
+
+  async function handleConfirmDeleteReply() {
+    if (!deleteReplyTarget) return;
+    const target = deleteReplyTarget;
+    setIsDeleting(true);
+    try {
+      await deleteReplyMutation.mutateAsync({
+        annotationId: target.annotationId,
+        replyId: target.replyId,
+      });
+      toast.success("Reply deleted.");
+      setDeleteReplyTarget(null);
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : "Failed to delete reply.");
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -213,9 +276,14 @@ export function DesignerCorrectionFeedback({
                             {annotation.createdBy.name || "Admin"}
                           </p>
                         </div>
-                        <time className="text-[11px] text-muted-foreground">
-                          {formatWorkDate(annotation.createdAt)}
-                        </time>
+                        <div className="flex items-center gap-1">
+                          <time className="text-[11px] text-muted-foreground">
+                            {formatWorkDate(annotation.createdAt)}
+                          </time>
+                          {isEdited(annotation.createdAt, annotation.updatedAt) && (
+                            <span className="text-[10px] text-muted-foreground">Edited</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Comment Body */}
@@ -226,24 +294,27 @@ export function DesignerCorrectionFeedback({
                       {/* Nested Threaded Replies */}
                       {annotation.replies.length > 0 && (
                         <div className="mt-3 space-y-2 border-l-2 border-border/80 pl-3">
-                          {annotation.replies.map((reply) => (
-                            <div
-                              className="rounded-lg bg-background/80 p-2 text-xs"
-                              key={reply.id}
-                            >
+                          {annotation.replies.map((reply) => {
+                            const canModifyReply =
+                              canReply && reply.createdBy.id === currentUserId;
+                            const isEditingReply = editingReplyId === reply.id;
+
+                            return (
+                            <div className="rounded-lg bg-background/80 p-2 text-xs" key={reply.id}>
                               <div className="flex items-center justify-between gap-2">
                                 <span className="font-medium text-foreground">
                                   {reply.createdBy.name || "Team member"}
                                 </span>
-                                <time className="text-[10px] text-muted-foreground">
-                                  {formatWorkDate(reply.createdAt)}
-                                </time>
+                                <div className="flex items-center gap-1">
+                                  <time className="text-[10px] text-muted-foreground">{formatWorkDate(reply.createdAt)}</time>
+                                  {isEdited(reply.createdAt, reply.updatedAt) && <span className="text-[10px] text-muted-foreground">Edited</span>}
+                                  {canModifyReply && <DropdownMenu><DropdownMenuTrigger render={<Button aria-label={`Manage reply from ${reply.createdBy.name || "team member"}`} size="icon-xs" variant="ghost" />}><Ellipsis /></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => { setEditingReplyId(reply.id); setEditText(reply.message); }}><Pencil />Edit</DropdownMenuItem><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setDeleteReplyTarget({ annotationId: annotation.id, replyId: reply.id })} variant="destructive"><Trash2 />Delete</DropdownMenuItem></DropdownMenuContent></DropdownMenu>}
+                                </div>
                               </div>
-                              <p className="mt-1 text-muted-foreground whitespace-pre-wrap">
-                                {reply.message}
-                              </p>
+                              {isEditingReply ? <div className="mt-1 space-y-2"><textarea aria-label="Edit reply" className="w-full resize-none rounded-lg border border-border bg-background p-2 text-xs text-foreground" disabled={updateReplyMutation.isPending} maxLength={2000} onChange={(event) => setEditText(event.target.value)} rows={2} value={editText} /><div className="flex flex-wrap justify-end gap-1.5"><Button disabled={updateReplyMutation.isPending} onClick={() => setEditingReplyId(null)} size="xs" type="button" variant="ghost">Cancel</Button><Button disabled={updateReplyMutation.isPending || editText.trim().length === 0} onClick={() => void saveReply(annotation.id, reply.id)} size="xs" type="button">{updateReplyMutation.isPending ? "Saving…" : "Save"}</Button></div></div> : <p className="mt-1 text-muted-foreground whitespace-pre-wrap">{reply.message}</p>}
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
 
@@ -341,6 +412,29 @@ export function DesignerCorrectionFeedback({
         open={isLightboxOpen}
         title={`Round ${review.roundNumber} proof`}
       />
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (!open) setDeleteReplyTarget(null);
+        }}
+        open={deleteReplyTarget !== null}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete reply?</AlertDialogTitle>
+            <AlertDialogDescription>This reply will be deleted.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={() => void handleConfirmDeleteReply()}
+              variant="destructive"
+            >
+              {isDeleting ? "Confirming…" : "Delete reply"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

@@ -65,6 +65,7 @@ export type ReviewReplyDetail = {
   };
   id: string;
   message: string;
+  updatedAt: string;
 };
 
 export type ReviewAnnotationDetail = {
@@ -79,6 +80,7 @@ export type ReviewAnnotationDetail = {
   resolved: boolean;
   x: number;
   y: number;
+  updatedAt: string;
 };
 
 export type ReviewHistoryItem = {
@@ -138,6 +140,7 @@ export type CreateAnnotationResult = {
     id: string;
     resolved: boolean;
     reviewSubmissionId: string;
+    updatedAt: string;
     x: number;
     y: number;
   };
@@ -163,11 +166,35 @@ export type CreateReplyResult = {
     };
     id: string;
     message: string;
+    updatedAt: string;
   };
 };
 
 export type CreateReplyResponse = {
   data: CreateReplyResult;
+  message: string;
+  success: boolean;
+};
+
+export type UpdateAnnotationInput = { comment: string };
+export type UpdateAnnotationResponse = {
+  data: { annotation: CreateAnnotationResult["annotation"] };
+  message: string;
+  success: boolean;
+};
+export type DeleteAnnotationResponse = {
+  data: { annotationId: string };
+  message: string;
+  success: boolean;
+};
+export type UpdateAnnotationReplyInput = { message: string };
+export type UpdateAnnotationReplyResponse = {
+  data: { reply: ReviewReplyDetail };
+  message: string;
+  success: boolean;
+};
+export type DeleteAnnotationReplyResponse = {
+  data: { replyId: string };
   message: string;
   success: boolean;
 };

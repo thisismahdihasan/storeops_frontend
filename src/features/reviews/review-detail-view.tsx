@@ -514,8 +514,10 @@ export function ReviewDetailView({
             <AnnotationPanel
               canReply={canReply}
               isActionable={isActionable}
+              isLatestRound={isLatestReview}
               onSelectAnnotation={setSelectedAnnotationId}
               researchItemId={researchItem.id}
+              researchItemStatus={researchItem.status}
               reviewId={selectedReview.id}
               hoveredAnnotationId={hoveredAnnotationId}
               onHoverAnnotation={setHoveredAnnotationId}

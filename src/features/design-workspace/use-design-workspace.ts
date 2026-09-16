@@ -102,6 +102,12 @@ export function useDesignerAnnotationReply(
       void queryClient.invalidateQueries({
         queryKey: designWorkspaceKeys.detail(workspaceId, researchItemId),
       });
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.lists(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.detail(workspaceId, researchItemId),
+      });
       if (reviewId) {
         void queryClient.invalidateQueries({
           queryKey: reviewsKeys.detail(workspaceId, reviewId),

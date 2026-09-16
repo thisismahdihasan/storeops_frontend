@@ -76,6 +76,7 @@ export const reviewReplyDetailSchema = z.object({
   }),
   id: z.string(),
   message: z.string(),
+  updatedAt: z.string(),
 });
 
 export const reviewAnnotationDetailSchema = z.object({
@@ -90,6 +91,7 @@ export const reviewAnnotationDetailSchema = z.object({
   resolved: z.boolean(),
   x: z.number(),
   y: z.number(),
+  updatedAt: z.string(),
 });
 
 export const reviewHistoryItemSchema = z.object({
@@ -130,21 +132,27 @@ export const reviewDetailResponseSchema = z.object({
   success: z.boolean(),
 });
 
+// Shared shape returned by the create and update annotation mutation endpoints.
+// Intentionally smaller than reviewAnnotationDetailSchema: mutation responses do
+// not include the replies array.
+const annotationMutationResultSchema = z.object({
+  comment: z.string(),
+  createdAt: z.string(),
+  createdBy: z.object({
+    id: z.string(),
+    name: z.string().nullable(),
+  }),
+  id: z.string(),
+  resolved: z.boolean(),
+  reviewSubmissionId: z.string(),
+  updatedAt: z.string(),
+  x: z.number(),
+  y: z.number(),
+});
+
 export const createAnnotationResponseSchema = z.object({
   data: z.object({
-    annotation: z.object({
-      comment: z.string(),
-      createdAt: z.string(),
-      createdBy: z.object({
-        id: z.string(),
-        name: z.string().nullable(),
-      }),
-      id: z.string(),
-      resolved: z.boolean(),
-      reviewSubmissionId: z.string(),
-      x: z.number(),
-      y: z.number(),
-    }),
+    annotation: annotationMutationResultSchema,
   }),
   message: z.string(),
   success: z.boolean(),
@@ -161,8 +169,33 @@ export const createReplyResponseSchema = z.object({
       }),
       id: z.string(),
       message: z.string(),
+      updatedAt: z.string(),
     }),
   }),
+  message: z.string(),
+  success: z.boolean(),
+});
+
+export const updateAnnotationResponseSchema = z.object({
+  data: z.object({ annotation: annotationMutationResultSchema }),
+  message: z.string(),
+  success: z.boolean(),
+});
+
+export const deleteAnnotationResponseSchema = z.object({
+  data: z.object({ annotationId: z.string() }),
+  message: z.string(),
+  success: z.boolean(),
+});
+
+export const updateAnnotationReplyResponseSchema = z.object({
+  data: z.object({ reply: reviewReplyDetailSchema }),
+  message: z.string(),
+  success: z.boolean(),
+});
+
+export const deleteAnnotationReplyResponseSchema = z.object({
+  data: z.object({ replyId: z.string() }),
   message: z.string(),
   success: z.boolean(),
 });

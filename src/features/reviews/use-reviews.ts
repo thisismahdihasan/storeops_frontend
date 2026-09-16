@@ -12,14 +12,20 @@ import {
   approveReviewSubmission,
   createAnnotationReply,
   createReviewAnnotation,
+  deleteAnnotationReply,
+  deleteReviewAnnotation,
   getReviewDetail,
   getReviewQueue,
   requestReviewCorrection,
+  updateAnnotationReply,
+  updateReviewAnnotation,
 } from "./reviews.api";
 import { reviewsKeys } from "./reviews.keys";
 import type {
   CreateAnnotationInput,
   CreateReplyInput,
+  UpdateAnnotationInput,
+  UpdateAnnotationReplyInput,
   ReviewDetailResponse,
 } from "./reviews.types";
 
@@ -201,6 +207,70 @@ export function useCreateAnnotationReply(
         });
       }
     },
+  });
+}
+
+function invalidateMessageDetails(
+  queryClient: ReturnType<typeof useQueryClient>,
+  workspaceId: string,
+  reviewId: string,
+  researchItemId?: string,
+  includeResearchActivity = false,
+) {
+  void queryClient.invalidateQueries({
+    queryKey: reviewsKeys.detail(workspaceId, reviewId),
+  });
+  if (researchItemId) {
+    void queryClient.invalidateQueries({
+      queryKey: designWorkspaceKeys.detail(workspaceId, researchItemId),
+    });
+    if (includeResearchActivity) {
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.lists(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.detail(workspaceId, researchItemId),
+      });
+    }
+  }
+}
+
+export function useUpdateReviewAnnotation(workspaceId: string, reviewId: string, researchItemId?: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ annotationId, input }: { annotationId: string; input: UpdateAnnotationInput }) =>
+      updateReviewAnnotation(workspaceId, annotationId, input),
+    onError: () => invalidateMessageDetails(queryClient, workspaceId, reviewId, researchItemId),
+    onSuccess: () => invalidateMessageDetails(queryClient, workspaceId, reviewId, researchItemId),
+  });
+}
+
+export function useDeleteReviewAnnotation(workspaceId: string, reviewId: string, researchItemId?: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (annotationId: string) => deleteReviewAnnotation(workspaceId, annotationId),
+    onError: () => invalidateMessageDetails(queryClient, workspaceId, reviewId, researchItemId),
+    onSuccess: () => invalidateMessageDetails(queryClient, workspaceId, reviewId, researchItemId),
+  });
+}
+
+export function useUpdateAnnotationReply(workspaceId: string, reviewId: string, researchItemId?: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ annotationId, replyId, input }: { annotationId: string; replyId: string; input: UpdateAnnotationReplyInput }) =>
+      updateAnnotationReply(workspaceId, annotationId, replyId, input),
+    onError: () => invalidateMessageDetails(queryClient, workspaceId, reviewId, researchItemId),
+    onSuccess: () => invalidateMessageDetails(queryClient, workspaceId, reviewId, researchItemId),
+  });
+}
+
+export function useDeleteAnnotationReply(workspaceId: string, reviewId: string, researchItemId?: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ annotationId, replyId }: { annotationId: string; replyId: string }) =>
+      deleteAnnotationReply(workspaceId, annotationId, replyId),
+    onError: () => invalidateMessageDetails(queryClient, workspaceId, reviewId, researchItemId, true),
+    onSuccess: () => invalidateMessageDetails(queryClient, workspaceId, reviewId, researchItemId, true),
   });
 }
 
