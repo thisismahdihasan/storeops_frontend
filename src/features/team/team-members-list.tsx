@@ -4,6 +4,7 @@ import { Loader2, UsersRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 import {
   formatPausedUntil,
@@ -40,7 +41,24 @@ function formatJoinedAt(joinedAt: string) {
 }
 
 function MemberIdentity({ member }: { member: TeamMember }) {
-  return <div className="min-w-0">{member.name && <p className="truncate font-medium text-foreground">{member.name}</p>}<p className="truncate text-sm text-muted-foreground">{member.email}</p></div>;
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <div aria-hidden="true" className="shrink-0">
+        <UserAvatar
+          email={member.email}
+          name={member.name}
+          profileImageUrl={member.profileImageUrl}
+          size="sm"
+        />
+      </div>
+      <div className="min-w-0">
+        {member.name ? (
+          <p className="truncate font-medium text-foreground">{member.name}</p>
+        ) : null}
+        <p className="truncate text-xs text-muted-foreground">{member.email}</p>
+      </div>
+    </div>
+  );
 }
 
 const AVAILABILITY_LABELS = { AVAILABLE: "Available", OFF: "Off", PAUSED: "Paused" } as const;

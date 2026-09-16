@@ -151,6 +151,7 @@ export const userActivityResponseSchema = z.object({
       joinedAt: z.string().nullable(),
       membershipStatus: z.enum(["ACTIVE", "REMOVED"]),
       name: z.string().nullable(),
+      profileImageUrl: z.string().nullable(),
       roles: z.array(workspaceRoleSchema),
     }),
   }),

@@ -229,33 +229,35 @@ export function DateFilter({
         </div>
 
         {/* Preset Selector */}
-        <div
-          role="group"
-          aria-label="Dashboard Date Presets"
-          className="inline-flex flex-wrap items-center rounded-lg border border-border bg-muted/40 p-1 text-xs"
-        >
-          {PRESET_OPTIONS.map((option) => {
-            const isSelected =
-              isCustomMode && option.value === "custom"
-                ? true
-                : !isCustomMode && activePreset === option.value;
+        <div className="max-w-full overflow-x-auto pb-0.5 sm:pb-0">
+          <div
+            role="group"
+            aria-label="Dashboard Date Presets"
+            className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-1 text-xs"
+          >
+            {PRESET_OPTIONS.map((option) => {
+              const isSelected =
+                isCustomMode && option.value === "custom"
+                  ? true
+                  : !isCustomMode && activePreset === option.value;
 
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => handleSelectPreset(option.value)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 font-medium transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
-                  isSelected
-                    ? "bg-card text-foreground shadow-xs font-semibold"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleSelectPreset(option.value)}
+                  className={cn(
+                    "shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-medium transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                    isSelected
+                      ? "border border-border/80 bg-background font-semibold text-foreground shadow-xs"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                  )}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
