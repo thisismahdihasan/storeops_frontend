@@ -1,7 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { MessageSquare, MessageSquarePlus, X } from "lucide-react";
+import {
+  Maximize,
+  MessageSquare,
+  MessageSquarePlus,
+  X,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import { type MouseEvent, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -21,8 +28,13 @@ type ComposerPlacement = {
   top: number;
 };
 
+type ReviewViewMode = "comment" | "inspect";
+
+const ZOOM_SCALES = [1, 1.25, 1.5, 2] as const;
+
 type ReviewImageCanvasProps = {
   annotations: ReviewImageAnnotation[];
+  enableZoomControls?: boolean;
   hoveredAnnotationId?: string | null;
   imageDeletedAt: string | null;
   imageUrl: string | null;
@@ -39,6 +51,7 @@ type ReviewImageCanvasProps = {
 
 export function ReviewImageCanvas({
   annotations,
+  enableZoomControls = false,
   hoveredAnnotationId,
   imageDeletedAt,
   imageUrl,
@@ -54,6 +67,7 @@ export function ReviewImageCanvas({
 }: ReviewImageCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
   const [activeComposer, setActiveComposer] = useState<{
     x: number;
     y: number;
@@ -61,6 +75,9 @@ export function ReviewImageCanvas({
   const [composerPlacement, setComposerPlacement] =
     useState<ComposerPlacement | null>(null);
   const [commentText, setCommentText] = useState("");
+  const [viewMode, setViewMode] = useState<ReviewViewMode>("inspect");
+  const [zoomIndex, setZoomIndex] = useState(0);
+  const [zoomBaseWidth, setZoomBaseWidth] = useState<number | null>(null);
 
   const createAnnotationMutation = useCreateReviewAnnotation(
     workspaceId,
@@ -69,6 +86,9 @@ export function ReviewImageCanvas({
   );
 
   const isImageUnavailable = !imageUrl || imageDeletedAt !== null;
+  const zoomScale = ZOOM_SCALES[zoomIndex];
+  const isZoomed = zoomScale > 1;
+  const zoomedCanvasWidth = zoomBaseWidth ? zoomBaseWidth * zoomScale : null;
 
   useLayoutEffect(() => {
     if (!activeComposer) return;
@@ -81,16 +101,23 @@ export function ReviewImageCanvas({
 
       const containerRect = container.getBoundingClientRect();
       const composerRect = composer.getBoundingClientRect();
+      const scrollViewportRect = scrollViewportRef.current?.getBoundingClientRect();
       const viewportPadding = 16;
       const pinOffset = 16;
       const pinX =
         containerRect.left + composerCoordinates.x * containerRect.width;
       const pinY =
         containerRect.top + composerCoordinates.y * containerRect.height;
-      const minimumLeft = viewportPadding;
+      const minimumLeft = Math.max(
+        viewportPadding,
+        scrollViewportRect?.left ?? viewportPadding,
+      );
       const maximumLeft = Math.max(
         minimumLeft,
-        window.innerWidth - viewportPadding - composerRect.width,
+        Math.min(
+          window.innerWidth - viewportPadding,
+          scrollViewportRect?.right ?? window.innerWidth - viewportPadding,
+        ) - composerRect.width,
       );
       const cardLeft = Math.min(
         Math.max(pinX - composerRect.width / 2, minimumLeft),
@@ -98,9 +125,17 @@ export function ReviewImageCanvas({
       );
       const belowTop = pinY + pinOffset;
       const aboveTop = pinY - pinOffset - composerRect.height;
+      const minimumTop = Math.max(
+        viewportPadding,
+        scrollViewportRect?.top ?? viewportPadding,
+      );
+      const maximumBottom = Math.min(
+        window.innerHeight - viewportPadding,
+        scrollViewportRect?.bottom ?? window.innerHeight - viewportPadding,
+      );
       const fitsBelow =
-        belowTop + composerRect.height <= window.innerHeight - viewportPadding;
-      const fitsAbove = aboveTop >= viewportPadding;
+        belowTop + composerRect.height <= maximumBottom;
+      const fitsAbove = aboveTop >= minimumTop;
       const placeAbove =
         !fitsBelow &&
         (fitsAbove || pinY > window.innerHeight - pinY);
@@ -146,6 +181,8 @@ export function ReviewImageCanvas({
       return;
     }
 
+    if (viewMode !== "comment") return;
+
     // If clicking directly on an existing marker or composer popover, do nothing
     const target = e.target as HTMLElement;
     if (target.closest("[data-annotation-element]")) {
@@ -185,6 +222,7 @@ export function ReviewImageCanvas({
       setActiveComposer(null);
       setComposerPlacement(null);
       setCommentText("");
+      setViewMode("inspect");
     } catch (error) {
       const message =
         error instanceof ApiError ? error.message : "Failed to add annotation.";
@@ -196,32 +234,139 @@ export function ReviewImageCanvas({
     setActiveComposer(null);
     setComposerPlacement(null);
     setCommentText("");
+    setViewMode("inspect");
+  }
+
+  function handleCommentModeToggle() {
+    if (viewMode === "comment") {
+      handleCancelComposer();
+      return;
+    }
+
+    setViewMode("comment");
+  }
+
+  function handleZoomChange(nextZoomIndex: number) {
+    if (nextZoomIndex === zoomIndex) return;
+
+    if (nextZoomIndex === 0) {
+      setZoomIndex(0);
+      setZoomBaseWidth(null);
+      scrollViewportRef.current?.scrollTo({ left: 0, top: 0 });
+      return;
+    }
+
+    const canvasWidth =
+      zoomBaseWidth ?? containerRef.current?.getBoundingClientRect().width;
+    if (!canvasWidth) return;
+
+    setZoomBaseWidth(canvasWidth);
+    setZoomIndex(nextZoomIndex);
   }
 
   return (
     <div className="flex flex-col items-center">
-      {isActionable && (
-        <div className="mb-3 flex w-full items-center justify-between gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-            <MessageSquarePlus className="size-3.5 text-primary" />
-            Click anywhere on the image to place a correction note
-          </span>
-          <span className="hidden sm:inline">Normalized coordinate pin</span>
+      {enableZoomControls && (
+        <div
+          aria-label="Review image tools"
+          className="mb-3 flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-border/80 bg-background/80 p-2.5 shadow-xs"
+          role="toolbar"
+        >
+          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card/80 p-1 shadow-xs">
+            <Button
+              aria-label="Zoom out"
+              className="bg-card hover:bg-muted"
+              disabled={zoomIndex === 0 || Boolean(activeComposer)}
+              onClick={() => handleZoomChange(zoomIndex - 1)}
+              size="icon-xs"
+              title="Zoom out"
+              type="button"
+              variant="outline"
+            >
+              <ZoomOut className="size-3.5" />
+            </Button>
+            <span
+              aria-live="polite"
+              className="min-w-12 rounded-md bg-card px-2 py-1 text-center text-xs font-semibold text-foreground shadow-xs"
+            >
+              {Math.round(zoomScale * 100)}%
+            </span>
+            <Button
+              aria-label="Zoom in"
+              className="bg-card hover:bg-muted"
+              disabled={
+                zoomIndex === ZOOM_SCALES.length - 1 || Boolean(activeComposer)
+              }
+              onClick={() => handleZoomChange(zoomIndex + 1)}
+              size="icon-xs"
+              title="Zoom in"
+              type="button"
+              variant="outline"
+            >
+              <ZoomIn className="size-3.5" />
+            </Button>
+            <Button
+              aria-label="Fit image to review area"
+              className="bg-card hover:bg-muted"
+              disabled={zoomIndex === 0 || Boolean(activeComposer)}
+              onClick={() => handleZoomChange(0)}
+              size="xs"
+              title="Fit image"
+              type="button"
+              variant="outline"
+            >
+              <Maximize className="size-3" />
+              Fit
+            </Button>
+          </div>
+
+          <Button
+            aria-pressed={viewMode === "comment"}
+            className={
+              viewMode === "comment"
+                ? "ring-2 ring-primary/30 shadow-sm"
+                : "shadow-xs hover:shadow-sm"
+            }
+            disabled={!isActionable || Boolean(activeComposer)}
+            onClick={handleCommentModeToggle}
+            size="xs"
+            type="button"
+            variant="default"
+          >
+            <MessageSquarePlus className="size-3.5" />
+            {viewMode === "comment" ? "Comment mode" : "Add Comment"}
+          </Button>
         </div>
       )}
 
-      {/* Main Image Container with relative positioning */}
       <div
-        className={`relative inline-block max-w-full ${
-          isActionable ? "cursor-crosshair" : "cursor-default"
+        className={`review-zoom-viewport w-full ${
+          isZoomed ? "max-h-[720px] overflow-auto" : "overflow-visible"
         }`}
-        onClick={handleImageClick}
-        ref={containerRef}
+        ref={scrollViewportRef}
       >
+        <div className={isZoomed ? "w-max" : "flex justify-center"}>
+          {/* Main Image Container with relative positioning */}
+          <div
+            className={`relative inline-block ${
+              isZoomed ? "" : "max-w-full"
+            } ${viewMode === "comment" ? "cursor-crosshair" : "cursor-default"}`}
+            onClick={handleImageClick}
+            ref={containerRef}
+            style={
+              isZoomed && zoomedCanvasWidth
+                ? { width: `${zoomedCanvasWidth}px` }
+                : undefined
+            }
+          >
         <div className="overflow-hidden rounded-xl border border-border bg-black/5 shadow-xs dark:bg-black/20">
           <img
             alt={`Review submission round ${roundNumber}`}
-            className="block max-h-[720px] w-auto max-w-full object-contain select-none"
+            className={
+              isZoomed
+                ? "block h-auto w-full max-w-none select-none"
+                : "block max-h-[720px] w-auto max-w-full object-contain select-none"
+            }
             src={imageUrl}
           />
         </div>
@@ -359,7 +504,41 @@ export function ReviewImageCanvas({
             </div>
           </>
         )}
+          </div>
+        </div>
       </div>
+      <style jsx>{`
+        .review-zoom-viewport {
+          scrollbar-color: var(--muted-foreground) var(--muted);
+          scrollbar-width: thin;
+        }
+
+        .review-zoom-viewport::-webkit-scrollbar {
+          height: 8px;
+          width: 8px;
+        }
+
+        .review-zoom-viewport::-webkit-scrollbar-track {
+          background: var(--muted);
+          border-radius: 9999px;
+        }
+
+        .review-zoom-viewport::-webkit-scrollbar-thumb {
+          background: var(--muted-foreground);
+          border: 2px solid var(--muted);
+          border-radius: 9999px;
+        }
+
+        .review-zoom-viewport::-webkit-scrollbar-thumb:hover {
+          background: var(--foreground);
+        }
+
+        .review-zoom-viewport::-webkit-scrollbar-button {
+          display: none;
+          height: 0;
+          width: 0;
+        }
+      `}</style>
     </div>
   );
 }

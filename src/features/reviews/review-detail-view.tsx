@@ -493,9 +493,11 @@ export function ReviewDetailView({
             >
               <ReviewImageCanvas
                 annotations={selectedReview.annotations}
+                enableZoomControls
                 imageDeletedAt={selectedReview.imageDeletedAt}
                 imageUrl={selectedReview.imageUrl}
                 isActionable={isActionable}
+                key={selectedReview.id}
                 onSelectAnnotation={setSelectedAnnotationId}
                 researchItemId={researchItem.id}
                 reviewId={selectedReview.id}
