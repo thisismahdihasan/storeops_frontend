@@ -36,6 +36,31 @@ const annotationSchema = z.object({
   y: z.number(),
 });
 
+const workspaceReviewAnnotationSchema = z.object({
+  comment: z.string(),
+  createdAt: z.string(),
+  createdBy: z.object({ name: z.string().nullable() }),
+  id: z.string(),
+  replies: z.array(z.object({
+    createdAt: z.string(),
+    createdBy: z.object({ name: z.string().nullable() }),
+    id: z.string(),
+    message: z.string(),
+  })),
+  x: z.number(),
+  y: z.number(),
+});
+
+export const designWorkspaceReviewSchema = z.object({
+  annotations: z.array(workspaceReviewAnnotationSchema),
+  id: z.string(),
+  imageDeletedAt: z.string().nullable(),
+  imageUrl: z.string().url().nullable(),
+  note: z.string().nullable(),
+  roundNumber: z.number().int().positive(),
+  submittedAt: z.string(),
+});
+
 export const designDetailResponseSchema = z.object({
   data: z.object({
     assignment: z.object({
@@ -71,6 +96,9 @@ export const designDetailResponseSchema = z.object({
       roundNumber: z.number().int().positive(),
       submittedAt: z.string(),
     }).nullable(),
+    reviewHistory: z.object({
+      previousReviews: z.array(designWorkspaceReviewSchema),
+    }),
     researcher: userSchema,
     researchItem: z.object({
       createdAt: z.string(),

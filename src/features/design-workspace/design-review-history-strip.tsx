@@ -6,7 +6,7 @@ import { ImageIcon } from "lucide-react";
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 import { cn } from "@/lib/utils";
 
-import type { ReviewHistoryItem } from "@/features/reviews/reviews.types";
+import type { DesignWorkspaceReview } from "./design-workspace.types";
 
 export type DesignReviewHistorySelection =
   | { kind: "reference" }
@@ -17,7 +17,7 @@ type DesignReviewHistoryStripProps = {
   latestReviewId: string;
   onSelect: (selection: DesignReviewHistorySelection) => void;
   researchItemId: string;
-  reviews: ReviewHistoryItem[];
+  reviews: DesignWorkspaceReview[];
   selected: DesignReviewHistorySelection;
   workspaceId: string;
 };
@@ -125,7 +125,7 @@ type ReviewHistoryCardProps = {
   isSelected: boolean;
   needsChanges: boolean;
   onSelect: () => void;
-  review: ReviewHistoryItem;
+  review: DesignWorkspaceReview;
 };
 
 function ReviewHistoryCard({

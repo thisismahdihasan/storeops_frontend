@@ -10,12 +10,12 @@ import { formatWorkDate } from "@/features/designer-work/designer-work.types";
 import { ReviewImageCanvas } from "@/features/reviews/review-image-canvas";
 import { ApiError } from "@/lib/api";
 
-import type { ReviewHistoryItem } from "@/features/reviews/reviews.types";
 import { DesignPreviewLightbox } from "./design-preview-lightbox";
+import type { DesignWorkspaceReview } from "./design-workspace.types";
 import { useDesignerAnnotationReply } from "./use-design-workspace";
 
 type ReviewFeedbackRound = Pick<
-  ReviewHistoryItem,
+  DesignWorkspaceReview,
   | "annotations"
   | "id"
   | "imageDeletedAt"

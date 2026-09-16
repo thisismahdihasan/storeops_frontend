@@ -11,8 +11,13 @@ import { ApiError } from "@/lib/api";
 import type { ReviewAnnotationDetail } from "./reviews.types";
 import { useCreateReviewAnnotation } from "./use-reviews";
 
+type ReviewImageAnnotation = Pick<
+  ReviewAnnotationDetail,
+  "comment" | "id" | "x" | "y"
+>;
+
 type ReviewImageCanvasProps = {
-  annotations: ReviewAnnotationDetail[];
+  annotations: ReviewImageAnnotation[];
   hoveredAnnotationId?: string | null;
   imageDeletedAt: string | null;
   imageUrl: string | null;

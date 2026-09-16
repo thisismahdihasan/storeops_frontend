@@ -14,7 +14,6 @@ import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
 
 import { canUserReplyToAnnotation } from "@/features/reviews/reviews.constants";
-import { useReviewDetail } from "@/features/reviews/use-reviews";
 
 import {
   DesignReviewHistoryStrip,
@@ -47,12 +46,6 @@ export function DesignWorkspaceView({
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<
     string | null
   >(null);
-  const latestReviewId = detailQuery.data?.data.latestReview?.id ?? "";
-  const reviewHistoryQuery = useReviewDetail(
-    workspaceId,
-    latestReviewId,
-    hasDesignerRole && latestReviewId.length > 0,
-  );
   const [historySelection, setHistorySelection] =
     useState<DesignReviewHistorySelection>({ kind: "review", reviewId: "" });
 
@@ -79,29 +72,29 @@ export function DesignWorkspaceView({
     detail.researchItem.title ||
     `Etsy Listing #${detail.researchItem.etsyListingId}`;
 
-  const reviewHistory = reviewHistoryQuery.data?.data;
-  const hasInlineReviewHistory = Boolean(
-    reviewHistory && reviewHistory.reviews.length > 0,
-  );
+  const reviewHistory = detail.latestReview
+    ? [...detail.reviewHistory.previousReviews, detail.latestReview]
+    : [];
+  const hasInlineReviewHistory = reviewHistory.length > 0;
   const selectedHistoryReview =
     historySelection.kind === "review"
-      ? reviewHistory?.reviews.find(
+      ? reviewHistory.find(
           (review) => review.id === historySelection.reviewId,
         ) ?? null
       : null;
   const selectedReview =
     selectedHistoryReview ??
-    reviewHistory?.reviews.find(
-      (review) => review.id === reviewHistory.latestReviewId,
-    ) ??
+    detail.latestReview ??
     null;
   const resolvedHistorySelection: DesignReviewHistorySelection =
-    historySelection.kind === "review" && !selectedHistoryReview && reviewHistory
-      ? { kind: "review", reviewId: reviewHistory.latestReviewId }
+    historySelection.kind === "review" &&
+    !selectedHistoryReview &&
+    detail.latestReview
+      ? { kind: "review", reviewId: detail.latestReview.id }
       : historySelection;
   const isSelectedLatestReview =
     resolvedHistorySelection.kind === "review" &&
-    resolvedHistorySelection.reviewId === reviewHistory?.latestReviewId;
+    resolvedHistorySelection.reviewId === detail.latestReview?.id;
   const hasLegacyCorrectionFeedback = Boolean(
     detail.latestReview &&
       detail.latestReview.annotations.length > 0 &&
@@ -247,16 +240,16 @@ export function DesignWorkspaceView({
         </div>
       </header>
 
-      {hasInlineReviewHistory && reviewHistory && (
+      {hasInlineReviewHistory && (
         <>
           <DesignReviewHistoryStrip
             isCorrectionNeeded={
               detail.researchItem.status === "CORRECTION_NEEDED"
             }
-            latestReviewId={reviewHistory.latestReviewId}
+            latestReviewId={detail.latestReview?.id ?? ""}
             onSelect={handleHistorySelection}
             researchItemId={detail.researchItem.id}
-            reviews={reviewHistory.reviews}
+            reviews={reviewHistory}
             selected={resolvedHistorySelection}
             workspaceId={workspaceId}
           />
