@@ -32,11 +32,11 @@ export function WorkerAssignmentStatusBanner({
     return (
       <InlineNotice
         icon={Clock}
-        title="Assignments Paused"
+        title="Your Assignments Are Paused"
         variant="warning"
       >
         <p>
-          New automatic assignments are paused until {formattedDate}. Existing assigned work is unaffected.
+          An administrator has paused automatic assignments for your account until {formattedDate}. Any existing assigned work is unaffected.
         </p>
       </InlineNotice>
     );
@@ -45,11 +45,11 @@ export function WorkerAssignmentStatusBanner({
   // OFF state
   return (
     <InlineNotice
-      title="Assignments Turned Off"
+      title="Your Assignments Are Turned Off"
       variant="warning"
     >
       <p>
-        New automatic assignments are turned off by an administrator. Existing assigned work is unaffected.
+        An administrator has turned off automatic assignments for your account. Any existing assigned work is unaffected.
       </p>
     </InlineNotice>
   );

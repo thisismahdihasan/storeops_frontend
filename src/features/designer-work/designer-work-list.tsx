@@ -15,12 +15,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusBadge, STATUS_TONE_TEXT_CLASSES } from "@/components/ui/status-badge";
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
+import type { AssignmentAvailabilityState } from "@/features/workspace/workspace-assignment-availability";
 import { cn } from "@/lib/utils";
 
 import { formatWorkDate, getDesignerWorkStatusMeta } from "./designer-work.types";
 import type { DesignerQueueResponse, DesignerWorkItem } from "./designer-work.types";
 
 type DesignerWorkListProps = {
+  availabilityState?: AssignmentAvailabilityState;
   data?: DesignerQueueResponse["data"];
   filtersActive: boolean;
   isError: boolean;
@@ -37,6 +39,7 @@ type DesignerWorkListProps = {
 };
 
 export function DesignerWorkList({
+  availabilityState = "AVAILABLE",
   data,
   filtersActive,
   isError,
@@ -65,6 +68,13 @@ export function DesignerWorkList({
     );
   }
   if (!data || data.items.length === 0) {
+    const emptySubtitle = filtersActive
+      ? "Try another status or refine your search."
+      : availabilityState === "OFF"
+        ? "Automatic assignments are currently turned off for your account."
+        : availabilityState === "PAUSED"
+          ? "Automatic assignments are currently paused for your account."
+          : "New assignments will appear here when they are assigned to you.";
     return (
       <section className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center">
         <FileSearch className="size-9 text-muted-foreground" />
@@ -72,9 +82,7 @@ export function DesignerWorkList({
           {filtersActive ? "No work matches this status." : "No active design work assigned to you."}
         </h2>
         <p className="mt-1 max-w-md text-sm text-muted-foreground">
-          {filtersActive
-            ? "Try another status or refine your search."
-            : "New assignments will appear here when they are assigned to you."}
+          {emptySubtitle}
         </p>
       </section>
     );

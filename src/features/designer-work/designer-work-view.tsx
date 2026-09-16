@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { ApiError } from "@/lib/api";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { getAssignmentAvailabilityState } from "@/features/workspace/workspace-assignment-availability";
 
 import { WorkerAssignmentStatusBanner } from "@/features/workspace/worker-assignment-status-banner";
 import { DesignerWorkFilters } from "./designer-work-filters";
@@ -88,7 +89,26 @@ export function DesignerWorkView({ workspaceId }: DesignerWorkViewProps) {
         />
       ) : null}
       <DesignerWorkFilters key={filters.search ?? ""} filters={filters} onChange={updateFilters} />
-      <DesignerWorkList data={queueQuery.data?.data} filtersActive={Boolean(filters.search || filters.status)} isError={queueQuery.isError} isLoading={queueQuery.isLoading || workspacesQuery.isLoading} onOpenWork={handleOpenWork} onPageChange={(page) => updateFilters({ page })} onReportIssue={setIssueWork} onRetry={() => void queueQuery.refetch()} onStartCorrection={(work) => void handleStartCorrection(work)} onStartWork={(work) => void handleStartWork(work)} startingCorrectionItemId={startCorrectionMutation.isPending ? startCorrectionMutation.variables : undefined} startingWorkItemId={startWorkMutation.isPending ? startWorkMutation.variables : undefined} workspaceId={workspaceId} />
+      <DesignerWorkList
+        availabilityState={
+          activeWorkspace
+            ? getAssignmentAvailabilityState(activeWorkspace.membership, "DESIGNER")
+            : "AVAILABLE"
+        }
+        data={queueQuery.data?.data}
+        filtersActive={Boolean(filters.search || filters.status)}
+        isError={queueQuery.isError}
+        isLoading={queueQuery.isLoading || workspacesQuery.isLoading}
+        onOpenWork={handleOpenWork}
+        onPageChange={(page) => updateFilters({ page })}
+        onReportIssue={setIssueWork}
+        onRetry={() => void queueQuery.refetch()}
+        onStartCorrection={(work) => void handleStartCorrection(work)}
+        onStartWork={(work) => void handleStartWork(work)}
+        startingCorrectionItemId={startCorrectionMutation.isPending ? startCorrectionMutation.variables : undefined}
+        startingWorkItemId={startWorkMutation.isPending ? startWorkMutation.variables : undefined}
+        workspaceId={workspaceId}
+      />
       <ReportIssueDialog isSubmitting={reportIssueMutation.isPending} onOpenChange={(open) => !open && setIssueWork(null)} onSubmit={(values) => void handleReportIssue(values)} open={issueWork !== null} workTitle={issueWork?.researchItem.title || `Etsy Listing #${issueWork?.researchItem.etsyListingId ?? ""}`} />
     </div>
   );

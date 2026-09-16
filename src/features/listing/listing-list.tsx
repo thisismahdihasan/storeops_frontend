@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
+import type { AssignmentAvailabilityState } from "@/features/workspace/workspace-assignment-availability";
 
 import { ApprovedPreview } from "./approved-preview";
 import {
@@ -23,6 +24,7 @@ import {
 import type { ListingQueueItem, ListingQueueResponse, ListingStatus } from "./listing.types";
 
 type ListingListProps = {
+  availabilityState?: AssignmentAvailabilityState;
   data?: ListingQueueResponse["data"];
   hasSearch: boolean;
   isError: boolean;
@@ -34,6 +36,7 @@ type ListingListProps = {
 };
 
 export function ListingList({
+  availabilityState = "AVAILABLE",
   data,
   hasSearch,
   isError,
@@ -66,12 +69,19 @@ export function ListingList({
       : status === "READY_FOR_LISTING"
         ? "No assigned listings"
         : "No listings in progress";
+    const emptySubtitle = hasSearch
+      ? "Try a different search."
+      : availabilityState === "OFF"
+        ? "Automatic assignments are currently turned off for your account."
+        : availabilityState === "PAUSED"
+          ? "Automatic assignments are currently paused for your account."
+          : "New work will appear here automatically.";
     return (
       <section className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center">
         <FileSearch className="size-9 text-muted-foreground" />
         <h2 className="mt-3 font-semibold">{title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          {hasSearch ? "Try a different search." : "New work will appear here automatically."}
+          {emptySubtitle}
         </p>
       </section>
     );

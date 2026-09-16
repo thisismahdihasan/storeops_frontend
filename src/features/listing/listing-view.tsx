@@ -7,6 +7,7 @@ import { Tag } from "lucide-react";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
 
+import { getAssignmentAvailabilityState } from "@/features/workspace/workspace-assignment-availability";
 import { WorkerAssignmentStatusBanner } from "@/features/workspace/worker-assignment-status-banner";
 import { ListingAccessState } from "./listing-access-state";
 import { ListingFilters } from "./listing-filters";
@@ -112,6 +113,11 @@ export function ListingView({ workspaceId }: ListingViewProps) {
         onChange={updateFilters}
       />
       <ListingList
+        availabilityState={
+          workspace
+            ? getAssignmentAvailabilityState(workspace.membership, "LISTER")
+            : "AVAILABLE"
+        }
         data={queueQuery.data?.data}
         hasSearch={Boolean(filters.search)}
         isError={queueQuery.isError || workspacesQuery.isError}
