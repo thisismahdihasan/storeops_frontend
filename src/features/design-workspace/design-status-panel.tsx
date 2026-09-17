@@ -18,6 +18,7 @@ import { formatWorkDate } from "@/features/designer-work/designer-work.types";
 import { FinalAssetsPanel } from "./final-assets-panel";
 import { ReviewUploadForm } from "./review-upload-form";
 import type { DesignDetail } from "./design-workspace.types";
+import type { FinalAssetMultipartUploadState } from "./use-design-workspace";
 
 type DesignStatusPanelProps = {
   detail: DesignDetail;
@@ -26,10 +27,14 @@ type DesignStatusPanelProps = {
   isCompleting: boolean;
   isStartingCorrection: boolean;
   isStartingWork: boolean;
-  isSubmittingFinalAssets: boolean;
   isSubmittingReview: boolean;
+  finalAssetUploadState: FinalAssetMultipartUploadState;
+  canRetryFinalAssetUpload: boolean;
+  onCancelFinalAssetUpload: () => void;
   onComplete: () => void;
   onOpenIssueDialog: () => void;
+  onResetFinalAssetUpload: () => void;
+  onRetryFinalAssetUpload: () => void;
   onStartCorrection: () => void;
   onStartWork: () => void;
   onSubmitFinalAssets: (file: File) => void;
@@ -44,10 +49,14 @@ export function DesignStatusPanel({
   isCompleting,
   isStartingCorrection,
   isStartingWork,
-  isSubmittingFinalAssets,
   isSubmittingReview,
+  finalAssetUploadState,
+  canRetryFinalAssetUpload,
+  onCancelFinalAssetUpload,
   onComplete,
   onOpenIssueDialog,
+  onResetFinalAssetUpload,
+  onRetryFinalAssetUpload,
   onStartCorrection,
   onStartWork,
   onSubmitFinalAssets,
@@ -337,10 +346,14 @@ export function DesignStatusPanel({
           <div className="space-y-4">
             <FinalAssetsPanel
               assets={finalAssets.items}
+              canRetryUpload={canRetryFinalAssetUpload}
               isCompleting={isCompleting}
-              isPending={isSubmittingFinalAssets}
+              onCancelUpload={onCancelFinalAssetUpload}
+              onResetUpload={onResetFinalAssetUpload}
+              onRetryUpload={onRetryFinalAssetUpload}
               onUpload={onSubmitFinalAssets}
               showUploader
+              uploadState={finalAssetUploadState}
             />
             {finalAssets.items.length > 0 && (
               <div className="pt-3 border-t border-border">
@@ -380,10 +393,22 @@ export function DesignStatusPanel({
             {finalAssets.items.length > 0 && (
               <FinalAssetsPanel
               assets={finalAssets.items}
+              canRetryUpload={false}
               isCompleting={false}
-              isPending={false}
+                onCancelUpload={() => undefined}
+                onResetUpload={() => undefined}
+                onRetryUpload={() => undefined}
                 onUpload={() => undefined}
                 showUploader={false}
+                uploadState={{
+                  completedBytes: 0,
+                  completedParts: 0,
+                  error: null,
+                  fileName: null,
+                  partCount: 0,
+                  phase: "idle",
+                  totalBytes: 0,
+                }}
               />
             )}
           </div>

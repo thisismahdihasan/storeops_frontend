@@ -3,6 +3,17 @@ import { ApiError, apiRequest } from "@/lib/api";
 import {
   designDetailResponseSchema,
   designWorkflowResponseSchema,
+  multipartAbortRequestSchema,
+  multipartAbortResponseSchema,
+  multipartCompleteRequestSchema,
+  multipartInitRequestSchema,
+  multipartInitResponseSchema,
+} from "./design-workspace.schemas";
+import type {
+  MultipartAbortRequest,
+  MultipartCompleteRequest,
+  MultipartInitRequest,
+  MultipartInitResponse,
 } from "./design-workspace.schemas";
 import type { DesignDetailResponse } from "./design-workspace.types";
 
@@ -71,4 +82,51 @@ export async function uploadFinalAssets(
     `${designPath(workspaceId, researchItemId)}/final-assets`,
     { body: formData, method: "POST" },
   ));
+}
+
+export async function initFinalAssetMultipartUpload(
+  workspaceId: string,
+  researchItemId: string,
+  input: MultipartInitRequest,
+  signal?: AbortSignal,
+): Promise<MultipartInitResponse> {
+  const validatedInput = multipartInitRequestSchema.parse(input);
+  const response = await apiRequest<unknown>(
+    `${designPath(workspaceId, researchItemId)}/final-assets/multipart/init`,
+    { json: validatedInput, method: "POST", signal },
+  );
+  const parsed = multipartInitResponseSchema.safeParse(response);
+  if (!parsed.success) {
+    throw new ApiError(502, "Unexpected multipart upload response format.");
+  }
+
+  return parsed.data.data;
+}
+
+export async function completeFinalAssetMultipartUpload(
+  workspaceId: string,
+  researchItemId: string,
+  input: MultipartCompleteRequest,
+) {
+  const validatedInput = multipartCompleteRequestSchema.parse(input);
+  return parseWorkflowResponse(await apiRequest<unknown>(
+    `${designPath(workspaceId, researchItemId)}/final-assets/multipart/complete`,
+    { json: validatedInput, method: "POST" },
+  ));
+}
+
+export async function abortFinalAssetMultipartUpload(
+  workspaceId: string,
+  researchItemId: string,
+  input: MultipartAbortRequest,
+): Promise<void> {
+  const validatedInput = multipartAbortRequestSchema.parse(input);
+  const response = await apiRequest<unknown>(
+    `${designPath(workspaceId, researchItemId)}/final-assets/multipart/abort`,
+    { json: validatedInput, method: "POST" },
+  );
+  const parsed = multipartAbortResponseSchema.safeParse(response);
+  if (!parsed.success) {
+    throw new ApiError(502, "Unexpected multipart abort response format.");
+  }
 }

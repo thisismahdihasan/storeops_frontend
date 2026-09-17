@@ -132,7 +132,10 @@ export function DesignWorkspaceView({
 
   const handleFinalAssetsSubmission = async (file: File) => {
     try {
-      await actions.submitFinalAssets.mutateAsync(file);
+      const uploaded = await actions.multipartFinalAssetUpload.start(file);
+      if (!uploaded) {
+        return;
+      }
     } catch (error) {
       toast.error(actionErrorMessage(error));
       return;
@@ -169,8 +172,15 @@ export function DesignWorkspaceView({
       isCompleting={actions.completeWork.isPending}
       isStartingCorrection={actions.startCorrection.isPending}
       isStartingWork={actions.startWork.isPending}
-      isSubmittingFinalAssets={actions.submitFinalAssets.isPending}
       isSubmittingReview={actions.submitReview.isPending}
+      finalAssetUploadState={actions.multipartFinalAssetUpload.state}
+      canRetryFinalAssetUpload={
+        actions.multipartFinalAssetUpload.state.phase === "failed" &&
+        actions.multipartFinalAssetUpload.canRetry
+      }
+      onCancelFinalAssetUpload={() => {
+        void actions.multipartFinalAssetUpload.cancel();
+      }}
       onComplete={() =>
         void runAction(
           () => actions.completeWork.mutateAsync(),
@@ -178,6 +188,10 @@ export function DesignWorkspaceView({
         )
       }
       onOpenIssueDialog={() => setIsIssueDialogOpen(true)}
+      onResetFinalAssetUpload={actions.multipartFinalAssetUpload.reset}
+      onRetryFinalAssetUpload={() => {
+        void actions.multipartFinalAssetUpload.retry().catch(() => undefined);
+      }}
       onStartCorrection={() =>
         void runAction(
           () => actions.startCorrection.mutateAsync(),
