@@ -16,6 +16,7 @@ type AuthenticatedReferenceImageProps = {
   hasImage: boolean;
   isActive?: boolean;
   minHeightClassName?: string;
+  openImageLabel?: string;
   onOpenImage?: (imageUrl: string) => void;
   onOpenUpload?: () => void;
   researchItemId: string;
@@ -31,6 +32,7 @@ export function AuthenticatedReferenceImage({
   hasImage,
   isActive = true,
   minHeightClassName = "min-h-[200px]",
+  openImageLabel,
   onOpenImage,
   onOpenUpload,
   researchItemId,
@@ -166,7 +168,7 @@ export function AuthenticatedReferenceImage({
     >
       {onOpenImage ? (
         <button
-          aria-label={`Open ${alt} larger`}
+          aria-label={openImageLabel || `Open ${alt} larger`}
           className="max-w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           onClick={() => onOpenImage(objectUrl)}
           type="button"

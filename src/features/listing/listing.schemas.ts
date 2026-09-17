@@ -14,11 +14,18 @@ export const listingFiltersSchema = z
   })
   .strict();
 
-const userSchema = z
+const queuePersonSchema = z
   .object({
-    email: z.string().email(),
     id: z.string(),
     name: z.string().nullable(),
+  })
+  .strict();
+
+const detailPersonSchema = z
+  .object({
+    id: z.string(),
+    name: z.string().nullable(),
+    profileImageUrl: z.string().nullable(),
   })
   .strict();
 
@@ -45,7 +52,7 @@ const queueFinalAssetSchema = z
 const queueResearchItemSchema = z
   .object({
     createdAt: z.string(),
-    createdBy: userSchema,
+    createdBy: queuePersonSchema,
     etsyListingId: z.string(),
     id: z.string(),
     normalizedUrl: z.string().url(),
@@ -100,8 +107,8 @@ export const listingDetailResponseSchema = z
     data: z
       .object({
         approvedPreview: approvedPreviewSchema,
-        creator: userSchema,
-        designer: userSchema.nullable(),
+        creator: detailPersonSchema,
+        designer: detailPersonSchema.nullable(),
         finalAssets: z.array(detailFinalAssetSchema),
         listingAssignment: z
           .object({

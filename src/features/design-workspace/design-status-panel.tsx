@@ -32,7 +32,7 @@ type DesignStatusPanelProps = {
   onOpenIssueDialog: () => void;
   onStartCorrection: () => void;
   onStartWork: () => void;
-  onSubmitFinalAssets: (files: File[]) => void;
+  onSubmitFinalAssets: (file: File) => void;
   onSubmitReview: (file: File, note: string) => void;
   workspaceId: string;
 };
@@ -337,16 +337,15 @@ export function DesignStatusPanel({
           <div className="space-y-4">
             <FinalAssetsPanel
               assets={finalAssets.items}
-              count={finalAssets.count}
               isCompleting={isCompleting}
               isPending={isSubmittingFinalAssets}
               onUpload={onSubmitFinalAssets}
               showUploader
             />
-            {finalAssets.count > 0 && (
+            {finalAssets.items.length > 0 && (
               <div className="pt-3 border-t border-border">
                 <p className="mb-2 text-xs text-muted-foreground">
-                  Final files are uploaded. Retry completion only if the handoff did not finish.
+                  Final ZIP is uploaded. Retry completion only if the handoff did not finish.
                 </p>
                 <Button
                   className="w-full sm:w-auto font-semibold gap-1.5"
@@ -378,10 +377,9 @@ export function DesignStatusPanel({
                 </p>
               </div>
             </div>
-            {finalAssets.count > 0 && (
+            {finalAssets.items.length > 0 && (
               <FinalAssetsPanel
               assets={finalAssets.items}
-              count={finalAssets.count}
               isCompleting={false}
               isPending={false}
                 onUpload={() => undefined}

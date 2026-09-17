@@ -148,10 +148,10 @@ function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceI
         </div>
 
         <dl className="grid gap-x-4 gap-y-3 text-sm sm:grid-cols-2">
-          <QueueDetail icon={<User className="size-3.5" />} label="Created by" value={researchItem.createdBy.name || researchItem.createdBy.email} />
+          <QueueDetail icon={<User className="size-3.5" />} label="Created by" value={researchItem.createdBy.name || "Unknown member"} />
           <QueueDetail icon={<CalendarDays className="size-3.5" />} label="Assigned" value={formatListingDate(item.assignedAt)} />
           {item.startedAt ? <QueueDetail icon={<Clock3 className="size-3.5" />} label="Started" value={formatListingDate(item.startedAt)} /> : null}
-          <QueueDetail icon={<Files className="size-3.5" />} label="Final assets" value={`${item.finalAssets.length} file${item.finalAssets.length === 1 ? "" : "s"}`} />
+          <QueueDetail icon={<Files className="size-3.5" />} label="Final package" value={item.finalAssets.length > 0 ? "1 ZIP package" : "No ZIP package"} />
           {item.preview ? <QueueDetail label="Approved review" value={`Round ${item.preview.roundNumber} · ${formatListingDate(item.preview.approvedAt)}`} /> : null}
         </dl>
 

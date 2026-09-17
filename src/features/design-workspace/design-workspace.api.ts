@@ -62,12 +62,10 @@ export async function uploadReview(
 export async function uploadFinalAssets(
   workspaceId: string,
   researchItemId: string,
-  files: File[],
+  file: File,
 ) {
   const formData = new FormData();
-  for (const file of files) {
-    formData.append("files", file);
-  }
+  formData.append("files", file);
 
   return parseWorkflowResponse(await apiRequest<unknown>(
     `${designPath(workspaceId, researchItemId)}/final-assets`,

@@ -13,11 +13,9 @@ import { ApiError } from "@/lib/api";
 import { FinalAssetDownloadList } from "./final-asset-download-list";
 import { ListingAccessState } from "./listing-access-state";
 import {
-  ApprovedDesign,
-  AssignmentPanel,
-  OriginalReference,
+  AssignmentMetadata,
   PeoplePanel,
-  ResearchItemPanel,
+  ReferenceCheck,
 } from "./listing-detail-sections";
 import { getListingStatusMeta } from "./listing.types";
 import type { CompleteListingFormValues } from "./listing.types";
@@ -43,6 +41,7 @@ export function ListingDetailView({
     (item) => item.id === workspaceId,
   );
   const hasListerRole = workspace?.membership.roles.includes("LISTER") ?? false;
+  const isAdmin = workspace?.membership.roles.includes("ADMIN") ?? false;
   const detailQuery = useListingDetail(
     workspaceId,
     researchItemId,
@@ -150,17 +149,8 @@ export function ListingDetailView({
         </div>
       </header>
 
-      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
-        <div className="min-w-0 space-y-5">
-          <OriginalReference detail={detail} workspaceId={workspaceId} />
-          <ApprovedDesign detail={detail} />
-          <FinalAssetDownloadList
-            assets={detail.finalAssets}
-            workspaceId={workspaceId}
-          />
-        </div>
-
-        <aside className="min-w-0 space-y-5">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <aside className="order-1 min-w-0 space-y-5 lg:order-2">
           <ListingWorkflowPanel
             detail={detail}
             isCompleting={completeMutation.isPending}
@@ -168,11 +158,17 @@ export function ListingDetailView({
             onComplete={(values) => void handleComplete(values)}
             onStart={() => void handleStart()}
           />
-          <PeoplePanel detail={detail} />
-          <AssignmentPanel detail={detail} />
-          <ResearchItemPanel detail={detail} />
+          <FinalAssetDownloadList
+            assets={detail.finalAssets}
+            workspaceId={workspaceId}
+          />
         </aside>
+        <div className="order-2 min-w-0 lg:order-1">
+          <ReferenceCheck detail={detail} workspaceId={workspaceId} />
+        </div>
       </div>
+      {isAdmin && <PeoplePanel detail={detail} />}
+      <AssignmentMetadata detail={detail} />
     </main>
   );
 }
@@ -195,10 +191,11 @@ export function ListingDetailSkeleton() {
   return (
     <main aria-label="Loading listing detail" className="mx-auto max-w-screen-2xl animate-pulse space-y-5 p-4 sm:p-6 lg:p-8" role="status">
       <div className="h-24 rounded-xl bg-muted" />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
-        <div className="space-y-5"><div className="h-96 rounded-xl bg-muted" /><div className="h-80 rounded-xl bg-muted" /><div className="h-48 rounded-xl bg-muted" /></div>
-        <div className="space-y-5"><div className="h-52 rounded-xl bg-muted" /><div className="h-40 rounded-xl bg-muted" /><div className="h-40 rounded-xl bg-muted" /></div>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="order-1 h-52 rounded-xl bg-muted lg:order-2" />
+        <div className="order-2 h-64 rounded-xl bg-muted lg:order-1" />
       </div>
+      <div className="h-24 rounded-xl bg-muted" />
     </main>
   );
 }

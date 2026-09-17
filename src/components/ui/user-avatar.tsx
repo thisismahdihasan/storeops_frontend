@@ -9,7 +9,7 @@ export type UserAvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 export type UserAvatarProps = {
   className?: string;
-  email: string;
+  email?: string | null;
   name: string | null | undefined;
   profileImageUrl?: string | null;
   size?: UserAvatarSize;
@@ -25,7 +25,7 @@ const avatarSizeClasses: Record<UserAvatarSize, string> = {
 
 export function getInitials(
   name: string | null | undefined,
-  email: string,
+  email?: string | null,
 ): string {
   const cleanName = (name ?? "").trim();
 
@@ -37,7 +37,7 @@ export function getInitials(
     return (firstInitial + secondInitial || cleanName.slice(0, 2)).toUpperCase();
   }
 
-  return email.slice(0, 2).toUpperCase();
+  return email?.slice(0, 2).toUpperCase() || "?";
 }
 
 export function UserAvatar({
@@ -48,7 +48,7 @@ export function UserAvatar({
   size = "sm",
 }: UserAvatarProps) {
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
-  const displayName = name?.trim() || email;
+  const displayName = name?.trim() || email || "Unknown member";
   const imageFailed = failedImageUrl === profileImageUrl;
 
   return (

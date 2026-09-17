@@ -72,7 +72,7 @@ export function useDesignActions(workspaceId: string, researchItemId: string) {
     onSuccess: () => { invalidate(); },
   });
   const submitFinalAssets = useMutation({
-    mutationFn: (files: File[]) => uploadFinalAssets(workspaceId, researchItemId, files),
+    mutationFn: (file: File) => uploadFinalAssets(workspaceId, researchItemId, file),
     onSuccess: () => { invalidate(); },
   });
   const reportIssue = useMutation({

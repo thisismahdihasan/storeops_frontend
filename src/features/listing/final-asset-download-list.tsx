@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, File, Loader2 } from "lucide-react";
+import { Download, FileArchive, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -18,13 +18,14 @@ type FinalAssetDownloadListProps = {
 
 export function FinalAssetDownloadList({ assets, workspaceId }: FinalAssetDownloadListProps) {
   const [pendingAssetId, setPendingAssetId] = useState<string | null>(null);
+  const asset = assets[0] ?? null;
 
   const handleDownload = async (asset: ListingDetail["finalAssets"][number]) => {
     setPendingAssetId(asset.id);
     try {
       await downloadListingAsset(workspaceId, asset.id, asset.fileName);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to download this file.");
+      toast.error(error instanceof Error ? error.message : "Unable to download the ZIP package.");
     } finally {
       setPendingAssetId(null);
     }
@@ -32,48 +33,34 @@ export function FinalAssetDownloadList({ assets, workspaceId }: FinalAssetDownlo
 
   return (
     <section className="rounded-xl border border-border bg-card p-4 shadow-xs">
-      <div>
-        <h2 className="font-semibold">Final assets</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {assets.length} production file{assets.length === 1 ? "" : "s"} available through secure download.
-        </p>
-      </div>
+      <h2 className="font-semibold">Final Package</h2>
 
-      {assets.length === 0 ? (
+      {!asset ? (
         <p className="mt-4 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-          No final assets are available.
+          No final ZIP package available.
         </p>
       ) : (
-        <ul className="mt-4 divide-y divide-border overflow-hidden rounded-lg border border-border">
-          {assets.map((asset) => {
-            const isPending = pendingAssetId === asset.id;
-            return (
-              <li className="flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between" key={asset.id}>
-                <div className="flex min-w-0 gap-3">
-                  <File className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <p className="break-all text-sm font-medium">{asset.fileName}</p>
-                    <p className="mt-1 break-words text-xs text-muted-foreground">
-                      {asset.mimeType} · {formatFileSize(asset.fileSize)} · Uploaded {formatListingDate(asset.uploadedAt)}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  aria-label={`Download ${asset.fileName}`}
-                  className="w-full sm:w-auto"
-                  disabled={pendingAssetId !== null}
-                  onClick={() => void handleDownload(asset)}
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                >
-                  {isPending ? <Loader2 className="animate-spin" /> : <Download />}
-                  {isPending ? "Downloading…" : "Download"}
-                </Button>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="mt-4 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 gap-3">
+            <FileArchive className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium" title={asset.fileName}>{asset.fileName}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {formatFileSize(asset.fileSize)} · {formatListingDate(asset.uploadedAt)}
+              </p>
+            </div>
+          </div>
+          <Button
+            aria-label={`Download ZIP ${asset.fileName}`}
+            className="w-full bg-brand-accent text-brand-accent-foreground hover:bg-brand-accent/85 focus-visible:border-brand-accent focus-visible:ring-brand-accent/50 sm:w-auto"
+            disabled={pendingAssetId !== null}
+            onClick={() => void handleDownload(asset)}
+            type="button"
+          >
+            {pendingAssetId === asset.id ? <Loader2 className="animate-spin" /> : <Download />}
+            {pendingAssetId === asset.id ? "Downloading…" : "Download ZIP"}
+          </Button>
+        </div>
       )}
     </section>
   );
