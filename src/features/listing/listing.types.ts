@@ -19,7 +19,10 @@ export type ListingBackfillResponse = z.infer<
   typeof listingBackfillResponseSchema
 >;
 export type ListingDetail = ListingDetailResponse["data"];
-export type ListingApprovedPreview = ListingDetail["approvedPreview"];
+export type ListingApprovedPreview = Pick<
+  NonNullable<ListingDetail["approvedPreview"]>,
+  "imageDeletedAt" | "imageUrl"
+> | null;
 export type ListingFilters = z.infer<typeof listingFiltersSchema>;
 export type ListingQueueResponse = z.infer<typeof listingQueueResponseSchema>;
 export type ListingQueueItem = ListingQueueResponse["data"]["items"][number];

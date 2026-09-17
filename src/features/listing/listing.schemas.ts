@@ -14,13 +14,6 @@ export const listingFiltersSchema = z
   })
   .strict();
 
-const queuePersonSchema = z
-  .object({
-    id: z.string(),
-    name: z.string().nullable(),
-  })
-  .strict();
-
 const detailPersonSchema = z
   .object({
     id: z.string(),
@@ -40,6 +33,14 @@ const approvedPreviewSchema = z
   .strict()
   .nullable();
 
+const queueApprovedPreviewSchema = z
+  .object({
+    imageDeletedAt: z.string().nullable(),
+    imageUrl: z.string().url().nullable(),
+  })
+  .strict()
+  .nullable();
+
 const queueFinalAssetSchema = z
   .object({
     fileName: z.string(),
@@ -51,21 +52,13 @@ const queueFinalAssetSchema = z
 
 const queueResearchItemSchema = z
   .object({
-    createdAt: z.string(),
-    createdBy: queuePersonSchema,
     etsyListingId: z.string(),
     id: z.string(),
-    normalizedUrl: z.string().url(),
     originalUrl: z.string().url(),
-    referenceImageUrl: z.string().nullable(),
     status: listingStatusSchema,
     title: z.string().nullable(),
   })
-  .strict()
-  .transform(({ referenceImageUrl, ...researchItem }) => ({
-    ...researchItem,
-    hasReferenceImage: referenceImageUrl !== null,
-  }));
+  .strict();
 
 export const listingQueueResponseSchema = z
   .object({
@@ -74,12 +67,9 @@ export const listingQueueResponseSchema = z
         items: z.array(
           z
             .object({
-              assignedAt: z.string(),
               assignmentId: z.string(),
-              finalAssets: z.array(queueFinalAssetSchema),
-              preview: approvedPreviewSchema,
+              preview: queueApprovedPreviewSchema,
               researchItem: queueResearchItemSchema,
-              startedAt: z.string().nullable(),
             })
             .strict(),
         ),
