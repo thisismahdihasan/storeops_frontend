@@ -3,14 +3,27 @@ import type {
   MultipartInitResponse,
 } from "./design-workspace.schemas";
 
-const MAX_PART_UPLOAD_ATTEMPTS = 3;
+const MAX_PART_UPLOAD_ATTEMPTS = 4;
 const PART_UPLOAD_CONCURRENCY = 3;
-const RETRY_DELAYS_MS = [400, 1000] as const;
+const RETRY_DELAYS_MS = [500, 1500, 3000] as const;
 
 export type MultipartUploadProgressPart = MultipartCompleteRequest["parts"][number];
 
 export type UploadedMultipartPart = MultipartUploadProgressPart & {
   uploadedBytes: number;
+};
+
+export type MultipartPartErrorKind =
+  | "cancelled"
+  | "network"
+  | "http_retryable"
+  | "http_non_retryable"
+  | "missing_etag";
+
+export type MultipartPartErrorDetails = {
+  kind: MultipartPartErrorKind;
+  partNumber: number;
+  status?: number;
 };
 
 export class MultipartUploadCancelledError extends Error {
@@ -20,6 +33,31 @@ export class MultipartUploadCancelledError extends Error {
   }
 }
 
+export class MultipartPartUploadError extends Error {
+  public readonly kind: MultipartPartErrorKind;
+  public readonly partNumber: number;
+  public readonly status?: number;
+
+  public constructor(message: string, details: MultipartPartErrorDetails) {
+    super(message);
+    this.name = "MultipartPartUploadError";
+    this.kind = details.kind;
+    this.partNumber = details.partNumber;
+    this.status = details.status;
+  }
+}
+
+export const isPartUploadErrorRetryable = (error: unknown): boolean => {
+  if (error instanceof MultipartPartUploadError) {
+    return (
+      error.kind === "network" ||
+      error.kind === "http_retryable" ||
+      error.kind === "missing_etag"
+    );
+  }
+  return false;
+};
+
 const throwIfAborted = (signal: AbortSignal): void => {
   if (signal.aborted) {
     throw new MultipartUploadCancelledError();
@@ -27,15 +65,23 @@ const throwIfAborted = (signal: AbortSignal): void => {
 };
 
 const waitForRetry = (delayMs: number, signal: AbortSignal): Promise<void> => {
+  if (signal.aborted) {
+    return Promise.reject(new MultipartUploadCancelledError());
+  }
+
   return new Promise((resolve, reject) => {
-    const timeoutId = window.setTimeout(() => {
+    let timeoutId: number | null = null;
+    const onAbort = () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+      reject(new MultipartUploadCancelledError());
+    };
+
+    timeoutId = window.setTimeout(() => {
       signal.removeEventListener("abort", onAbort);
       resolve();
     }, delayMs);
-    const onAbort = () => {
-      window.clearTimeout(timeoutId);
-      reject(new MultipartUploadCancelledError());
-    };
 
     signal.addEventListener("abort", onAbort, { once: true });
   });
@@ -60,20 +106,57 @@ const uploadPartOnce = async (
 
   const start = (part.partNumber - 1) * partSize;
   const end = Math.min(start + partSize, file.size);
-  const response = await fetch(part.uploadUrl, {
-    body: file.slice(start, end),
-    credentials: "omit",
-    method: "PUT",
-    signal,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(part.uploadUrl, {
+      body: file.slice(start, end),
+      credentials: "omit",
+      method: "PUT",
+      signal,
+    });
+  } catch (error) {
+    if (signal.aborted || error instanceof MultipartUploadCancelledError) {
+      throw new MultipartUploadCancelledError();
+    }
+
+    throw new MultipartPartUploadError(
+      `Part ${part.partNumber} upload failed due to a network issue.`,
+      {
+        kind: "network",
+        partNumber: part.partNumber,
+      },
+    );
+  }
 
   if (!response.ok) {
-    throw new Error("A ZIP part could not be uploaded.");
+    const isRetryable =
+      response.status === 408 ||
+      response.status === 429 ||
+      response.status >= 500;
+
+    throw new MultipartPartUploadError(
+      isRetryable
+        ? `Part ${part.partNumber} upload failed with a retryable storage response.`
+        : `Part ${part.partNumber} upload could not continue.`,
+      {
+        kind: isRetryable ? "http_retryable" : "http_non_retryable",
+        partNumber: part.partNumber,
+        status: response.status,
+      },
+    );
   }
 
   const eTag = response.headers.get("ETag");
   if (!eTag || eTag.trim().length === 0) {
-    throw new Error("The storage service did not return a ZIP part ETag.");
+    throw new MultipartPartUploadError(
+      `Part ${part.partNumber} upload response is missing an ETag verification header.`,
+      {
+        kind: "missing_etag",
+        partNumber: part.partNumber,
+        status: response.status,
+      },
+    );
   }
 
   return {
@@ -100,6 +183,11 @@ const uploadPartWithRetry = async (
       }
 
       lastError = error;
+
+      if (!isPartUploadErrorRetryable(error)) {
+        throw error;
+      }
+
       const retryDelay = RETRY_DELAYS_MS[attempt];
       if (retryDelay !== undefined) {
         await waitForRetry(retryDelay, signal);
@@ -107,11 +195,21 @@ const uploadPartWithRetry = async (
     }
   }
 
-  if (lastError instanceof Error) {
-    throw new Error(`Part ${part.partNumber} could not be uploaded after 3 attempts.`);
+  if (lastError instanceof MultipartPartUploadError) {
+    throw lastError;
   }
 
-  throw new Error(`Part ${part.partNumber} could not be uploaded.`);
+  if (lastError instanceof Error) {
+    throw lastError;
+  }
+
+  throw new MultipartPartUploadError(
+    `Part ${part.partNumber} could not be uploaded.`,
+    {
+      kind: "network",
+      partNumber: part.partNumber,
+    },
+  );
 };
 
 type UploadMultipartPartsInput = {

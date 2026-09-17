@@ -18,6 +18,7 @@ import {
 } from "./design-workspace.api";
 import {
   getCompletedMultipartBytes,
+  MultipartPartUploadError,
   MultipartUploadCancelledError,
   uploadPendingMultipartParts,
 } from "./final-asset-multipart-upload";
@@ -91,6 +92,22 @@ const getErrorMessage = (error: unknown): string => {
   if (error instanceof ApiError) return error.message;
   if (error instanceof Error) return error.message;
   return "Final ZIP upload could not be completed. Please try again.";
+};
+
+const getPartUploadErrorMessage = (error: unknown): string => {
+  if (error instanceof MultipartPartUploadError) {
+    switch (error.kind) {
+      case "missing_etag":
+        return "Upload could not be verified. Please retry.";
+      case "http_non_retryable":
+        return "Upload could not continue. Please retry the upload.";
+      case "network":
+      case "http_retryable":
+      default:
+        return "Upload paused. Check your connection and retry.";
+    }
+  }
+  return "Upload paused. Check your connection and retry.";
 };
 
 const isExpiredMultipartSessionError = (error: unknown): boolean =>
@@ -306,7 +323,7 @@ const uploadPendingPartsAndComplete = async (session: InternalUploadSession): Pr
       expireSession(session);
       return;
     }
-    failRecoverably(session, "Upload paused due to network issue.", "parts");
+    failRecoverably(session, getPartUploadErrorMessage(error), "parts");
     return;
   } finally {
     if (session.activeController === controller) session.activeController = null;
