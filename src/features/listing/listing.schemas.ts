@@ -68,6 +68,7 @@ export const listingQueueResponseSchema = z
           z
             .object({
               assignmentId: z.string(),
+              finalAssetId: z.string().nullable(),
               preview: queueApprovedPreviewSchema,
               researchItem: queueResearchItemSchema,
             })

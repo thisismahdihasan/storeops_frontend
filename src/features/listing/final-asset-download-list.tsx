@@ -20,14 +20,15 @@ export function FinalAssetDownloadList({ assets, workspaceId }: FinalAssetDownlo
   const [pendingAssetId, setPendingAssetId] = useState<string | null>(null);
   const asset = assets[0] ?? null;
 
-  const handleDownload = async (asset: ListingDetail["finalAssets"][number]) => {
+  const handleDownload = (asset: ListingDetail["finalAssets"][number]) => {
+    if (pendingAssetId === asset.id) return;
     setPendingAssetId(asset.id);
     try {
-      await downloadListingAsset(workspaceId, asset.id, asset.fileName);
+      downloadListingAsset(workspaceId, asset.id, asset.fileName);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to download the ZIP package.");
     } finally {
-      setPendingAssetId(null);
+      setTimeout(() => setPendingAssetId(null), 1000);
     }
   };
 
@@ -54,7 +55,7 @@ export function FinalAssetDownloadList({ assets, workspaceId }: FinalAssetDownlo
             aria-label={`Download ZIP ${asset.fileName}`}
             className="w-full bg-brand-accent text-brand-accent-foreground hover:bg-brand-accent/85 focus-visible:border-brand-accent focus-visible:ring-brand-accent/50 sm:w-auto"
             disabled={pendingAssetId !== null}
-            onClick={() => void handleDownload(asset)}
+            onClick={() => handleDownload(asset)}
             type="button"
           >
             {pendingAssetId === asset.id ? <Loader2 className="animate-spin" /> : <Download />}
