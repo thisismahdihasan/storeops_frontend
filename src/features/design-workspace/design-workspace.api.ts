@@ -70,19 +70,6 @@ export async function uploadReview(
   ));
 }
 
-export async function uploadFinalAssets(
-  workspaceId: string,
-  researchItemId: string,
-  file: File,
-) {
-  const formData = new FormData();
-  formData.append("files", file);
-
-  return parseWorkflowResponse(await apiRequest<unknown>(
-    `${designPath(workspaceId, researchItemId)}/final-assets`,
-    { body: formData, method: "POST" },
-  ));
-}
 
 export async function initFinalAssetMultipartUpload(
   workspaceId: string,
