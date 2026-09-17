@@ -98,7 +98,7 @@ const isExpiredMultipartSessionError = (error: unknown): boolean => {
 function useFinalAssetMultipartUpload(
   workspaceId: string,
   researchItemId: string,
-  onUploaded: () => void,
+  onUploaded?: () => void,
 ) {
   const [state, setState] = useState<FinalAssetMultipartUploadState>(
     initialMultipartUploadState,
@@ -201,7 +201,7 @@ function useFinalAssetMultipartUpload(
         phase: "success",
         totalBytes: activeUpload.file.size,
       });
-      onUploaded();
+      onUploaded?.();
     } catch (error) {
       if (
         isExpiredMultipartSessionError(error) ||
@@ -214,7 +214,7 @@ function useFinalAssetMultipartUpload(
         updateState({
           completedBytes: activeUpload.file.size,
           completedParts: activeUpload.completedParts.size,
-          error: "All ZIP parts uploaded, but finalizing failed. Retry finalization.",
+          error: "Upload completed, but finalization failed.",
           fileName: activeUpload.file.name,
           partCount: activeUpload.multipartUpload.partCount,
           phase: "failed",
@@ -274,7 +274,7 @@ function useFinalAssetMultipartUpload(
           activeUpload.completedParts,
         ),
         completedParts: activeUpload.completedParts.size,
-        error: "A ZIP part could not be uploaded. Retry to continue this upload.",
+        error: "Upload paused due to network issue.",
         fileName: activeUpload.file.name,
         partCount: activeUpload.multipartUpload.partCount,
         phase: "failed",
@@ -489,7 +489,6 @@ export function useDesignActions(workspaceId: string, researchItemId: string) {
   const multipartFinalAssetUpload = useFinalAssetMultipartUpload(
     workspaceId,
     researchItemId,
-    () => invalidate(),
   );
   const reportIssue = useMutation({
     mutationFn: (values: ReportIssueFormValues) => reportDesignIssue(workspaceId, researchItemId, values),

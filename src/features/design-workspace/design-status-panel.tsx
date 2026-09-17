@@ -27,6 +27,7 @@ type DesignStatusPanelProps = {
   isCompleting: boolean;
   isStartingCorrection: boolean;
   isStartingWork: boolean;
+  isSubmittingFinalPackage?: boolean;
   isSubmittingReview: boolean;
   finalAssetUploadState: FinalAssetMultipartUploadState;
   canRetryFinalAssetUpload: boolean;
@@ -49,6 +50,7 @@ export function DesignStatusPanel({
   isCompleting,
   isStartingCorrection,
   isStartingWork,
+  isSubmittingFinalPackage = false,
   isSubmittingReview,
   finalAssetUploadState,
   canRetryFinalAssetUpload,
@@ -348,6 +350,7 @@ export function DesignStatusPanel({
               assets={finalAssets.items}
               canRetryUpload={canRetryFinalAssetUpload}
               isCompleting={isCompleting}
+              isSubmittingFinalPackage={isSubmittingFinalPackage}
               onCancelUpload={onCancelFinalAssetUpload}
               onResetUpload={onResetFinalAssetUpload}
               onRetryUpload={onRetryFinalAssetUpload}
@@ -355,10 +358,10 @@ export function DesignStatusPanel({
               showUploader
               uploadState={finalAssetUploadState}
             />
-            {finalAssets.items.length > 0 && (
+            {finalAssets.items.length > 0 && !isSubmittingFinalPackage && (
               <div className="pt-3 border-t border-border">
                 <p className="mb-2 text-xs text-muted-foreground">
-                  Final ZIP is uploaded. Retry completion only if the handoff did not finish.
+                  Final ZIP uploaded, but design handoff could not be completed.
                 </p>
                 <Button
                   className="w-full sm:w-auto font-semibold gap-1.5"
@@ -368,7 +371,7 @@ export function DesignStatusPanel({
                   type="button"
                 >
                   {isCompleting && <Loader2 className="size-4 animate-spin" />}
-                  <span>{isCompleting ? "Completing work..." : "Retry completion"}</span>
+                  <span>{isCompleting ? "Completing work..." : "Complete handoff"}</span>
                 </Button>
               </div>
             )}

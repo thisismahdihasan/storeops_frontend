@@ -48,6 +48,8 @@ export function DesignWorkspaceView({
   >(null);
   const [historySelection, setHistorySelection] =
     useState<DesignReviewHistorySelection>({ kind: "review", reviewId: "" });
+  const [isSubmittingFinalPackageState, setIsSubmittingFinalPackage] =
+    useState(false);
 
   if (workspacesQuery.isLoading || (hasDesignerRole && detailQuery.isLoading)) {
     return <LoadingState />;
@@ -67,6 +69,9 @@ export function DesignWorkspaceView({
   if (!detailQuery.data) return <LoadingState />;
 
   const detail = detailQuery.data.data;
+  const isSubmittingFinalPackage =
+    isSubmittingFinalPackageState &&
+    detail.researchItem.status === "DESIGN_APPROVED";
   const statusMeta = getDesignerWorkStatusMeta(detail.researchItem.status);
   const title =
     detail.researchItem.title ||
@@ -131,26 +136,30 @@ export function DesignWorkspaceView({
   };
 
   const handleFinalAssetsSubmission = async (file: File) => {
+    setIsSubmittingFinalPackage(true);
     try {
       const uploaded = await actions.multipartFinalAssetUpload.start(file);
       if (!uploaded) {
+        setIsSubmittingFinalPackage(false);
         return;
       }
     } catch (error) {
+      setIsSubmittingFinalPackage(false);
       toast.error(actionErrorMessage(error));
       return;
     }
 
     try {
       await actions.completeWork.mutateAsync();
+      await detailQuery.refetch();
+      setIsSubmittingFinalPackage(false);
       toast.success("Final ZIP uploaded and design handed off to listing.");
-    } catch (error) {
+    } catch {
+      setIsSubmittingFinalPackage(false);
       toast.error(
-        "Final ZIP was uploaded, but work could not be completed. Retry completion to finish the handoff.",
+        "Final ZIP uploaded, but design handoff could not be completed.",
       );
-      if (error instanceof ApiError && error.status === 409) {
-        void detailQuery.refetch();
-      }
+      void detailQuery.refetch();
     }
   };
 
@@ -174,6 +183,7 @@ export function DesignWorkspaceView({
       isStartingWork={actions.startWork.isPending}
       isSubmittingReview={actions.submitReview.isPending}
       finalAssetUploadState={actions.multipartFinalAssetUpload.state}
+      isSubmittingFinalPackage={isSubmittingFinalPackage}
       canRetryFinalAssetUpload={
         actions.multipartFinalAssetUpload.state.phase === "failed" &&
         actions.multipartFinalAssetUpload.canRetry

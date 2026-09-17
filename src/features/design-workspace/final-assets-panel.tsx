@@ -20,6 +20,7 @@ type FinalAssetsPanelProps = {
   assets: DesignFinalAsset[];
   canRetryUpload: boolean;
   isCompleting: boolean;
+  isSubmittingFinalPackage?: boolean;
   onCancelUpload: () => void;
   onResetUpload: () => void;
   onRetryUpload: () => void;
@@ -32,6 +33,7 @@ export function FinalAssetsPanel({
   assets,
   canRetryUpload,
   isCompleting,
+  isSubmittingFinalPackage = false,
   onCancelUpload,
   onResetUpload,
   onRetryUpload,
@@ -43,8 +45,11 @@ export function FinalAssetsPanel({
   const [validationError, setValidationError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadedAsset = assets[0] ?? null;
-  const isUploading =
-    uploadState.phase === "uploading" || uploadState.phase === "completing";
+  const isFinalizing =
+    uploadState.phase === "completing" ||
+    (isSubmittingFinalPackage && uploadState.phase === "success");
+  const isUploading = uploadState.phase === "uploading";
+  const isUploadingOrFinalizing = isUploading || isFinalizing;
   const progressPercent = uploadState.totalBytes > 0
     ? Math.min(100, Math.round((uploadState.completedBytes / uploadState.totalBytes) * 100))
     : 0;
@@ -85,11 +90,11 @@ export function FinalAssetsPanel({
       <div>
         <h3 className="text-sm font-semibold text-foreground">Final ZIP</h3>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          {uploadedAsset ? "Final ZIP uploaded." : "One ZIP · up to 1 GB"}
+          {uploadedAsset && !isSubmittingFinalPackage ? "Final ZIP uploaded." : "One ZIP · up to 1 GB"}
         </p>
       </div>
 
-      {uploadedAsset && (
+      {uploadedAsset && !isSubmittingFinalPackage && (
         <ul className="divide-y divide-border rounded-lg border border-border bg-muted/10">
           <li className="flex min-w-0 flex-col gap-1 px-3 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-2">
@@ -104,7 +109,7 @@ export function FinalAssetsPanel({
         </ul>
       )}
 
-      {showUploader && !uploadedAsset && (
+      {showUploader && (!uploadedAsset || isSubmittingFinalPackage) && (
         <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/15 p-4">
           <input
             accept=".zip,application/zip,application/x-zip-compressed"
@@ -116,7 +121,7 @@ export function FinalAssetsPanel({
             type="file"
           />
 
-          {!isUploading && uploadState.phase !== "success" && (
+          {!isUploadingOrFinalizing && (
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 disabled={isCompleting}
@@ -132,7 +137,7 @@ export function FinalAssetsPanel({
             </div>
           )}
 
-          {activeFile && uploadState.phase !== "success" && (
+          {activeFile && !isUploadingOrFinalizing && (
             <div className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-background p-3 text-xs">
               <div className="flex min-w-0 items-center gap-2">
                 <FileArchive className="size-4 shrink-0 text-muted-foreground" />
@@ -141,53 +146,48 @@ export function FinalAssetsPanel({
                   <p className="text-muted-foreground">{formatFileSize(String(activeFile.size))}</p>
                 </div>
               </div>
-              {!isUploading && (
-                <Button
-                  aria-label={`Remove ${activeFile.name}`}
-                  disabled={isCompleting}
-                  onClick={clearSelection}
-                  size="icon-xs"
-                  type="button"
-                  variant="ghost"
-                >
-                  <X className="size-3" />
-                </Button>
-              )}
+              <Button
+                aria-label={`Remove ${activeFile.name}`}
+                disabled={isCompleting}
+                onClick={clearSelection}
+                size="icon-xs"
+                type="button"
+                variant="ghost"
+              >
+                <X className="size-3" />
+              </Button>
             </div>
           )}
 
-          {isUploading && (
+          {isUploadingOrFinalizing && (
             <div className="space-y-2 rounded-lg border border-border bg-background p-3">
               <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
                 <p className="font-medium text-foreground">
-                  {uploadState.phase === "completing" ? "Finalizing Final ZIP" : "Uploading Final ZIP"}
+                  {isFinalizing ? "Finalizing upload..." : "Uploading Final ZIP"}
                 </p>
-                <p className="font-medium text-muted-foreground">{progressPercent}%</p>
+                <p className="font-medium text-muted-foreground">{isFinalizing ? "100%" : `${progressPercent}%`}</p>
               </div>
               <div
                 aria-label="Final ZIP upload progress"
                 aria-valuemax={100}
                 aria-valuemin={0}
-                aria-valuenow={progressPercent}
+                aria-valuenow={isFinalizing ? 100 : progressPercent}
                 className="h-2 overflow-hidden rounded-full bg-muted"
                 role="progressbar"
               >
                 <div
                   className="h-full rounded-full bg-brand-accent transition-[width]"
-                  style={{ width: `${progressPercent}%` }}
+                  style={{ width: isFinalizing ? "100%" : `${progressPercent}%` }}
                 />
               </div>
               <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span>
-                  {uploadState.phase === "completing"
-                    ? "Verifying uploaded ZIP"
-                    : `Uploading part ${Math.min(uploadState.completedParts + 1, uploadState.partCount)} of ${uploadState.partCount}`}
-                </span>
-                <span>
-                  {formatFileSize(String(uploadState.completedBytes))} / {formatFileSize(String(uploadState.totalBytes))}
+                  {isFinalizing
+                    ? formatFileSize(String(uploadState.totalBytes))
+                    : `${formatFileSize(String(uploadState.completedBytes))} / ${formatFileSize(String(uploadState.totalBytes))}`}
                 </span>
               </div>
-              {uploadState.phase === "uploading" && (
+              {isUploading && (
                 <Button
                   className="w-full sm:w-auto"
                   onClick={onCancelUpload}
@@ -208,7 +208,11 @@ export function FinalAssetsPanel({
                 {canRetryUpload && (
                   <Button onClick={onRetryUpload} size="sm" type="button" variant="outline">
                     <RotateCcw className="size-3.5" />
-                    Retry
+                    <span>
+                      {uploadState.completedParts === uploadState.partCount && uploadState.partCount > 0
+                        ? "Retry finalization"
+                        : "Retry"}
+                    </span>
                   </Button>
                 )}
                 <Button onClick={canRetryUpload ? onCancelUpload : onResetUpload} size="sm" type="button" variant="ghost">
@@ -218,15 +222,9 @@ export function FinalAssetsPanel({
             </div>
           )}
 
-          {uploadState.phase === "success" && (
-            <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-              Final ZIP uploaded. Completing handoff…
-            </p>
-          )}
-
           {validationError && <p className="text-xs font-medium text-destructive" role="alert">{validationError}</p>}
 
-          {!isUploading && uploadState.phase !== "success" && (
+          {!isUploadingOrFinalizing && (
             <Button
               className="w-full gap-1.5 font-semibold sm:w-auto"
               disabled={isCompleting || !selectedFile}
