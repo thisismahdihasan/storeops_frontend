@@ -48,8 +48,6 @@ export function DesignWorkspaceView({
   >(null);
   const [historySelection, setHistorySelection] =
     useState<DesignReviewHistorySelection>({ kind: "review", reviewId: "" });
-  const [isSubmittingFinalPackageState, setIsSubmittingFinalPackage] =
-    useState(false);
 
   if (workspacesQuery.isLoading || (hasDesignerRole && detailQuery.isLoading)) {
     return <LoadingState />;
@@ -69,9 +67,6 @@ export function DesignWorkspaceView({
   if (!detailQuery.data) return <LoadingState />;
 
   const detail = detailQuery.data.data;
-  const isSubmittingFinalPackage =
-    isSubmittingFinalPackageState &&
-    detail.researchItem.status === "DESIGN_APPROVED";
   const statusMeta = getDesignerWorkStatusMeta(detail.researchItem.status);
   const title =
     detail.researchItem.title ||
@@ -136,31 +131,7 @@ export function DesignWorkspaceView({
   };
 
   const handleFinalAssetsSubmission = async (file: File) => {
-    setIsSubmittingFinalPackage(true);
-    try {
-      const uploaded = await actions.multipartFinalAssetUpload.start(file);
-      if (!uploaded) {
-        setIsSubmittingFinalPackage(false);
-        return;
-      }
-    } catch (error) {
-      setIsSubmittingFinalPackage(false);
-      toast.error(actionErrorMessage(error));
-      return;
-    }
-
-    try {
-      await actions.completeWork.mutateAsync();
-      await detailQuery.refetch();
-      setIsSubmittingFinalPackage(false);
-      toast.success("Final ZIP uploaded and design handed off to listing.");
-    } catch {
-      setIsSubmittingFinalPackage(false);
-      toast.error(
-        "Final ZIP uploaded, but design handoff could not be completed.",
-      );
-      void detailQuery.refetch();
-    }
+    await actions.finalAssetUpload.start(file);
   };
 
   const handleReviewSubmission = async (image: File, note: string) => {
@@ -182,14 +153,11 @@ export function DesignWorkspaceView({
       isStartingCorrection={actions.startCorrection.isPending}
       isStartingWork={actions.startWork.isPending}
       isSubmittingReview={actions.submitReview.isPending}
-      finalAssetUploadState={actions.multipartFinalAssetUpload.state}
-      isSubmittingFinalPackage={isSubmittingFinalPackage}
-      canRetryFinalAssetUpload={
-        actions.multipartFinalAssetUpload.state.phase === "failed" &&
-        actions.multipartFinalAssetUpload.canRetry
-      }
+      finalAssetUploadState={actions.finalAssetUpload.activeUpload}
+      isAnotherFinalAssetUploadActive={actions.finalAssetUpload.isAnotherItemActive}
+      canRetryFinalAssetUpload={actions.finalAssetUpload.activeUpload?.canRetry ?? false}
       onCancelFinalAssetUpload={() => {
-        void actions.multipartFinalAssetUpload.cancel();
+        void actions.finalAssetUpload.cancel();
       }}
       onComplete={() =>
         void runAction(
@@ -198,9 +166,9 @@ export function DesignWorkspaceView({
         )
       }
       onOpenIssueDialog={() => setIsIssueDialogOpen(true)}
-      onResetFinalAssetUpload={actions.multipartFinalAssetUpload.reset}
+      onResetFinalAssetUpload={actions.finalAssetUpload.reset}
       onRetryFinalAssetUpload={() => {
-        void actions.multipartFinalAssetUpload.retry().catch(() => undefined);
+        void actions.finalAssetUpload.retry();
       }}
       onStartCorrection={() =>
         void runAction(

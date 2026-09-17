@@ -17,8 +17,8 @@ import { formatWorkDate } from "@/features/designer-work/designer-work.types";
 
 import { FinalAssetsPanel } from "./final-assets-panel";
 import { ReviewUploadForm } from "./review-upload-form";
+import type { FinalAssetUploadUIState } from "./final-asset-upload-store";
 import type { DesignDetail } from "./design-workspace.types";
-import type { FinalAssetMultipartUploadState } from "./use-design-workspace";
 
 type DesignStatusPanelProps = {
   detail: DesignDetail;
@@ -29,7 +29,8 @@ type DesignStatusPanelProps = {
   isStartingWork: boolean;
   isSubmittingFinalPackage?: boolean;
   isSubmittingReview: boolean;
-  finalAssetUploadState: FinalAssetMultipartUploadState;
+  finalAssetUploadState: FinalAssetUploadUIState | null;
+  isAnotherFinalAssetUploadActive: boolean;
   canRetryFinalAssetUpload: boolean;
   onCancelFinalAssetUpload: () => void;
   onComplete: () => void;
@@ -53,6 +54,7 @@ export function DesignStatusPanel({
   isSubmittingFinalPackage = false,
   isSubmittingReview,
   finalAssetUploadState,
+  isAnotherFinalAssetUploadActive,
   canRetryFinalAssetUpload,
   onCancelFinalAssetUpload,
   onComplete,
@@ -350,6 +352,7 @@ export function DesignStatusPanel({
               assets={finalAssets.items}
               canRetryUpload={canRetryFinalAssetUpload}
               isCompleting={isCompleting}
+              isAnotherUploadActive={isAnotherFinalAssetUploadActive}
               isSubmittingFinalPackage={isSubmittingFinalPackage}
               onCancelUpload={onCancelFinalAssetUpload}
               onResetUpload={onResetFinalAssetUpload}
@@ -403,15 +406,7 @@ export function DesignStatusPanel({
                 onRetryUpload={() => undefined}
                 onUpload={() => undefined}
                 showUploader={false}
-                uploadState={{
-                  completedBytes: 0,
-                  completedParts: 0,
-                  error: null,
-                  fileName: null,
-                  partCount: 0,
-                  phase: "idle",
-                  totalBytes: 0,
-                }}
+                uploadState={null}
               />
             )}
           </div>

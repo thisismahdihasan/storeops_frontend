@@ -8,7 +8,7 @@ import { formatWorkDate } from "@/features/designer-work/designer-work.types";
 import { formatFileSize } from "@/lib/format-file-size";
 
 import type { DesignFinalAsset } from "./design-workspace.types";
-import type { FinalAssetMultipartUploadState } from "./use-design-workspace";
+import type { FinalAssetUploadUIState } from "./final-asset-upload-store";
 
 const MAX_FINAL_ASSET_BYTES = 1024 * 1024 * 1024;
 
@@ -20,19 +20,21 @@ type FinalAssetsPanelProps = {
   assets: DesignFinalAsset[];
   canRetryUpload: boolean;
   isCompleting: boolean;
+  isAnotherUploadActive?: boolean;
   isSubmittingFinalPackage?: boolean;
   onCancelUpload: () => void;
   onResetUpload: () => void;
   onRetryUpload: () => void;
   onUpload: (file: File) => void;
   showUploader: boolean;
-  uploadState: FinalAssetMultipartUploadState;
+  uploadState: FinalAssetUploadUIState | null;
 };
 
 export function FinalAssetsPanel({
   assets,
   canRetryUpload,
   isCompleting,
+  isAnotherUploadActive = false,
   isSubmittingFinalPackage = false,
   onCancelUpload,
   onResetUpload,
@@ -45,12 +47,10 @@ export function FinalAssetsPanel({
   const [validationError, setValidationError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadedAsset = assets[0] ?? null;
-  const isFinalizing =
-    uploadState.phase === "completing" ||
-    (isSubmittingFinalPackage && uploadState.phase === "success");
-  const isUploading = uploadState.phase === "uploading";
+  const isFinalizing = uploadState?.phase === "completing";
+  const isUploading = uploadState?.phase === "uploading";
   const isUploadingOrFinalizing = isUploading || isFinalizing;
-  const progressPercent = uploadState.totalBytes > 0
+  const progressPercent = uploadState && uploadState.totalBytes > 0
     ? Math.min(100, Math.round((uploadState.completedBytes / uploadState.totalBytes) * 100))
     : 0;
 
@@ -80,7 +80,7 @@ export function FinalAssetsPanel({
   };
 
   const activeFile = selectedFile ?? (
-    uploadState.fileName
+    uploadState?.fileName
       ? { name: uploadState.fileName, size: uploadState.totalBytes }
       : null
   );
@@ -115,7 +115,7 @@ export function FinalAssetsPanel({
             accept=".zip,application/zip,application/x-zip-compressed"
             aria-label="Select Final ZIP"
             className="sr-only"
-            disabled={isUploading || isCompleting}
+            disabled={isUploading || isCompleting || isAnotherUploadActive}
             onChange={(event) => selectFile(event.target.files)}
             ref={inputRef}
             type="file"
@@ -135,6 +135,12 @@ export function FinalAssetsPanel({
               </Button>
               <p className="text-xs text-muted-foreground">One ZIP · up to 1 GB</p>
             </div>
+          )}
+
+          {isAnotherUploadActive && (
+            <p className="text-xs font-medium text-muted-foreground" role="status">
+              Another Final ZIP upload is already in progress. Finish or cancel it before starting another.
+            </p>
           )}
 
           {activeFile && !isUploadingOrFinalizing && (
@@ -183,8 +189,8 @@ export function FinalAssetsPanel({
               <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span>
                   {isFinalizing
-                    ? formatFileSize(String(uploadState.totalBytes))
-                    : `${formatFileSize(String(uploadState.completedBytes))} / ${formatFileSize(String(uploadState.totalBytes))}`}
+                    ? formatFileSize(String(uploadState?.totalBytes ?? 0))
+                    : `${formatFileSize(String(uploadState?.completedBytes ?? 0))} / ${formatFileSize(String(uploadState?.totalBytes ?? 0))}`}
                 </span>
               </div>
               {isUploading && (
@@ -201,7 +207,7 @@ export function FinalAssetsPanel({
             </div>
           )}
 
-          {uploadState.phase === "failed" && uploadState.error && (
+          {uploadState?.phase === "failed" && uploadState.error && (
             <div className="space-y-2" role="alert">
               <p className="text-xs font-medium text-destructive">{uploadState.error}</p>
               <div className="flex flex-wrap gap-2">
@@ -209,9 +215,7 @@ export function FinalAssetsPanel({
                   <Button onClick={onRetryUpload} size="sm" type="button" variant="outline">
                     <RotateCcw className="size-3.5" />
                     <span>
-                      {uploadState.completedParts === uploadState.partCount && uploadState.partCount > 0
-                        ? "Retry finalization"
-                        : "Retry"}
+                      Retry
                     </span>
                   </Button>
                 )}
@@ -227,7 +231,7 @@ export function FinalAssetsPanel({
           {!isUploadingOrFinalizing && (
             <Button
               className="w-full gap-1.5 font-semibold sm:w-auto"
-              disabled={isCompleting || !selectedFile}
+              disabled={isCompleting || isAnotherUploadActive || !selectedFile}
               onClick={() => selectedFile && onUpload(selectedFile)}
               size="sm"
               type="button"
