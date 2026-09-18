@@ -5,7 +5,6 @@ import { ArrowRight, ImageOff } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 import type { ReviewQueueItem } from "./reviews.types";
@@ -40,10 +39,13 @@ export function ReviewList({ items, workspaceId }: ReviewListProps) {
         const title = researchItem.title?.trim() || null;
 
         return (
-          <article
-            className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-all hover:border-primary/40 hover:shadow-md"
+          <Link
+            aria-label={`Review Round ${review.roundNumber} for Etsy #${researchItem.etsyListingId}`}
+            className="group block cursor-pointer rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2"
+            href={`/w/${workspaceId}/reviews/${review.id}`}
             key={review.id}
           >
+            <article className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-colors group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:border-primary/60">
             {/* Image Thumbnail Preview */}
             <div className="relative aspect-video w-full overflow-hidden bg-muted/40">
               {isImageAvailable ? (
@@ -124,21 +126,14 @@ export function ReviewList({ items, workspaceId }: ReviewListProps) {
 
               {/* Action Button */}
               <div className="mt-4 border-t border-border pt-3">
-                <Button
-                  className="h-9 w-full inline-flex items-center justify-between"
-                  nativeButton={false}
-                  render={
-                    <Link
-                      href={`/w/${workspaceId}/reviews/${review.id}`}
-                    />
-                  }
-                >
+                <div className="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-lg border border-transparent bg-primary px-2.5 font-ui text-sm font-medium text-primary-foreground transition-colors group-hover:bg-primary/80">
                   <span>Review Round {review.roundNumber}</span>
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                </Button>
+                </div>
               </div>
             </div>
-          </article>
+            </article>
+          </Link>
         );
       })}
     </div>
