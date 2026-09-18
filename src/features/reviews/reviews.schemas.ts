@@ -17,6 +17,7 @@ export const reviewUserSummarySchema = z.object({
   email: z.string(),
   id: z.string(),
   name: z.string().nullable(),
+  profileImageUrl: z.string().url().nullable(),
 });
 
 export const reviewAssignmentSummarySchema = z.object({

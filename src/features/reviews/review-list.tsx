@@ -1,12 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { ArrowRight, ImageOff, User } from "lucide-react";
+import { ArrowRight, ImageOff } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 import type { ReviewQueueItem } from "./reviews.types";
 
@@ -31,25 +31,24 @@ function formatSubmittedTime(value: string): string {
 
 export function ReviewList({ items, workspaceId }: ReviewListProps) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 min-[640px]:grid-cols-2 min-[900px]:grid-cols-3 min-[1200px]:grid-cols-4">
       {items.map(({ designer, researchItem, review }) => {
         const isImageAvailable =
           review.imageUrl !== null && review.imageDeletedAt === null;
         const designerDisplayName =
           designer?.name || designer?.email || "Unassigned";
+        const title = researchItem.title?.trim() || null;
 
         return (
           <article
-            className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xs transition-all hover:border-primary/40 hover:shadow-md"
+            className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-all hover:border-primary/40 hover:shadow-md"
             key={review.id}
           >
             {/* Image Thumbnail Preview */}
             <div className="relative aspect-video w-full overflow-hidden bg-muted/40">
               {isImageAvailable ? (
                 <img
-                  alt={`Round ${review.roundNumber} preview for ${
-                    researchItem.title || researchItem.etsyListingId
-                  }`}
+                  alt={`Round ${review.roundNumber} preview for Etsy #${researchItem.etsyListingId}`}
                   className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
                   src={review.imageUrl ?? undefined}
@@ -75,28 +74,40 @@ export function ReviewList({ items, workspaceId }: ReviewListProps) {
 
               {/* Status Badge Overlay */}
               <div className="absolute top-2.5 right-2.5">
-                <StatusBadge label="Design Review" tone="info" />
+                <Badge
+                  className="rounded-full bg-blue-600/90 px-2 py-0.5 text-xs font-medium text-white shadow-sm backdrop-blur-xs hover:bg-blue-600/95"
+                  variant="secondary"
+                >
+                  Design Review
+                </Badge>
               </div>
             </div>
 
             {/* Content Body */}
-            <div className="flex flex-1 flex-col justify-between p-4 sm:p-5">
+            <div className="flex flex-1 flex-col justify-between p-4">
               <div className="space-y-3">
-                <div>
-                  <h3 className="line-clamp-2 text-sm font-semibold tracking-tight text-foreground">
-                    {researchItem.title || `Listing #${researchItem.etsyListingId}`}
-                  </h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Etsy ID: {researchItem.etsyListingId}
+                <div className="space-y-1">
+                  <p className="font-mono text-xs text-muted-foreground">
+                    Etsy #{researchItem.etsyListingId}
                   </p>
+                  {title ? (
+                    <h3 className="line-clamp-2 text-sm font-semibold tracking-tight text-foreground">
+                      {title}
+                    </h3>
+                  ) : null}
                 </div>
 
                 {/* Designer Info */}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="flex size-5 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                    <User className="size-3" />
-                  </div>
-                  <span className="truncate">{designerDisplayName}</span>
+                  <UserAvatar
+                    email={designer?.email}
+                    name={designer?.name}
+                    profileImageUrl={designer?.profileImageUrl}
+                    size="xs"
+                  />
+                  <span className="truncate font-medium text-foreground/80">
+                    {designerDisplayName}
+                  </span>
                 </div>
 
                 {/* Submitted Timestamp */}
@@ -112,16 +123,15 @@ export function ReviewList({ items, workspaceId }: ReviewListProps) {
               </div>
 
               {/* Action Button */}
-              <div className="mt-4 pt-3 border-t border-border">
+              <div className="mt-4 border-t border-border pt-3">
                 <Button
-                  className="w-full justify-between"
+                  className="h-9 w-full inline-flex items-center justify-between"
                   nativeButton={false}
                   render={
                     <Link
                       href={`/w/${workspaceId}/reviews/${review.id}`}
                     />
                   }
-                  size="sm"
                 >
                   <span>Review Round {review.roundNumber}</span>
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />

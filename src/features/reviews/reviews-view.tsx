@@ -70,7 +70,7 @@ function RequestError({ onRetry }: { onRetry: () => void }) {
 
 function LoadingSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 min-[640px]:grid-cols-2 min-[900px]:grid-cols-3 min-[1200px]:grid-cols-4">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           className="h-72 animate-pulse rounded-2xl border border-border bg-muted/20"
