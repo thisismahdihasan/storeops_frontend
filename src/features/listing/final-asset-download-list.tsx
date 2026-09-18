@@ -1,35 +1,35 @@
 "use client";
 
 import { Download, FileArchive, Loader2 } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { formatFileSize } from "@/lib/format-file-size";
 
-import { downloadListingAsset } from "./listing.api";
+import { useDownloadActivityStore } from "./download-activity-store";
+import { launchListingDownload } from "./launch-listing-download";
 import { formatListingDate } from "./listing.types";
 import type { ListingDetail } from "./listing.types";
 
 type FinalAssetDownloadListProps = {
   assets: ListingDetail["finalAssets"];
+  researchItemId: string;
   workspaceId: string;
 };
 
-export function FinalAssetDownloadList({ assets, workspaceId }: FinalAssetDownloadListProps) {
-  const [pendingAssetId, setPendingAssetId] = useState<string | null>(null);
+export function FinalAssetDownloadList({ assets, researchItemId, workspaceId }: FinalAssetDownloadListProps) {
   const asset = assets[0] ?? null;
+  const activity = useDownloadActivityStore((state) => asset ? state.activities[asset.id] : undefined);
 
   const handleDownload = (asset: ListingDetail["finalAssets"][number]) => {
-    if (pendingAssetId === asset.id) return;
-    setPendingAssetId(asset.id);
-    try {
-      downloadListingAsset(workspaceId, asset.id, asset.fileName);
-    } catch (error) {
+    void launchListingDownload({
+      assetId: asset.id,
+      fileName: asset.fileName,
+      researchItemId,
+      workspaceId,
+    }).catch((error) => {
       toast.error(error instanceof Error ? error.message : "Unable to download the ZIP package.");
-    } finally {
-      setTimeout(() => setPendingAssetId(null), 1000);
-    }
+    });
   };
 
   return (
@@ -54,12 +54,12 @@ export function FinalAssetDownloadList({ assets, workspaceId }: FinalAssetDownlo
           <Button
             aria-label={`Download ZIP ${asset.fileName}`}
             className="w-full bg-brand-accent text-brand-accent-foreground hover:bg-brand-accent/85 focus-visible:border-brand-accent focus-visible:ring-brand-accent/50 sm:w-auto"
-            disabled={pendingAssetId !== null}
+            disabled={activity?.launchGuarded ?? false}
             onClick={() => handleDownload(asset)}
             type="button"
           >
-            {pendingAssetId === asset.id ? <Loader2 className="animate-spin" /> : <Download />}
-            {pendingAssetId === asset.id ? "Downloading…" : "Download ZIP"}
+            {activity?.phase === "starting" ? <Loader2 className="animate-spin" /> : <Download />}
+            {activity?.phase === "starting" ? "Starting download…" : "Download ZIP"}
           </Button>
         </div>
       )}

@@ -1,0 +1,16 @@
+/* A repeating sweep indicates launch preparation only, never byte progress. */
+@keyframes download-activity-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+
+.download-activity-indeterminate {
+  animation: download-activity-sweep 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .download-activity-indeterminate {
+    animation: none;
+    transform: translateX(100%);
+  }
+}

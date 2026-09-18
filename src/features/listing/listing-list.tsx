@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import {
   AlertCircle,
   ArrowRight,
@@ -18,7 +17,8 @@ import type { AssignmentAvailabilityState } from "@/features/workspace/workspace
 import { ApiError } from "@/lib/api";
 
 import { ApprovedPreview } from "./approved-preview";
-import { downloadListingAsset } from "./listing.api";
+import { useDownloadActivityStore } from "./download-activity-store";
+import { ListingDownloadLaunchError, launchListingDownload } from "./launch-listing-download";
 import { getListingStatusMeta } from "./listing.types";
 import type { ListingQueueItem, ListingQueueResponse, ListingStatus } from "./listing.types";
 import { useStartListing } from "./use-listing";
@@ -109,7 +109,9 @@ function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceI
   const isReady = researchItem.status === "READY_FOR_LISTING";
   const detailActionLabel = isReady ? "Open" : "Continue";
 
-  const [isLaunching, setIsLaunching] = useState(false);
+  const isLaunching = useDownloadActivityStore(
+    (state) => !!(item.finalAssetId && state.activities[item.finalAssetId]?.launchGuarded),
+  );
   const startMutation = useStartListing(workspaceId, researchItem.id);
 
   const handleDownloadAndStart = async () => {
@@ -119,21 +121,20 @@ function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceI
       return;
     }
 
-    setIsLaunching(true);
     try {
-      await startMutation.mutateAsync();
-      try {
-        downloadListingAsset(workspaceId, item.finalAssetId);
-        toast.success("Listing work started.");
-      } catch {
-        toast.error(
-          "Listing started, but download failed to start. You can retry downloading.",
-        );
-      }
+      await launchListingDownload({
+        assetId: item.finalAssetId,
+        beforeBrowserDownload: () => startMutation.mutateAsync(),
+        fileName: null,
+        researchItemId: researchItem.id,
+        workspaceId,
+      });
     } catch (error) {
-      toast.error(actionErrorMessage(error, "Unable to start listing."));
-    } finally {
-      setIsLaunching(false);
+      if (error instanceof ListingDownloadLaunchError && error.stage === "before-browser-download") {
+        toast.error(actionErrorMessage(error.originalError, "Unable to start listing."));
+      } else {
+        toast.error("Listing started, but download failed to start. You can retry downloading.");
+      }
     }
   };
 
@@ -144,19 +145,14 @@ function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceI
       return;
     }
 
-    setIsLaunching(true);
-    try {
-      downloadListingAsset(workspaceId, item.finalAssetId);
-      toast.success("Download started.");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to download package.",
-      );
-    } finally {
-      setTimeout(() => {
-        setIsLaunching(false);
-      }, 1000);
-    }
+    void launchListingDownload({
+      assetId: item.finalAssetId,
+      fileName: null,
+      researchItemId: researchItem.id,
+      workspaceId,
+    }).catch((error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to download package.");
+    });
   };
 
   return (
@@ -186,7 +182,7 @@ function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceI
           ) : null}
         </div>
 
-        <div className="grid grid-cols-2 items-center gap-1.5 pt-0.5 @[270px]:grid-cols-[1fr_auto_1fr]">
+        <div className="grid grid-cols-2 items-center gap-1.5 pt-0.5 @[320px]:flex @[320px]:justify-between">
           <Button
             className="justify-self-start border-brand-accent/35 text-brand-accent hover:border-brand-accent/60 hover:bg-brand-accent/10 hover:text-brand-accent focus-visible:border-brand-accent focus-visible:ring-brand-accent/40 px-2"
             nativeButton={false}
@@ -203,37 +199,16 @@ function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceI
             <ExternalLink /> Etsy
           </Button>
 
-          {isReady ? (
-            <Button
-              className="order-last col-span-2 justify-self-center px-2 @[270px]:order-none @[270px]:col-span-1"
-              disabled={isLaunching || startMutation.isPending || !item.finalAssetId}
-              onClick={() => void handleDownloadAndStart()}
-              size="sm"
-              type="button"
-            >
-              {isLaunching || startMutation.isPending ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <Download />
-              )}
-              Download & Start
-            </Button>
-          ) : (
-            <Button
-              className="order-last col-span-2 justify-self-center px-2 @[270px]:order-none @[270px]:col-span-1"
-              disabled={isLaunching || !item.finalAssetId}
-              onClick={handleDownloadZip}
-              size="sm"
-              type="button"
-            >
-              {isLaunching ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <Download />
-              )}
-              Download ZIP
-            </Button>
-          )}
+          <Button
+            className="order-last col-span-2 justify-self-center px-2 @[320px]:order-none"
+            disabled={isLaunching || startMutation.isPending || !item.finalAssetId}
+            onClick={isReady ? () => void handleDownloadAndStart() : handleDownloadZip}
+            size="sm"
+            type="button"
+          >
+            {isLaunching || startMutation.isPending ? <Loader2 className="animate-spin" /> : <Download />}
+            {isReady ? "Download & Start" : "Download ZIP"}
+          </Button>
 
           <Button
             className="justify-self-end px-2"

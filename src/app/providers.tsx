@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { GlobalUploadIndicator } from "@/components/layout/global-upload-indicator";
+import { GlobalDownloadActivity } from "@/components/layout/global-download-activity";
 
 type ProvidersProps = {
   children: ReactNode;
@@ -36,6 +37,7 @@ export function Providers({ children }: ProvidersProps) {
       <QueryClientProvider client={queryClient}>
         {children}
         <GlobalUploadIndicator />
+        <GlobalDownloadActivity />
         <Toaster closeButton position="top-right" richColors />
       </QueryClientProvider>
     </ThemeProvider>

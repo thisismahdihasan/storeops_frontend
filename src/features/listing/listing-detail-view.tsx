@@ -160,6 +160,7 @@ export function ListingDetailView({
           />
           <FinalAssetDownloadList
             assets={detail.finalAssets}
+            researchItemId={researchItemId}
             workspaceId={workspaceId}
           />
         </aside>
