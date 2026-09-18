@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Upload, X } from "lucide-react";
+import { AlertTriangle, Loader2, Upload, X } from "lucide-react";
 import { type PointerEvent, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
@@ -34,7 +34,7 @@ const clampPosition = (
 };
 
 const getDefaultPosition = (element: HTMLElement | null): FloatingUploadPosition => {
-  const width = element?.getBoundingClientRect().width ?? 300;
+  const width = element?.getBoundingClientRect().width ?? 320;
   return {
     x: Math.max(EDGE_SPACING, window.innerWidth - width - EDGE_SPACING),
     y: Math.max(80, EDGE_SPACING),
@@ -86,8 +86,10 @@ export function GlobalUploadIndicator() {
     return null;
   }
 
+  const isUploading = activeUpload.phase === "uploading";
   const isFinalizing = activeUpload.phase === "completing";
   const isFailed = activeUpload.phase === "failed";
+
   const chipStyle = floatingPosition
     ? { left: floatingPosition.x, top: floatingPosition.y }
     : { right: EDGE_SPACING, top: 80 };
@@ -139,10 +141,18 @@ export function GlobalUploadIndicator() {
     event.stopPropagation();
   };
 
+  const title = isFinalizing
+    ? "Finalizing upload…"
+    : isFailed
+      ? "Final ZIP upload paused"
+      : "Uploading Final ZIP";
+
+  const Icon = isFinalizing ? Loader2 : isFailed ? AlertTriangle : Upload;
+
   return (
     <div
       aria-live="polite"
-      className="fixed z-[70] max-w-[calc(100vw-2rem)] cursor-grab select-none active:cursor-grabbing"
+      className="fixed z-[70] w-80 max-w-[calc(100vw-2rem)] select-none"
       onPointerCancel={endDrag}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -150,47 +160,103 @@ export function GlobalUploadIndicator() {
       ref={chipRef}
       style={chipStyle}
     >
-      <div className="flex max-w-full flex-wrap items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1.5 shadow-lg">
-        {isFinalizing ? (
-          <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
-        ) : isFailed ? (
-          <Upload className="size-3.5 shrink-0 text-destructive" />
-        ) : (
-          <Upload className="size-3.5 shrink-0 text-primary" />
-        )}
-        <span className="min-w-0 text-xs font-medium text-foreground">
-          {isFinalizing
-            ? "Finalizing upload..."
+      <div
+        className={`rounded-xl border p-3 shadow-lg backdrop-blur-sm cursor-grab active:cursor-grabbing ${
+          isFinalizing
+            ? "border-amber-500/40 bg-amber-500/15 text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
             : isFailed
-              ? "Final ZIP upload paused"
-              : `Uploading Final ZIP · ${activeUpload.progressPercent}%`}
-        </span>
-        <Button
-          className="touch-auto"
-          onClick={() =>
-            router.push(
-              `/w/${activeUpload.workspaceId}/design/${activeUpload.researchItemId}`,
-            )
-          }
-          onPointerDown={stopActionDrag}
-          size="xs"
-          type="button"
-          variant="ghost"
-        >
-          View
-        </Button>
-        {activeUpload.canCancel && (
-          <Button
-            aria-label="Cancel Final ZIP upload"
-            className="touch-auto"
-            onClick={() => void cancel()}
-            onPointerDown={stopActionDrag}
-            size="icon-xs"
-            type="button"
-            variant="ghost"
+              ? "border-destructive/30 bg-destructive/10 text-destructive dark:border-destructive/30 dark:bg-destructive/15 dark:text-red-300"
+              : "border-blue-500/30 bg-blue-500/10 text-blue-950 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200"
+        }`}
+      >
+        <div className="flex items-start gap-2.5">
+          <span
+            className={`flex size-7 shrink-0 items-center justify-center rounded-lg border ${
+              isFinalizing
+                ? "border-amber-500/30 bg-amber-500/20 text-amber-700 dark:text-amber-400"
+                : isFailed
+                  ? "border-destructive/30 bg-destructive/15 text-destructive dark:text-red-400"
+                  : "border-blue-500/30 bg-blue-500/15 text-blue-700 dark:text-blue-400"
+            }`}
           >
-            <X className="size-3.5" />
-          </Button>
+            <Icon className={`size-3.5 ${isFinalizing ? "animate-spin" : ""}`} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-1.5">
+              <h3 className="truncate text-xs font-semibold leading-4">
+                {title}
+              </h3>
+              {isUploading && (
+                <span className="shrink-0 font-mono text-[11px] font-semibold">
+                  {activeUpload.progressPercent}%
+                </span>
+              )}
+            </div>
+            <p
+              className="truncate text-[11px] font-medium opacity-85"
+              title={activeUpload.fileName}
+            >
+              {activeUpload.fileName}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              className={`touch-auto ${
+                isFinalizing
+                  ? "text-amber-950 hover:bg-amber-500/15 hover:text-amber-950 dark:text-amber-200 dark:hover:bg-amber-500/20 dark:hover:text-amber-100"
+                  : isFailed
+                    ? "text-destructive hover:bg-destructive/15 hover:text-destructive dark:text-red-300 dark:hover:bg-destructive/20 dark:hover:text-red-200"
+                    : "text-blue-950 hover:bg-blue-500/15 hover:text-blue-950 dark:text-blue-200 dark:hover:bg-blue-500/20 dark:hover:text-blue-100"
+              }`}
+              onClick={() =>
+                router.push(
+                  `/w/${activeUpload.workspaceId}/design/${activeUpload.researchItemId}`,
+                )
+              }
+              onPointerDown={stopActionDrag}
+              size="xs"
+              type="button"
+              variant="ghost"
+            >
+              View
+            </Button>
+            {activeUpload.canCancel && (
+              <Button
+                aria-label="Cancel Final ZIP upload"
+                className={`touch-auto ${
+                  isFinalizing
+                    ? "text-amber-950 hover:bg-amber-500/15 hover:text-amber-950 dark:text-amber-200 dark:hover:bg-amber-500/20 dark:hover:text-amber-100"
+                    : isFailed
+                      ? "text-destructive hover:bg-destructive/15 hover:text-destructive dark:text-red-300 dark:hover:bg-destructive/20 dark:hover:text-red-200"
+                      : "text-blue-950 hover:bg-blue-500/15 hover:text-blue-950 dark:text-blue-200 dark:hover:bg-blue-500/20 dark:hover:text-blue-100"
+                }`}
+                onClick={() => void cancel()}
+                onPointerDown={stopActionDrag}
+                size="icon-xs"
+                type="button"
+                variant="ghost"
+              >
+                <X className="size-3.5" />
+              </Button>
+            )}
+          </div>
+        </div>
+        {isUploading && (
+          <div
+            aria-label={`Upload progress: ${activeUpload.progressPercent}%`}
+            aria-valuemax={100}
+            aria-valuemin={0}
+            aria-valuenow={activeUpload.progressPercent}
+            className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-blue-500/20"
+            role="progressbar"
+          >
+            <div
+              className="h-full rounded-full bg-blue-600 transition-all duration-200 dark:bg-blue-400"
+              style={{
+                width: `${Math.min(100, Math.max(0, activeUpload.progressPercent))}%`,
+              }}
+            />
+          </div>
         )}
       </div>
     </div>

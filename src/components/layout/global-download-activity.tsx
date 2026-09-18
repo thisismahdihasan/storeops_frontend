@@ -93,12 +93,12 @@ export function GlobalDownloadActivity() {
       aria-label="Download activity"
       className="fixed z-[60] w-80 max-w-[calc(100vw-2rem)]"
       ref={stackRef}
-      style={{ left: position?.x ?? "max(16px, calc(100vw - 340px))", top: position?.y ?? 144 }}
+      style={{ left: position?.x ?? "max(16px, calc(100vw - 340px))", top: position?.y ?? 170 }}
     >
       <div className="rounded-t-xl bg-card">
         <button
           aria-label="Move download notifications. Drag or use arrow keys."
-          className="flex w-full touch-none select-none items-center justify-center gap-1 rounded-t-xl border border-b-0 border-amber-500/50 bg-amber-500/20 px-3 py-2 text-xs text-amber-900 outline-none cursor-grab focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400"
+          className="flex w-full touch-none select-none items-center justify-center gap-1.5 rounded-t-xl border border-b-0 border-border/80 bg-card/95 px-3 py-1.5 text-xs font-medium text-muted-foreground outline-none cursor-grab hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing backdrop-blur-sm"
           onKeyDown={(event) => {
             if (!stackRef.current || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
             event.preventDefault();
@@ -129,7 +129,13 @@ export function GlobalDownloadActivity() {
 
           return (
             <li className="rounded-xl bg-card shadow-md" key={activity.assetId}>
-              <div className="rounded-xl border border-amber-500/50 bg-amber-500/20 p-4 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+              <div
+                className={`rounded-xl border p-4 ${
+                  isFailed
+                    ? "border-destructive/30 bg-destructive/10 text-destructive dark:border-destructive/30 dark:bg-destructive/15 dark:text-red-300"
+                    : "border-blue-500/30 bg-blue-500/10 text-blue-950 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200"
+                }`}
+              >
                 <div
                   className="flex touch-none select-none items-start gap-3 cursor-grab active:cursor-grabbing"
                   onLostPointerCapture={() => { dragRef.current = null; }}
@@ -139,7 +145,13 @@ export function GlobalDownloadActivity() {
                   onPointerUp={endDrag}
                   title="Drag to move downloads"
                 >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/15">
+                  <span
+                    className={`flex size-9 shrink-0 items-center justify-center rounded-lg border ${
+                      isFailed
+                        ? "border-destructive/30 bg-destructive/15 text-destructive dark:text-red-400"
+                        : "border-blue-500/30 bg-blue-500/15 text-blue-700 dark:text-blue-400"
+                    }`}
+                  >
                     <Icon aria-hidden="true" className={isStarting ? "size-4 motion-safe:animate-spin" : "size-4"} />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -151,15 +163,41 @@ export function GlobalDownloadActivity() {
                 {isStarting && (
                   <div
                     aria-label={`Starting download: ${activity.fileName ?? "Listing ZIP"}`}
-                    className="mt-3 h-1.5 overflow-hidden rounded-full bg-amber-500/20"
+                    className="mt-3 h-1.5 overflow-hidden rounded-full bg-blue-500/20 dark:bg-blue-500/25"
                     role="progressbar"
                   >
-                    <div className="download-activity-indeterminate h-full w-1/3 rounded-full bg-amber-600 dark:bg-amber-400" />
+                    <div className="download-activity-indeterminate h-full w-1/3 rounded-full bg-blue-600 dark:bg-blue-400" />
                   </div>
                 )}
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                  <Button nativeButton={false} render={<Link href={`/w/${activity.workspaceId}/listing/${activity.researchItemId}`} />} size="xs" variant="ghost">View listing</Button>
-                  <Button disabled={activity.launchGuarded} onClick={() => dismiss(activity.assetId)} size="xs" title="Dismiss activity only; browser download continues" type="button" variant="ghost">Dismiss</Button>
+                  <Button
+                    className={
+                      isFailed
+                        ? "text-destructive hover:bg-destructive/15 hover:text-destructive dark:text-red-300 dark:hover:bg-destructive/20 dark:hover:text-red-200"
+                        : "text-blue-950 hover:bg-blue-500/15 hover:text-blue-950 dark:text-blue-200 dark:hover:bg-blue-500/20 dark:hover:text-blue-100"
+                    }
+                    nativeButton={false}
+                    render={<Link href={`/w/${activity.workspaceId}/listing/${activity.researchItemId}`} />}
+                    size="xs"
+                    variant="ghost"
+                  >
+                    View listing
+                  </Button>
+                  <Button
+                    className={
+                      isFailed
+                        ? "text-destructive hover:bg-destructive/15 hover:text-destructive dark:text-red-300 dark:hover:bg-destructive/20 dark:hover:text-red-200"
+                        : "text-blue-950 hover:bg-blue-500/15 hover:text-blue-950 dark:text-blue-200 dark:hover:bg-blue-500/20 dark:hover:text-blue-100"
+                    }
+                    disabled={activity.launchGuarded}
+                    onClick={() => dismiss(activity.assetId)}
+                    size="xs"
+                    title="Dismiss activity only; browser download continues"
+                    type="button"
+                    variant="ghost"
+                  >
+                    Dismiss
+                  </Button>
                 </div>
               </div>
             </li>
