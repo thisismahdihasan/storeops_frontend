@@ -7,7 +7,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { ResearchItemDetailModal } from "@/features/research/research-item-detail-modal";
+import { etsyExternalButtonClass, etsyExternalInlineClass } from "@/lib/etsy-styles";
 import { calculateSerialNumber } from "@/lib/serial-number";
+import { cn } from "@/lib/utils";
 import type { AdminListingItem, AdminListingListResult } from "./listings-admin.types";
 import type { ResearchStatus } from "@/features/research/research.types";
 
@@ -259,7 +261,7 @@ export function ListingsAdminTable({
                               href={item.originalUrl}
                               target="_blank"
                               rel="noreferrer noopener"
-                              className="text-[11px] text-primary hover:underline inline-flex items-center gap-0.5"
+                              className={cn("text-[11px] inline-flex items-center gap-0.5", etsyExternalInlineClass)}
                               title="Open original Etsy reference"
                             >
                               <span>Ref</span>
@@ -339,7 +341,10 @@ export function ListingsAdminTable({
                             href={publishedUrl}
                             target="_blank"
                             rel="noreferrer noopener"
-                            className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-medium text-primary hover:bg-muted transition-colors"
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-md border bg-background px-2.5 py-1 text-xs font-medium transition-colors",
+                              etsyExternalButtonClass,
+                            )}
                             title="Open published listing"
                           >
                             <span>Published</span>

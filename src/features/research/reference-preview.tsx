@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { etsyExternalInlineClass } from "@/lib/etsy-styles";
 import { AuthenticatedReferenceImage } from "./authenticated-reference-image";
 import { downloadResearchReferenceImage } from "./research.api";
 
@@ -153,7 +154,10 @@ export function ReferencePreview({
                 href={normalizedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className={cn(
+                  "inline-flex items-center gap-1.5 text-xs font-medium transition-colors",
+                  etsyExternalInlineClass,
+                )}
               >
                 <ExternalLink className="size-3.5" />
                 <span>Open Etsy Listing</span>

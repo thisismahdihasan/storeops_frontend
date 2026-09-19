@@ -8,7 +8,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { ResearchItemDetailModal } from "@/features/research/research-item-detail-modal";
+import { etsyExternalInlineClass } from "@/lib/etsy-styles";
 import { calculateSerialNumber } from "@/lib/serial-number";
+import { cn } from "@/lib/utils";
 import type { AdminDesignItem, AdminDesignListResult } from "./designs.types";
 import type { ResearchStatus } from "@/features/research/research.types";
 
@@ -215,7 +217,7 @@ export function DesignsTable({
                               href={item.originalUrl}
                               target="_blank"
                               rel="noreferrer noopener"
-                              className="text-[11px] text-primary hover:underline inline-flex items-center gap-0.5"
+                              className={cn("text-[11px] inline-flex items-center gap-0.5", etsyExternalInlineClass)}
                               title="Open original Etsy listing"
                             >
                               <span>Etsy</span>

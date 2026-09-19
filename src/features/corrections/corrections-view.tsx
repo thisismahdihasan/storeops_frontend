@@ -21,6 +21,8 @@ import { useCallback, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { etsyExternalSubtleClass } from "@/lib/etsy-styles";
+import { cn } from "@/lib/utils";
 import {
   formatWorkDate,
   type DesignerWorkFilters as DesignerWorkFiltersValue,
@@ -380,7 +382,7 @@ function CorrectionCard({
             {researchItem.originalUrl && (
               <a
                 aria-label={`Open Etsy listing ${researchItem.etsyListingId} in new tab`}
-                className="text-muted-foreground hover:text-foreground"
+                className={cn("transition-colors", etsyExternalSubtleClass)}
                 href={researchItem.originalUrl}
                 rel="noreferrer"
                 target="_blank"

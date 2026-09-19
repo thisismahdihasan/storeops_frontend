@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { DesignPreviewLightbox } from "@/features/design-workspace/design-preview-lightbox";
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
+import { etsyExternalButtonClass } from "@/lib/etsy-styles";
+import { cn } from "@/lib/utils";
 
 import { ApprovedPreview } from "./approved-preview";
 import { formatListingDate } from "./listing.types";
@@ -54,7 +56,7 @@ export function ReferenceCheck({
             workspaceId={workspaceId}
           />
           <Button
-            className="mt-3 w-full"
+            className={cn("mt-3 w-full", etsyExternalButtonClass)}
             nativeButton={false}
             render={<a href={detail.researchItem.originalUrl} rel="noopener noreferrer" target="_blank" />}
             size="sm"

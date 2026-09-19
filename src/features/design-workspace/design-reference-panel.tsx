@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 import { downloadResearchReferenceImage } from "@/features/research/research.api";
+import { etsyExternalButtonClass } from "@/lib/etsy-styles";
+import { cn } from "@/lib/utils";
 
 import { DesignPreviewLightbox } from "./design-preview-lightbox";
 import type { DesignDetail } from "./design-workspace.types";
@@ -67,7 +69,7 @@ export function DesignReferencePanel({ detail, workspaceId }: DesignReferencePan
           <span>Download Reference</span>
         </Button>
         <Button
-          className="flex-1 gap-2 font-semibold border-emerald-600/30 text-emerald-700 hover:bg-emerald-500/10 hover:text-emerald-800 dark:border-emerald-500/30 dark:text-emerald-400 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-300"
+          className={cn("flex-1 gap-2 font-semibold", etsyExternalButtonClass)}
           nativeButton={false}
           render={
             <a

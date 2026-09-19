@@ -22,7 +22,9 @@ import { Button } from "@/components/ui/button";
 import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
+import { etsyExternalButtonClass, etsyExternalInlineClass } from "@/lib/etsy-styles";
 import { calculateSerialNumber } from "@/lib/serial-number";
+import { cn } from "@/lib/utils";
 import { DeleteResearchItemDialog } from "./delete-research-item-dialog";
 import { ReferencePreview } from "./reference-preview";
 import type {
@@ -408,7 +410,10 @@ function ResearchTableRow({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`View listing #${item.etsyListingId} on Etsy`}
-                className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground"
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  etsyExternalButtonClass,
+                )}
               >
                 <span>View on Etsy</span>
                 <ExternalLink className="size-2.5" />
@@ -418,7 +423,7 @@ function ResearchTableRow({
                 href={item.normalizedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-0.5 hover:text-foreground"
+                className={cn("inline-flex items-center gap-0.5", etsyExternalInlineClass)}
                 title="View on Etsy"
               >
                 <span>Etsy</span>

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 import { getIssueReasonLabel } from "@/features/research/issue-reasons";
+import { etsyExternalInlineClass } from "@/lib/etsy-styles";
+import { cn } from "@/lib/utils";
 
 import type { ActiveIssue } from "./issues.types";
 
@@ -91,7 +93,7 @@ export function IssueList({
                       {issue.title || `Etsy Listing #${issue.etsyListingId}`}
                     </h2>
                     <a
-                      className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      className={cn("mt-1 inline-flex items-center gap-1 text-xs transition-colors", etsyExternalInlineClass)}
                       href={issue.normalizedUrl}
                       rel="noreferrer"
                       target="_blank"

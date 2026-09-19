@@ -23,6 +23,8 @@ import { DesignPreviewLightbox } from "@/features/design-workspace/design-previe
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 import type { ResearchStatus } from "@/features/research/research.types";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { etsyExternalInlineClass } from "@/lib/etsy-styles";
+import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api";
 
 import { AnnotationPanel } from "./annotation-panel";
@@ -407,7 +409,7 @@ export function ReviewDetailView({
             </span>
             <span>·</span>
             <a
-              className="inline-flex items-center gap-1 text-primary hover:underline"
+              className={cn("inline-flex items-center gap-1", etsyExternalInlineClass)}
               href={researchItem.originalUrl}
               rel="noreferrer"
               target="_blank"

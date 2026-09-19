@@ -33,6 +33,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ApiError } from "@/lib/api";
+import { etsyExternalInlineClass } from "@/lib/etsy-styles";
+import { cn } from "@/lib/utils";
 import { DuplicateAlertModal } from "./duplicate-alert-modal";
 import { ReferenceImagePicker } from "./reference-image-picker";
 import { DuplicateResearchError } from "./research.api";
@@ -527,7 +529,7 @@ export function AddResearchModal({
                           href={previewResult.normalizedUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                          className={cn("inline-flex items-center gap-1", etsyExternalInlineClass)}
                         >
                           <span>View on Etsy</span>
                           <ExternalLink className="size-3" />

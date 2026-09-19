@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge, STATUS_TONE_TEXT_CLASSES } from "@/components/ui/status-badge";
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
+import { etsyExternalButtonClass } from "@/lib/etsy-styles";
 import { cn } from "@/lib/utils";
 import { AuthenticatedReferenceImage } from "./authenticated-reference-image";
 import { DeleteResearchItemDialog } from "./delete-research-item-dialog";
@@ -264,7 +265,10 @@ export function ResearchItemDetailModal({
                       href={item.normalizedUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+                        etsyExternalButtonClass,
+                      )}
                     >
                       <ExternalLink className="size-3" />
                       <span>Etsy</span>

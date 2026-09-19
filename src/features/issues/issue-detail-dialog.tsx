@@ -13,6 +13,8 @@ import { getIssueReasonLabel } from "@/features/research/issue-reasons";
 import { ReferenceImageUploadModal } from "@/features/research/reference-image-upload-modal";
 import { downloadResearchReferenceImage } from "@/features/research/research.api";
 import { useResearchItemDetail } from "@/features/research/use-research";
+import { etsyExternalInlineClass } from "@/lib/etsy-styles";
+import { cn } from "@/lib/utils";
 
 import type { ActiveIssue } from "./issues.types";
 
@@ -109,7 +111,7 @@ export function IssueDetailDialog({ issue, onOpenChange, open, workspaceId }: Is
                     Download
                   </Button>
                 )}
-                <a className="inline-flex items-center gap-1 rounded-md px-1 py-1 text-xs text-muted-foreground hover:text-foreground" href={item.normalizedUrl} rel="noreferrer" target="_blank">
+                <a className={cn("inline-flex items-center gap-1 rounded-md px-1 py-1 text-xs transition-colors", etsyExternalInlineClass)} href={item.normalizedUrl} rel="noreferrer" target="_blank">
                   View on Etsy <ExternalLink className="size-3" />
                 </a>
               </div>
