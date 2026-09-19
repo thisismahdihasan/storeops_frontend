@@ -14,6 +14,8 @@ export type WorkspaceWithMembership = {
   createdAt: string;
   designerAutoAssignmentEnabled: boolean;
   listerAutoAssignmentEnabled: boolean;
+  finalAssetAutoCleanupEnabled: boolean;
+  finalAssetRetentionDays: number;
   id: string;
   membership: WorkspaceMembershipSummary;
   name: string;
@@ -65,6 +67,8 @@ export type CreateWorkspaceResponse = {
 export type UpdateWorkspaceSettingsInput = {
   designerAutoAssignmentEnabled?: boolean;
   listerAutoAssignmentEnabled?: boolean;
+  finalAssetAutoCleanupEnabled?: boolean;
+  finalAssetRetentionDays?: number;
 };
 
 export type UpdateWorkspaceSettingsResponse = {

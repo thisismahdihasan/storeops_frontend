@@ -3,6 +3,7 @@
 import { useWorkspaces } from "./use-workspaces";
 import { useUpdateWorkspaceSettings } from "./use-update-workspace-settings";
 import { Switch } from "@/components/ui/switch";
+import { StorageCleanupSettingsCard } from "@/features/storage-cleanup/storage-cleanup-settings-card";
 
 type WorkspaceSettingsViewProps = {
   workspaceId: string;
@@ -99,6 +100,13 @@ export function WorkspaceSettingsView({ workspaceId }: WorkspaceSettingsViewProp
           </div>
         </div>
       </section>
+
+      {/* Storage Cleanup & Retention Section */}
+      <StorageCleanupSettingsCard
+        workspace={workspace}
+        onUpdateSettings={updateSettingsMutation.mutate}
+        isUpdating={updateSettingsMutation.isPending}
+      />
     </main>
   );
 }

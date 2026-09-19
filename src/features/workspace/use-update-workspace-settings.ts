@@ -30,6 +30,12 @@ export function useUpdateWorkspaceSettings(workspaceId: string) {
           if (input.listerAutoAssignmentEnabled !== undefined) {
             rollbackContext.previous.listerAutoAssignmentEnabled = targetWorkspace.listerAutoAssignmentEnabled;
           }
+          if (input.finalAssetAutoCleanupEnabled !== undefined) {
+            rollbackContext.previous.finalAssetAutoCleanupEnabled = targetWorkspace.finalAssetAutoCleanupEnabled;
+          }
+          if (input.finalAssetRetentionDays !== undefined) {
+            rollbackContext.previous.finalAssetRetentionDays = targetWorkspace.finalAssetRetentionDays;
+          }
         }
 
         queryClient.setQueryData<WorkspacesResponse>(workspacesQueryKey, {
@@ -45,6 +51,12 @@ export function useUpdateWorkspaceSettings(workspaceId: string) {
                     }),
                     ...(input.listerAutoAssignmentEnabled !== undefined && {
                       listerAutoAssignmentEnabled: input.listerAutoAssignmentEnabled,
+                    }),
+                    ...(input.finalAssetAutoCleanupEnabled !== undefined && {
+                      finalAssetAutoCleanupEnabled: input.finalAssetAutoCleanupEnabled,
+                    }),
+                    ...(input.finalAssetRetentionDays !== undefined && {
+                      finalAssetRetentionDays: input.finalAssetRetentionDays,
                     }),
                   }
                 : ws
@@ -76,6 +88,12 @@ export function useUpdateWorkspaceSettings(workspaceId: string) {
                       ...(previous.listerAutoAssignmentEnabled !== undefined && {
                         listerAutoAssignmentEnabled: previous.listerAutoAssignmentEnabled,
                       }),
+                      ...(previous.finalAssetAutoCleanupEnabled !== undefined && {
+                        finalAssetAutoCleanupEnabled: previous.finalAssetAutoCleanupEnabled,
+                      }),
+                      ...(previous.finalAssetRetentionDays !== undefined && {
+                        finalAssetRetentionDays: previous.finalAssetRetentionDays,
+                      }),
                     }
                   : ws
               ),
@@ -98,6 +116,16 @@ export function useUpdateWorkspaceSettings(workspaceId: string) {
       if (variables.listerAutoAssignmentEnabled !== undefined) {
         toast.success(
           `Lister auto-assignment turned ${variables.listerAutoAssignmentEnabled ? "on" : "off"}.`
+        );
+      }
+      if (variables.finalAssetAutoCleanupEnabled !== undefined) {
+        toast.success(
+          `Automatic final asset cleanup turned ${variables.finalAssetAutoCleanupEnabled ? "on" : "off"}.`
+        );
+      }
+      if (variables.finalAssetRetentionDays !== undefined) {
+        toast.success(
+          `Retention period updated to ${variables.finalAssetRetentionDays} day${variables.finalAssetRetentionDays === 1 ? "" : "s"}.`
         );
       }
     },

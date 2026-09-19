@@ -90,7 +90,10 @@ export const listingQueueResponseSchema = z
   .strict();
 
 const detailFinalAssetSchema = queueFinalAssetSchema
-  .extend({ uploadedAt: z.string() })
+  .extend({
+    uploadedAt: z.string(),
+    storageDeletedAt: z.string().nullable(),
+  })
   .strict();
 
 export const listingDetailResponseSchema = z

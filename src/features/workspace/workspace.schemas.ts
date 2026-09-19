@@ -21,6 +21,8 @@ export const workspaceWithMembershipSchema = z.object({
   createdAt: z.string(),
   designerAutoAssignmentEnabled: z.boolean(),
   listerAutoAssignmentEnabled: z.boolean(),
+  finalAssetAutoCleanupEnabled: z.boolean(),
+  finalAssetRetentionDays: z.number().int().min(1).max(365),
   id: z.string(),
   membership: workspaceMembershipSummarySchema,
   name: z.string(),
@@ -69,13 +71,22 @@ export const createWorkspaceResponseSchema = z.object({
   success: z.literal(true),
 });
 
-export const updateWorkspaceSettingsInputSchema = z.object({
-  designerAutoAssignmentEnabled: z.boolean().optional(),
-  listerAutoAssignmentEnabled: z.boolean().optional(),
-}).strict().refine(
-  (data) => data.designerAutoAssignmentEnabled !== undefined || data.listerAutoAssignmentEnabled !== undefined,
-  "At least one setting must be provided"
-);
+export const updateWorkspaceSettingsInputSchema = z
+  .object({
+    designerAutoAssignmentEnabled: z.boolean().optional(),
+    listerAutoAssignmentEnabled: z.boolean().optional(),
+    finalAssetAutoCleanupEnabled: z.boolean().optional(),
+    finalAssetRetentionDays: z.number().int().min(1).max(365).optional(),
+  })
+  .strict()
+  .refine(
+    (data) =>
+      data.designerAutoAssignmentEnabled !== undefined ||
+      data.listerAutoAssignmentEnabled !== undefined ||
+      data.finalAssetAutoCleanupEnabled !== undefined ||
+      data.finalAssetRetentionDays !== undefined,
+    "At least one setting must be provided"
+  );
 
 export const updateWorkspaceSettingsResponseSchema = z.object({
   data: z.object({
@@ -85,6 +96,8 @@ export const updateWorkspaceSettingsResponseSchema = z.object({
       ownerId: true,
       designerAutoAssignmentEnabled: true,
       listerAutoAssignmentEnabled: true,
+      finalAssetAutoCleanupEnabled: true,
+      finalAssetRetentionDays: true,
       createdAt: true,
       updatedAt: true,
     }),

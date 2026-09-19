@@ -58,6 +58,8 @@ export function useCreateWorkspace() {
         createdAt: createdWorkspace.createdAt,
         designerAutoAssignmentEnabled: true,
         listerAutoAssignmentEnabled: true,
+        finalAssetAutoCleanupEnabled: false,
+        finalAssetRetentionDays: 30,
         id: createdWorkspace.id,
         membership: {
           createdAt: createdMembership.createdAt,

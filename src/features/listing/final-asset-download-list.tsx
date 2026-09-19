@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, FileArchive, Loader2 } from "lucide-react";
+import { ArchiveX, Download, FileArchive, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -51,16 +51,23 @@ export function FinalAssetDownloadList({ assets, researchItemId, workspaceId }: 
               </p>
             </div>
           </div>
-          <Button
-            aria-label={`Download ZIP ${asset.fileName}`}
-            className="w-full bg-brand-accent text-brand-accent-foreground hover:bg-brand-accent/85 focus-visible:border-brand-accent focus-visible:ring-brand-accent/50 sm:w-auto"
-            disabled={activity?.launchGuarded ?? false}
-            onClick={() => handleDownload(asset)}
-            type="button"
-          >
-            {activity?.phase === "starting" ? <Loader2 className="animate-spin" /> : <Download />}
-            {activity?.phase === "starting" ? "Starting download…" : "Download ZIP"}
-          </Button>
+          {asset.storageDeletedAt ? (
+            <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground self-start sm:self-auto">
+              <ArchiveX className="size-3.5 text-muted-foreground/80" />
+              <span>Storage Cleaned Up</span>
+            </div>
+          ) : (
+            <Button
+              aria-label={`Download ZIP ${asset.fileName}`}
+              className="w-full bg-brand-accent text-brand-accent-foreground hover:bg-brand-accent/85 focus-visible:border-brand-accent focus-visible:ring-brand-accent/50 sm:w-auto"
+              disabled={activity?.launchGuarded ?? false}
+              onClick={() => handleDownload(asset)}
+              type="button"
+            >
+              {activity?.phase === "starting" ? <Loader2 className="animate-spin" /> : <Download />}
+              {activity?.phase === "starting" ? "Starting download…" : "Download ZIP"}
+            </Button>
+          )}
         </div>
       )}
     </section>
