@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { ResearchItemDetailModal } from "@/features/research/research-item-detail-modal";
+import { calculateSerialNumber } from "@/lib/serial-number";
 import type { AdminDesignItem, AdminDesignListResult } from "./designs.types";
 import type { ResearchStatus } from "@/features/research/research.types";
 
@@ -148,6 +149,10 @@ export function DesignsTable({
           <table className="w-full text-left text-xs">
             <thead className="border-b border-border bg-muted/40 font-medium text-muted-foreground">
               <tr>
+                <th className="w-12 px-3 py-3 text-center" scope="col">
+                  <span className="sr-only">Row number</span>
+                  <span aria-hidden="true">#</span>
+                </th>
                 <th className="px-4 py-3 w-14">Reference</th>
                 <th className="px-4 py-3 min-w-48">Etsy Listing / Title</th>
                 <th className="px-4 py-3 min-w-36">Designer</th>
@@ -157,7 +162,7 @@ export function DesignsTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {items.map((item: AdminDesignItem) => {
+              {items.map((item: AdminDesignItem, index: number) => {
                 const statusMeta = formatStatus(item.status);
                 const hasReview = Boolean(item.latestReview);
                 const isWaitingReview = item.status === "DESIGN_REVIEW";
@@ -167,6 +172,11 @@ export function DesignsTable({
                     key={item.id}
                     className="hover:bg-muted/20 transition-colors"
                   >
+                    {/* Row Number */}
+                    <td className="w-12 px-3 py-3 text-center font-mono text-[11px] font-medium text-foreground/70 tabular-nums">
+                      {calculateSerialNumber(index, pagination)}
+                    </td>
+
                     {/* Reference Thumbnail */}
                     <td className="px-4 py-3">
                       {item.referenceImageUrl ? (

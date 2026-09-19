@@ -145,6 +145,10 @@ export function TeamMembersList({
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border bg-muted/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <tr>
+              <th className="w-12 px-4 py-3 text-center" scope="col">
+                <span className="sr-only">Row number</span>
+                <span aria-hidden="true">#</span>
+              </th>
               <th className="px-5 py-3" scope="col">Member</th>
               <th className="px-5 py-3" scope="col">Roles</th>
               <th className="px-5 py-3" scope="col">Assignment Status</th>
@@ -153,8 +157,11 @@ export function TeamMembersList({
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {members.map((member) => (
+            {members.map((member, index) => (
               <tr className="align-middle" key={member.membershipId}>
+                <td className="w-12 px-4 py-4 text-center font-mono text-xs font-medium text-foreground/70 tabular-nums">
+                  {index + 1}
+                </td>
                 <td className="max-w-80 px-5 py-4"><MemberIdentity member={member} /></td>
                 <td className="px-5 py-4"><MemberRoles member={member} /></td>
                 <td className="px-5 py-4"><MemberAssignmentStatus member={member} /></td>
@@ -171,9 +178,16 @@ export function TeamMembersList({
         </table>
       </div>
       <ul className="divide-y divide-border sm:hidden">
-        {members.map((member) => (
+        {members.map((member, index) => (
           <li className="space-y-3 p-4" key={member.membershipId}>
-            <MemberIdentity member={member} />
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs font-medium text-foreground/70 tabular-nums shrink-0">
+                {index + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <MemberIdentity member={member} />
+              </div>
+            </div>
             <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Roles</p>
               <MemberRoles member={member} />

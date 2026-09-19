@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { ResearchItemDetailModal } from "@/features/research/research-item-detail-modal";
+import { calculateSerialNumber } from "@/lib/serial-number";
 import type { AdminListingItem, AdminListingListResult } from "./listings-admin.types";
 import type { ResearchStatus } from "@/features/research/research.types";
 
@@ -175,6 +176,10 @@ export function ListingsAdminTable({
                     />
                   </th>
                 )}
+                <th className="w-12 px-3 py-3 text-center" scope="col">
+                  <span className="sr-only">Row number</span>
+                  <span aria-hidden="true">#</span>
+                </th>
                 <th className="px-4 py-3 w-14">Reference</th>
                 <th className="px-4 py-3 min-w-48">Etsy Listing / Title</th>
                 <th className="px-4 py-3 min-w-36">Lister</th>
@@ -184,7 +189,7 @@ export function ListingsAdminTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {items.map((item: AdminListingItem) => {
+              {items.map((item: AdminListingItem, index: number) => {
                 const statusMeta = formatStatus(item.status);
                 const publishedUrl = item.listingResult?.etsyListingUrl;
                 const canAssignLister =
@@ -212,6 +217,10 @@ export function ListingsAdminTable({
                         )}
                       </td>
                     )}
+                    {/* Row Number */}
+                    <td className="w-12 px-3 py-3 text-center font-mono text-[11px] font-medium text-foreground/70 tabular-nums">
+                      {calculateSerialNumber(index, pagination)}
+                    </td>
                     {/* Reference Thumbnail */}
                     <td className="px-4 py-3">
                       {item.referenceImageUrl ? (

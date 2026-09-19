@@ -11,6 +11,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { CountBadge } from "@/components/ui/count-badge";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 
 import { ReviewList } from "./review-list";
@@ -141,17 +142,18 @@ export function ReviewsView({ workspaceId }: ReviewsViewProps) {
           <h1 className="mt-1 flex items-center gap-2.5 text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
             <CheckSquare className="size-7 text-primary" />
             Design Reviews
-            {totalItems > 0 && (
-              <span className="ml-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                {totalItems}
-              </span>
-            )}
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             Evaluate submitted designer artwork, provide point annotations, and
             either approve designs or request revisions.
           </p>
         </div>
+        {totalItems > 0 && (
+          <CountBadge
+            count={totalItems}
+            label="design review"
+          />
+        )}
       </header>
 
       {/* Main Content Area */}

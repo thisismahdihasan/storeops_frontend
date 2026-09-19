@@ -9,6 +9,7 @@ import { ApiError } from "@/lib/api";
 
 import { getAssignmentAvailabilityState } from "@/features/workspace/workspace-assignment-availability";
 import { WorkerAssignmentStatusBanner } from "@/features/workspace/worker-assignment-status-banner";
+import { CountBadge } from "@/components/ui/count-badge";
 import { ListingAccessState } from "./listing-access-state";
 import { ListingFilters } from "./listing-filters";
 import { ListingList } from "./listing-list";
@@ -93,10 +94,10 @@ export function ListingView({ workspaceId }: ListingViewProps) {
           </p>
         </div>
         {queueQuery.data ? (
-          <p className="text-sm text-muted-foreground">
-            {queueQuery.data.data.pagination.total} listing
-            {queueQuery.data.data.pagination.total === 1 ? "" : "s"}
-          </p>
+          <CountBadge
+            count={queueQuery.data.data.pagination.total}
+            label="listing"
+          />
         ) : null}
       </header>
 

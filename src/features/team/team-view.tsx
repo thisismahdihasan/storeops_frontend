@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { CountBadge } from "@/components/ui/count-badge";
 import { resolveDefaultRouteForRoles } from "@/components/layout/navigation.config";
 import { useCurrentSession } from "@/features/auth/use-current-session";
 import { ApiError } from "@/lib/api";
@@ -234,7 +235,12 @@ export function TeamView({ workspaceId }: TeamViewProps) {
       <section aria-labelledby="workspace-members-heading" className="space-y-3">
         <div className="flex items-baseline justify-between gap-3">
           <div><h2 className="text-lg font-semibold" id="workspace-members-heading">Members</h2><p className="text-sm text-muted-foreground">Current accepted workspace memberships.</p></div>
-          {membersQuery.data && <p className="shrink-0 text-sm text-muted-foreground">{membersQuery.data.data.members.length} member{membersQuery.data.data.members.length === 1 ? "" : "s"}</p>}
+          {membersQuery.data && (
+            <CountBadge
+              count={membersQuery.data.data.members.length}
+              label="member"
+            />
+          )}
         </div>
         <TeamMembersList canManageMembers={hasAdminRole} errorMessage={getRequestErrorMessage(membersQuery.error)} isError={membersQuery.isError} isLoading={workspacesQuery.isLoading || membersQuery.isLoading} members={membersQuery.data?.data.members ?? []} onAssignmentAvailability={setAvailabilityMember} onEditRoles={setEditingMember} onRemove={setRemovingMember} onRetry={() => void membersQuery.refetch()} workspaceId={workspaceId} />
       </section>

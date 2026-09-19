@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
+import { calculateSerialNumber } from "@/lib/serial-number";
 import { DeleteResearchItemDialog } from "./delete-research-item-dialog";
 import { ReferencePreview } from "./reference-preview";
 import type {
@@ -121,7 +122,7 @@ export function ResearchTable({
   }, [areAllEligibleItemsSelected, hasSelectedEligibleItems]);
 
   if (isLoading) {
-    return <TableSkeleton columnCount={isAdmin ? 8 : showStatus ? 5 : 4} />;
+    return <TableSkeleton columnCount={isAdmin ? 9 : showStatus ? 6 : 5} />;
   }
 
   if (isError) {
@@ -208,6 +209,10 @@ export function ResearchTable({
                     />
                   </th>
                 )}
+                <th scope="col" className="w-12 px-3 py-3 text-center text-xs font-medium text-muted-foreground">
+                  <span className="sr-only">Row number</span>
+                  <span aria-hidden="true">#</span>
+                </th>
                 <th scope="col" className="w-16 px-3 py-3">
                   Reference
                 </th>
@@ -238,7 +243,7 @@ export function ResearchTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
-              {items.map((item) => (
+              {items.map((item, index) => (
                 <ResearchTableRow
                   key={item.id}
                   item={item}
@@ -249,6 +254,7 @@ export function ResearchTable({
                   onDeleteItem={(target) => setDeleteTarget(target)}
                   onToggleSelection={onToggleSelection}
                   onOpenDetail={onOpenDetail}
+                  serialNumber={calculateSerialNumber(index, pagination)}
                   showStatus={showStatus}
                   userCanUpload={canCreate}
                   workspaceId={workspaceId}
@@ -321,6 +327,7 @@ function ResearchTableRow({
   onDeleteItem,
   onToggleSelection,
   onOpenDetail,
+  serialNumber,
   showStatus,
   userCanUpload,
   workspaceId,
@@ -333,6 +340,7 @@ function ResearchTableRow({
   onDeleteItem: (item: ResearchItemListItem) => void;
   onToggleSelection: (researchItemId: string) => void;
   onOpenDetail: (id: string) => void;
+  serialNumber: number;
   showStatus: boolean;
   userCanUpload: boolean;
   workspaceId: string;
@@ -364,6 +372,10 @@ function ResearchTableRow({
           )}
         </td>
       )}
+      {/* Row Number */}
+      <td className="w-12 px-3 py-3 text-center font-mono text-[11px] font-medium text-foreground/70 tabular-nums">
+        {serialNumber}
+      </td>
       {/* Reference Thumbnail (Enlarged to size-12 / 48px) */}
       <td className="px-3 py-3">
         <ReferencePreview

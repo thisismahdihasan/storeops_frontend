@@ -10,6 +10,7 @@ import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { getAssignmentAvailabilityState } from "@/features/workspace/workspace-assignment-availability";
 
 import { WorkerAssignmentStatusBanner } from "@/features/workspace/worker-assignment-status-banner";
+import { CountBadge } from "@/components/ui/count-badge";
 import { DesignerWorkFilters } from "./designer-work-filters";
 import { DesignerWorkList } from "./designer-work-list";
 import { ReportIssueDialog } from "./report-issue-dialog";
@@ -81,7 +82,21 @@ export function DesignerWorkView({ workspaceId }: DesignerWorkViewProps) {
 
   return (
     <div className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
-      <header className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">Designer workflow</p><h1 className="mt-1 flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl"><Palette className="size-6 text-primary" />My Work</h1><p className="mt-1 max-w-2xl text-sm text-muted-foreground">Your active design assignments, ordered by most recently assigned.</p></div>{queueQuery.data && <p className="text-sm text-muted-foreground">{queueQuery.data.data.pagination.total} active assignment{queueQuery.data.data.pagination.total === 1 ? "" : "s"}</p>}</header>
+      <header className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Designer workflow</p>
+          <h1 className="mt-1 flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
+            <Palette className="size-6 text-primary" />My Work
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Your active design assignments, ordered by most recently assigned.</p>
+        </div>
+        {queueQuery.data && (
+          <CountBadge
+            count={queueQuery.data.data.pagination.total}
+            label="active assignment"
+          />
+        )}
+      </header>
       {activeWorkspace ? (
         <WorkerAssignmentStatusBanner
           membership={activeWorkspace.membership}
