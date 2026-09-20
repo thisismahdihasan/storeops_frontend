@@ -13,7 +13,6 @@ import {
   deleteResearchItem,
   getResearchItemById,
   getResearchItems,
-  getResearchReferenceImageBlob,
   reassignResearchDesigner,
   previewResearchItem,
   syncResearchAssignments,
@@ -193,21 +192,7 @@ export function useDeleteResearchItem(workspaceId: string) {
   });
 }
 
-export function useResearchReferenceImage(
-  workspaceId: string,
-  researchItemId?: string | null,
-  enabled = true,
-) {
-  const hasId = typeof researchItemId === "string" && researchItemId.length > 0;
 
-  return useQuery({
-    enabled: enabled && workspaceId.length > 0 && hasId,
-    queryFn: () => getResearchReferenceImageBlob(workspaceId, researchItemId!),
-    queryKey: researchKeys.referenceImage(workspaceId, researchItemId ?? ""),
-    retry: (failureCount, error) => !isAuthError(error) && failureCount < 1,
-    staleTime: 5 * 60 * 1000,
-  });
-}
 
 export function useSyncResearchAssignments(workspaceId: string) {
   const queryClient = useQueryClient();

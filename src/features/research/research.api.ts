@@ -84,6 +84,8 @@ function buildResearchListQueryString(filter?: ResearchListFilterParams): string
   return query.length > 0 ? `?${query}` : "";
 }
 
+// Builds the authenticated backend URL for a research item's reference image.
+// Used by the native <img> display path — no JS fetch, no credentials mode mismatch.
 export function getReferenceImageProxyUrl(
   workspaceId: string,
   researchItemId: string,
@@ -327,25 +329,9 @@ export async function deleteResearchItem(
   return parsed.data;
 }
 
-export async function getResearchReferenceImageBlob(
-  workspaceId: string,
-  researchItemId: string,
-): Promise<Blob> {
-  const blob = await apiRequest<Blob>(
-    `/api/v1/workspaces/${workspaceId}/research-items/${researchItemId}/reference-image`,
-    {
-      method: "GET",
-      responseType: "blob",
-    },
-  );
-
-  if (!blob) {
-    throw new ApiError(404, "Reference image not found.");
-  }
-
-  return blob;
-}
-
+// Downloads the reference image through the secure backend proxy with ?download=true.
+// This path always proxies bytes through the backend (no 302 redirect), so
+// credentials: "include" works correctly — there is no third-party redirect involved.
 export async function downloadResearchReferenceImage(
   workspaceId: string,
   researchItemId: string,
@@ -368,7 +354,7 @@ export async function downloadResearchReferenceImage(
   let filename = fallbackFilename || `research-reference-${researchItemId}.png`;
 
   if (contentDisposition) {
-    const match = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i.exec(
+    const match = /filename[^;=\n]*=((['"']).*?\2|[^;\n]*)/i.exec(
       contentDisposition,
     );
     if (match && match[1]) {

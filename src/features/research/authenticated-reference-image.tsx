@@ -1,12 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AlertCircle, ImageIcon, Loader2, RefreshCw, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useResearchReferenceImage } from "./use-research";
+import { getReferenceImageProxyUrl } from "./research.api";
 
 type AuthenticatedReferenceImageProps = {
   alt: string;
@@ -40,36 +40,15 @@ export function AuthenticatedReferenceImage({
   workspaceId,
 }: AuthenticatedReferenceImageProps) {
   const active = isActive && enabled;
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-  const [decodeError, setDecodeError] = useState(false);
 
-  const {
-    data: blob,
-    error,
-    isError,
-    isLoading,
-    refetch,
-  } = useResearchReferenceImage(workspaceId, researchItemId, active && hasImage);
+  // Track native image load state with a cache-busting key for retry.
+  const [loadKey, setLoadKey] = useState(0);
+  const [loadState, setLoadState] = useState<"loading" | "loaded" | "error">("loading");
 
-  // Manage component-instance Object URL lifecycle
-  useEffect(() => {
-    if (!blob || !active) return;
-
-    const nextObjectUrl = URL.createObjectURL(blob);
-    let isCancelled = false;
-
-    queueMicrotask(() => {
-      if (!isCancelled) {
-        setObjectUrl(nextObjectUrl);
-      }
-    });
-
-    return () => {
-      isCancelled = true;
-      URL.revokeObjectURL(nextObjectUrl);
-      setObjectUrl(null);
-    };
-  }, [blob, active]);
+  // The authenticated backend URL — the browser sends the session cookie automatically
+  // as a subresource request (not a CORS fetch). The backend validates auth and issues
+  // a 302 to Cloudinary. The browser follows in navigation mode, bypassing CORS entirely.
+  const imageUrl = getReferenceImageProxyUrl(workspaceId, researchItemId);
 
   // State 1: No reference image exists
   if (!hasImage) {
@@ -106,8 +85,8 @@ export function AuthenticatedReferenceImage({
     );
   }
 
-  // State 2: Image request or decode failed
-  if (isError || decodeError) {
+  // State 2: Image load failed (native onError)
+  if (loadState === "error") {
     return (
       <div
         className={cn(
@@ -121,17 +100,15 @@ export function AuthenticatedReferenceImage({
         </div>
         <p className="text-xs font-semibold">Unable to load reference image</p>
         <p className="max-w-xs text-[11px] text-muted-foreground">
-          {error instanceof Error
-            ? error.message
-            : "An authenticated error occurred while retrieving the image."}
+          An error occurred while retrieving the image.
         </p>
         <Button
           type="button"
           size="xs"
           variant="outline"
           onClick={() => {
-            setDecodeError(false);
-            void refetch();
+            setLoadState("loading");
+            setLoadKey((k) => k + 1);
           }}
           className="mt-2 gap-1.5 text-xs"
         >
@@ -142,23 +119,14 @@ export function AuthenticatedReferenceImage({
     );
   }
 
-  // State 3: Image exists and is loading or preparing object URL
-  if (isLoading || !objectUrl) {
-    return (
-      <div
-        className={cn(
-          "flex w-full flex-col items-center justify-center gap-2.5 p-4 text-center text-muted-foreground",
-          minHeightClassName,
-          containerClassName,
-        )}
-      >
-        <Loader2 className="size-6 animate-spin text-primary" />
-        <span className="text-xs">Loading reference image…</span>
-      </div>
-    );
+  // When not active/enabled, render nothing
+  if (!active) {
+    return null;
   }
 
-  // State 4: Image loaded successfully with fresh object URL
+  // States 3 & 4: loading spinner overlay + image element.
+  // The img is always rendered so native load events fire; the spinner sits on top while
+  // loadState === "loading" and disappears once the browser fires onLoad.
   return (
     <div
       className={cn(
@@ -166,32 +134,60 @@ export function AuthenticatedReferenceImage({
         containerClassName,
       )}
     >
+      {/* Loading spinner — visible until the image fires onLoad */}
+      {loadState === "loading" && (
+        <div
+          className={cn(
+            "absolute flex flex-col items-center justify-center gap-2.5 p-4 text-muted-foreground",
+            minHeightClassName,
+          )}
+        >
+          <Loader2 className="size-6 animate-spin text-primary" />
+          <span className="text-xs">Loading reference image…</span>
+        </div>
+      )}
+
+      {/* The image itself.
+          - No crossOrigin attribute: the browser sends the session cookie as a
+            first-party subresource (same as any <img> on the page). The backend
+            validates auth, then issues 302. The browser follows the redirect to
+            Cloudinary in navigation mode — no CORS evaluation occurs.
+          - key={loadKey} forces React to unmount/remount the element on retry,
+            which causes the browser to re-issue the request fresh. */}
       {onOpenImage ? (
         <button
           aria-label={openImageLabel || `Open ${alt} larger`}
-          className="max-w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          onClick={() => onOpenImage(objectUrl)}
+          className={cn(
+            "max-w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            loadState === "loading" && "invisible",
+          )}
+          onClick={() => onOpenImage(imageUrl)}
           type="button"
         >
           <img
+            key={loadKey}
             alt={alt}
             className={cn(
               "max-h-[340px] max-w-full rounded-md object-contain",
               className,
             )}
-            onError={() => setDecodeError(true)}
-            src={objectUrl}
+            onError={() => setLoadState("error")}
+            onLoad={() => setLoadState("loaded")}
+            src={imageUrl}
           />
         </button>
       ) : (
         <img
+          key={loadKey}
           alt={alt}
           className={cn(
             "max-h-[340px] max-w-full rounded-md object-contain",
+            loadState === "loading" && "invisible",
             className,
           )}
-          onError={() => setDecodeError(true)}
-          src={objectUrl}
+          onError={() => setLoadState("error")}
+          onLoad={() => setLoadState("loaded")}
+          src={imageUrl}
         />
       )}
     </div>
