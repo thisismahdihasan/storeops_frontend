@@ -53,6 +53,7 @@ export function ReferenceCheck({
             }}
             openImageLabel="Preview original reference"
             researchItemId={detail.researchItem.id}
+            version={detail.researchItem.updatedAt}
             workspaceId={workspaceId}
           />
           <Button

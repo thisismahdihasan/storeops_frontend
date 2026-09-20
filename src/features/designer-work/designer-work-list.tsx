@@ -249,6 +249,7 @@ function DesignerWorkCard({
               containerClassName="min-h-0 size-full p-0"
               hasImage={Boolean(item.referenceImageUrl)}
               researchItemId={item.id}
+              version={item.updatedAt}
               workspaceId={workspaceId}
             />
           </button>
@@ -327,6 +328,7 @@ function DesignerWorkCard({
             containerClassName="min-h-0 size-full p-0"
             hasImage={Boolean(item.referenceImageUrl)}
             researchItemId={item.id}
+            version={item.updatedAt}
             workspaceId={workspaceId}
           />
         </button>

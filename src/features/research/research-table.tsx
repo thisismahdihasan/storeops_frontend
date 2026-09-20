@@ -389,6 +389,7 @@ function ResearchTableRow({
           normalizedUrl={item.normalizedUrl}
           onOpenDetail={() => onOpenDetail(item.id)}
           userCanUpload={userCanUpload}
+          version={item.updatedAt}
         />
       </td>
 

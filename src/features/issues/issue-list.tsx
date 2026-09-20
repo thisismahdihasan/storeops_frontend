@@ -76,6 +76,7 @@ export function IssueList({
                   hasImage={Boolean(issue.referenceImageUrl)}
                   minHeightClassName="min-h-0"
                   researchItemId={issue.id}
+                  version={issue.updatedAt}
                   workspaceId={workspaceId}
                 />
               </div>

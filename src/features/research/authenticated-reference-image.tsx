@@ -21,6 +21,7 @@ type AuthenticatedReferenceImageProps = {
   onOpenUpload?: () => void;
   researchItemId: string;
   userCanUpload?: boolean;
+  version?: string | number;
   workspaceId: string;
 };
 
@@ -37,6 +38,7 @@ export function AuthenticatedReferenceImage({
   onOpenUpload,
   researchItemId,
   userCanUpload = false,
+  version,
   workspaceId,
 }: AuthenticatedReferenceImageProps) {
   const active = isActive && enabled;
@@ -48,7 +50,15 @@ export function AuthenticatedReferenceImage({
   // The authenticated backend URL — the browser sends the session cookie automatically
   // as a subresource request (not a CORS fetch). The backend validates auth and issues
   // a 302 to Cloudinary. The browser follows in navigation mode, bypassing CORS entirely.
-  const imageUrl = getReferenceImageProxyUrl(workspaceId, researchItemId);
+  // Passing version (e.g. item.updatedAt) busts the browser's 24h HTTP 302 redirect cache on replace.
+  const imageUrl = getReferenceImageProxyUrl(workspaceId, researchItemId, false, version);
+
+  // When imageUrl changes (e.g. version update after Replace Image), reset loadState to loading
+  const [prevImageUrl, setPrevImageUrl] = useState(imageUrl);
+  if (prevImageUrl !== imageUrl) {
+    setPrevImageUrl(imageUrl);
+    setLoadState("loading");
+  }
 
   // State 1: No reference image exists
   if (!hasImage) {
@@ -165,7 +175,7 @@ export function AuthenticatedReferenceImage({
           type="button"
         >
           <img
-            key={loadKey}
+            key={`${loadKey}-${imageUrl}`}
             alt={alt}
             className={cn(
               "max-h-[340px] max-w-full rounded-md object-contain",
@@ -178,7 +188,7 @@ export function AuthenticatedReferenceImage({
         </button>
       ) : (
         <img
-          key={loadKey}
+          key={`${loadKey}-${imageUrl}`}
           alt={alt}
           className={cn(
             "max-h-[340px] max-w-full rounded-md object-contain",

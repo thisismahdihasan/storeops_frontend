@@ -312,6 +312,7 @@ export function ReviewDetailView({
                       hasImage
                       minHeightClassName="min-h-0"
                       researchItemId={researchItem.id}
+                      version={researchItem.updatedAt}
                       workspaceId={workspaceId}
                     />
                   </div>
@@ -468,6 +469,7 @@ export function ReviewDetailView({
                   setIsReferenceLightboxOpen(true);
                 }}
                 researchItemId={researchItem.id}
+                version={researchItem.updatedAt}
                 workspaceId={workspaceId}
               />
             </section>

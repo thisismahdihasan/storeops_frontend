@@ -86,14 +86,24 @@ function buildResearchListQueryString(filter?: ResearchListFilterParams): string
 
 // Builds the authenticated backend URL for a research item's reference image.
 // Used by the native <img> display path — no JS fetch, no credentials mode mismatch.
+// Supports an optional version parameter (e.g. item.updatedAt) to bust the browser's
+// 24-hour HTTP 302 redirect cache immediately when an image is replaced.
 export function getReferenceImageProxyUrl(
   workspaceId: string,
   researchItemId: string,
   download = false,
+  version?: string | number,
 ): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "";
-  const query = download ? "?download=true" : "";
-  return `${baseUrl}/api/v1/workspaces/${workspaceId}/research-items/${researchItemId}/reference-image${query}`;
+  const params = new URLSearchParams();
+  if (download) {
+    params.set("download", "true");
+  }
+  if (version !== undefined && version !== null && version !== "") {
+    params.set("v", String(version));
+  }
+  const query = params.toString();
+  return `${baseUrl}/api/v1/workspaces/${workspaceId}/research-items/${researchItemId}/reference-image${query ? `?${query}` : ""}`;
 }
 
 export async function createResearchItem(

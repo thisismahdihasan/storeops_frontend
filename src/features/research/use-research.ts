@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api";
 import { notificationKeys } from "@/features/notifications/notifications.keys";
 import { reviewsKeys } from "@/features/reviews/reviews.keys";
 import { listingKeys } from "@/features/listing/listing.keys";
+import { issueKeys } from "@/features/issues/use-issues";
 
 import {
   bulkAssignResearchDesigners,
@@ -127,6 +128,9 @@ export function useUploadReferenceImage(workspaceId: string) {
       });
       void queryClient.invalidateQueries({
         queryKey: researchKeys.referenceImage(workspaceId, variables.researchItemId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: issueKeys.lists(workspaceId),
       });
     },
   });

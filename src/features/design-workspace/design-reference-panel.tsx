@@ -50,6 +50,7 @@ export function DesignReferencePanel({ detail, workspaceId }: DesignReferencePan
           hasImage
           onOpenImage={setLightboxImageUrl}
           researchItemId={researchItem.id}
+          version={researchItem.updatedAt}
           workspaceId={workspaceId}
         />
       </div>

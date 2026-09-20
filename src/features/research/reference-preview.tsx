@@ -33,6 +33,7 @@ export type ReferencePreviewProps = {
   researchItemId: string;
   title: string | null;
   userCanUpload?: boolean;
+  version?: string | number;
   workspaceId: string;
 };
 
@@ -45,6 +46,7 @@ export function ReferencePreview({
   researchItemId,
   title,
   userCanUpload = false,
+  version,
   workspaceId,
 }: ReferencePreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -145,6 +147,7 @@ export function ReferencePreview({
               enabled={isOpen}
               isActive={isOpen}
               className="max-h-[55vh]"
+              version={version}
             />
           </div>
 

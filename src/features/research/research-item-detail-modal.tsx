@@ -287,6 +287,7 @@ export function ResearchItemDetailModal({
                     enabled={open}
                     isActive={open}
                     className="max-h-[350px]"
+                    version={item.updatedAt}
                   />
                 </div>
               </div>

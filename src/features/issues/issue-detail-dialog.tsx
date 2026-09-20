@@ -120,6 +120,7 @@ export function IssueDetailDialog({ issue, onOpenChange, open, workspaceId }: Is
               alt={item.title || `Reference for Etsy listing ${item.etsyListingId}`}
               hasImage={Boolean(item.referenceImageUrl)}
               researchItemId={item.id}
+              version={item.updatedAt}
               workspaceId={workspaceId}
             />
           </div>
