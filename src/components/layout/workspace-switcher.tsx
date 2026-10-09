@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -109,44 +110,46 @@ export function WorkspaceSwitcher({
 
         {canOpenSwitcher && (
           <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {workspaces.map((workspace) => {
-              const isSelected = workspace.id === activeWorkspaceId;
-              const isOwner = workspace.ownerId === currentUserId;
-              const isPending = workspace.deletionScheduledAt !== null;
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {workspaces.map((workspace) => {
+                const isSelected = workspace.id === activeWorkspaceId;
+                const isOwner = workspace.ownerId === currentUserId;
+                const isPending = workspace.deletionScheduledAt !== null;
 
-              return (
-                <DropdownMenuItem
-                  key={workspace.id}
-                  onClick={() => handleSelectWorkspace(workspace)}
-                  className={`flex cursor-pointer items-center justify-between gap-2 ${
-                    isSelected ? "bg-muted/60" : ""
-                  } ${
-                    isPending
-                      ? "text-amber-800 focus:bg-amber-500/10 focus:text-amber-900 dark:text-amber-300 dark:focus:text-amber-200"
-                      : ""
-                  }`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium">{workspace.name}</p>
-                    <p className="truncate text-[10px] text-muted-foreground">
-                      {isOwner
-                        ? `Owner · ${summarizeWorkspaceRoles(workspace.membership.roles)}`
-                        : summarizeWorkspaceRoles(workspace.membership.roles)}
-                    </p>
-                    {isPending && (
-                      <p className="mt-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
-                        Deletion pending
+                return (
+                  <DropdownMenuItem
+                    key={workspace.id}
+                    onClick={() => handleSelectWorkspace(workspace)}
+                    className={`flex cursor-pointer items-center justify-between gap-2 ${
+                      isSelected ? "bg-muted/60" : ""
+                    } ${
+                      isPending
+                        ? "text-amber-800 focus:bg-amber-500/10 focus:text-amber-900 dark:text-amber-300 dark:focus:text-amber-200"
+                        : ""
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium">{workspace.name}</p>
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {isOwner
+                          ? `Owner · ${summarizeWorkspaceRoles(workspace.membership.roles)}`
+                          : summarizeWorkspaceRoles(workspace.membership.roles)}
                       </p>
+                      {isPending && (
+                        <p className="mt-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                          Deletion pending
+                        </p>
+                      )}
+                    </div>
+                    {isSelected && (
+                      <Check className="size-3.5 shrink-0 text-primary" />
                     )}
-                  </div>
-                  {isSelected && (
-                    <Check className="size-3.5 shrink-0 text-primary" />
-                  )}
-                </DropdownMenuItem>
-              );
-            })}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => setIsCreateOpen(true)}
