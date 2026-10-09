@@ -16,10 +16,12 @@ export type WorkspaceWithMembership = {
   listerAutoAssignmentEnabled: boolean;
   finalAssetAutoCleanupEnabled: boolean;
   finalAssetRetentionDays: number;
+  deletionScheduledAt: string | null;
   id: string;
   membership: WorkspaceMembershipSummary;
   name: string;
   ownerId: string;
+  permanentDeletionAt: string | null;
   updatedAt: string;
 };
 
@@ -42,6 +44,8 @@ export type Workspace = {
   id: string;
   name: string;
   ownerId: string;
+  deletionScheduledAt: string | null;
+  permanentDeletionAt: string | null;
   updatedAt: string;
 };
 

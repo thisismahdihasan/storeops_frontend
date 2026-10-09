@@ -4,12 +4,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { resolveDefaultRouteForRoles } from "@/components/layout/navigation.config";
-import { ApiError } from "@/lib/api";
-
 import {
   createWorkspace,
-  getWorkspaces,
   workspacesQueryKey,
 } from "./workspace.api";
 import type {
@@ -24,30 +20,7 @@ export function useCreateWorkspace() {
 
   return useMutation({
     mutationFn: (input: CreateWorkspaceInput) => createWorkspace(input),
-    onError: async (error: Error) => {
-      if (error instanceof ApiError && error.status === 409) {
-        // 409: Stale state recovery — refetch workspaces
-        try {
-          const freshWorkspaces = await queryClient.fetchQuery({
-            queryFn: getWorkspaces,
-            queryKey: workspacesQueryKey,
-          });
-
-          if (freshWorkspaces.data.workspaces.length > 0) {
-            const firstWs = freshWorkspaces.data.workspaces[0];
-            toast.info("You already own a workspace. Navigating to your dashboard...");
-            const target = resolveDefaultRouteForRoles(
-              firstWs.membership.roles,
-              firstWs.id,
-            );
-            router.push(target);
-            return;
-          }
-        } catch {
-          // Fall through to standard error toast if refetch fails
-        }
-      }
-
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to create workspace. Please try again.");
     },
     onSuccess: (response) => {
@@ -60,6 +33,7 @@ export function useCreateWorkspace() {
         listerAutoAssignmentEnabled: true,
         finalAssetAutoCleanupEnabled: false,
         finalAssetRetentionDays: 30,
+        deletionScheduledAt: null,
         id: createdWorkspace.id,
         membership: {
           createdAt: createdMembership.createdAt,
@@ -72,6 +46,7 @@ export function useCreateWorkspace() {
         },
         name: createdWorkspace.name,
         ownerId: createdWorkspace.ownerId,
+        permanentDeletionAt: null,
         updatedAt: createdWorkspace.updatedAt,
       };
 

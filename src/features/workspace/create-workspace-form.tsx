@@ -12,7 +12,11 @@ import { useCreateWorkspace } from "./use-create-workspace";
 import { createWorkspaceInputSchema } from "./workspace.schemas";
 import type { CreateWorkspaceInput } from "./workspace.types";
 
-export function CreateWorkspaceForm() {
+type CreateWorkspaceFormProps = {
+  onSuccess?: () => void;
+};
+
+export function CreateWorkspaceForm({ onSuccess }: CreateWorkspaceFormProps) {
   const createWorkspaceMutation = useCreateWorkspace();
 
   const {
@@ -27,9 +31,10 @@ export function CreateWorkspaceForm() {
   });
 
   const onSubmit = (values: CreateWorkspaceInput) => {
-    createWorkspaceMutation.mutate({
-      name: values.name.trim(),
-    });
+    createWorkspaceMutation.mutate(
+      { name: values.name.trim() },
+      { onSuccess },
+    );
   };
 
   return (

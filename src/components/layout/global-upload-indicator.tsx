@@ -2,13 +2,14 @@
 
 import { AlertTriangle, Loader2, Upload, X } from "lucide-react";
 import { type PointerEvent, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
   type FloatingUploadPosition,
   useFinalAssetUploadStore,
 } from "@/features/design-workspace/final-asset-upload-store";
+import { useWorkspaces } from "@/features/workspace/use-workspaces";
 
 const EDGE_SPACING = 20;
 const DRAG_THRESHOLD = 5;
@@ -47,7 +48,9 @@ const positionsMatch = (
 ): boolean => first.x === second.x && first.y === second.y;
 
 export function GlobalUploadIndicator() {
+  const pathname = usePathname();
   const router = useRouter();
+  const workspacesQuery = useWorkspaces();
   const activeUpload = useFinalAssetUploadStore((state) => state.activeUpload);
   const cancel = useFinalAssetUploadStore((state) => state.cancel);
   const floatingPosition = useFinalAssetUploadStore((state) => state.floatingPosition);
@@ -89,6 +92,13 @@ export function GlobalUploadIndicator() {
   const isUploading = activeUpload.phase === "uploading";
   const isFinalizing = activeUpload.phase === "completing";
   const isFailed = activeUpload.phase === "failed";
+  const viewedWorkspaceId = pathname.match(/^\/w\/([^/]+)/)?.[1];
+  const isViewingDifferentWorkspace =
+    viewedWorkspaceId !== undefined &&
+    activeUpload.workspaceId !== viewedWorkspaceId;
+  const originWorkspace = workspacesQuery.data?.data.workspaces.find(
+    (workspace) => workspace.id === activeUpload.workspaceId,
+  );
 
   const chipStyle = floatingPosition
     ? { left: floatingPosition.x, top: floatingPosition.y }
@@ -198,6 +208,11 @@ export function GlobalUploadIndicator() {
             >
               {activeUpload.fileName}
             </p>
+            {isViewingDifferentWorkspace && (
+              <p className="truncate text-[10px] opacity-75">
+                Workspace: {originWorkspace?.name ?? "Other workspace"}
+              </p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <Button

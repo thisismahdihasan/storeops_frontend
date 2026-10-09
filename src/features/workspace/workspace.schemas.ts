@@ -23,10 +23,12 @@ export const workspaceWithMembershipSchema = z.object({
   listerAutoAssignmentEnabled: z.boolean(),
   finalAssetAutoCleanupEnabled: z.boolean(),
   finalAssetRetentionDays: z.number().int().min(1).max(365),
+  deletionScheduledAt: z.string().nullable(),
   id: z.string(),
   membership: workspaceMembershipSummarySchema,
   name: z.string(),
   ownerId: z.string(),
+  permanentDeletionAt: z.string().nullable(),
   updatedAt: z.string(),
 });
 
@@ -51,6 +53,8 @@ export const workspaceSchema = z.object({
   id: z.string(),
   name: z.string(),
   ownerId: z.string(),
+  deletionScheduledAt: z.string().nullable(),
+  permanentDeletionAt: z.string().nullable(),
   updatedAt: z.string(),
 });
 
@@ -98,7 +102,9 @@ export const updateWorkspaceSettingsResponseSchema = z.object({
       listerAutoAssignmentEnabled: true,
       finalAssetAutoCleanupEnabled: true,
       finalAssetRetentionDays: true,
+      deletionScheduledAt: true,
       createdAt: true,
+      permanentDeletionAt: true,
       updatedAt: true,
     }),
   }),
