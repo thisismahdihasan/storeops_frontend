@@ -17,6 +17,7 @@ import {
   resendWorkspaceInvite,
   revokeWorkspaceInvite,
   teamMembersQueryKey,
+  transferWorkspaceOwnership,
   updateMemberAssignmentAvailability,
   updateMemberRoles,
 } from "./team.api";
@@ -26,6 +27,7 @@ import type {
   UpdateMemberAssignmentAvailabilityInput,
   UpdateMemberRolesInput,
 } from "./team.types";
+import type { TransferWorkspaceOwnershipInput } from "@/features/workspace/workspace.types";
 
 function isUnauthenticatedError(error: unknown) {
   return error instanceof ApiError && error.status === 401;
@@ -157,5 +159,21 @@ export function useRemoveMember(workspaceId: string) {
   return useMutation({
     mutationFn: (userId: string) => removeMember(workspaceId, userId),
     onSuccess: () => invalidateMemberMutationQueries(queryClient, workspaceId),
+  });
+}
+
+export function useTransferWorkspaceOwnership(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: TransferWorkspaceOwnershipInput) =>
+      transferWorkspaceOwnership(workspaceId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
+      void queryClient.invalidateQueries({
+        queryKey: teamMembersQueryKey(workspaceId),
+      });
+      toast.success("Workspace ownership transferred successfully");
+    },
   });
 }

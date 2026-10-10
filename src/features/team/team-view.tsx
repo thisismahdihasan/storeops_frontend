@@ -18,6 +18,7 @@ import { InviteMemberDialog } from "./invite-member-dialog";
 import { getMemberMutationErrorMessage } from "./member-mutation-errors";
 import { RemoveMemberDialog } from "./remove-member-dialog";
 import { TeamMembersList } from "./team-members-list";
+import { TransferOwnershipDialog } from "./transfer-ownership-dialog";
 import { PendingInvitesList } from "./pending-invites-list";
 import type {
   PendingWorkspaceInvite,
@@ -30,6 +31,7 @@ import {
   useResendWorkspaceInvite,
   useRevokeWorkspaceInvite,
   useTeamMembers,
+  useTransferWorkspaceOwnership,
   useUpdateMemberAssignmentAvailability,
   useUpdateMemberRoles,
 } from "./use-team";
@@ -72,19 +74,22 @@ export function TeamView({ workspaceId }: TeamViewProps) {
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [availabilityMember, setAvailabilityMember] = useState<TeamMember | null>(null);
   const [removingMember, setRemovingMember] = useState<TeamMember | null>(null);
+  const [transferTarget, setTransferTarget] = useState<TeamMember | null>(null);
   const [cooldownEndsAtByInviteId, setCooldownEndsAtByInviteId] = useState<Record<string, number>>({});
   const currentSessionQuery = useCurrentSession();
   const workspacesQuery = useWorkspaces();
   const activeWorkspace = workspacesQuery.data?.data.workspaces.find((workspace) => workspace.id === workspaceId);
-  const hasAdminRole = activeWorkspace?.membership.roles.includes("ADMIN") ?? false;
-  const membersQuery = useTeamMembers(workspaceId, hasAdminRole);
-  const pendingInvitesQuery = usePendingWorkspaceInvites(workspaceId, hasAdminRole);
+  const currentUserId = currentSessionQuery.data?.data.user.id;
+  const isActorOwner = activeWorkspace?.ownerId === currentUserId;
+  const isActorAdmin = activeWorkspace?.membership.roles.includes("ADMIN") ?? false;
+  const membersQuery = useTeamMembers(workspaceId, isActorAdmin);
+  const pendingInvitesQuery = usePendingWorkspaceInvites(workspaceId, isActorAdmin);
   const resendInviteMutation = useResendWorkspaceInvite(workspaceId);
   const revokeInviteMutation = useRevokeWorkspaceInvite(workspaceId);
   const updateMemberRolesMutation = useUpdateMemberRoles(workspaceId);
   const updateAssignmentAvailabilityMutation = useUpdateMemberAssignmentAvailability(workspaceId);
   const removeMemberMutation = useRemoveMember(workspaceId);
-  const currentUserId = currentSessionQuery.data?.data.user.id;
+  const transferOwnershipMutation = useTransferWorkspaceOwnership(workspaceId);
 
   const getCurrentUserId = async () => {
     if (currentUserId) {
@@ -164,6 +169,16 @@ export function TeamView({ workspaceId }: TeamViewProps) {
     }
   };
 
+  const handleTransferOwnership = async () => {
+    if (!transferTarget) {
+      return;
+    }
+
+    await transferOwnershipMutation.mutateAsync({
+      targetUserId: transferTarget.userId,
+    });
+  };
+
   const handleAssignmentAvailabilityUpdate = async (
     input: UpdateMemberAssignmentAvailabilityInput,
   ) => {
@@ -230,7 +245,7 @@ export function TeamView({ workspaceId }: TeamViewProps) {
           <h1 className="mt-1 flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl"><UsersRound className="size-6 text-primary" />Team Management</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Manage current workspace members and invite collaborators.</p>
         </div>
-        <Button disabled={!hasAdminRole} onClick={() => setIsInviteDialogOpen(true)} type="button"><Plus className="size-4" />Invite member</Button>
+        <Button disabled={!isActorAdmin} onClick={() => setIsInviteDialogOpen(true)} type="button"><Plus className="size-4" />Invite member</Button>
       </header>
       <section aria-labelledby="workspace-members-heading" className="space-y-3">
         <div className="flex items-baseline justify-between gap-3">
@@ -242,16 +257,17 @@ export function TeamView({ workspaceId }: TeamViewProps) {
             />
           )}
         </div>
-        <TeamMembersList canManageMembers={hasAdminRole} errorMessage={getRequestErrorMessage(membersQuery.error)} isError={membersQuery.isError} isLoading={workspacesQuery.isLoading || membersQuery.isLoading} members={membersQuery.data?.data.members ?? []} onAssignmentAvailability={setAvailabilityMember} onEditRoles={setEditingMember} onRemove={setRemovingMember} onRetry={() => void membersQuery.refetch()} workspaceId={workspaceId} />
+        <TeamMembersList currentUserId={currentUserId} errorMessage={getRequestErrorMessage(membersQuery.error)} isActorAdmin={isActorAdmin} isActorOwner={isActorOwner} isError={membersQuery.isError} isLoading={workspacesQuery.isLoading || membersQuery.isLoading} isTransferOwnershipAvailable={isActorOwner && activeWorkspace?.deletionScheduledAt === null} members={membersQuery.data?.data.members ?? []} onAssignmentAvailability={setAvailabilityMember} onEditRoles={setEditingMember} onRemove={setRemovingMember} onRetry={() => void membersQuery.refetch()} onTransferOwnership={setTransferTarget} workspaceId={workspaceId} workspaceOwnerId={activeWorkspace?.ownerId} />
       </section>
       <section aria-labelledby="pending-invites-heading" className="space-y-3">
         <div><h2 className="text-lg font-semibold" id="pending-invites-heading">Pending Invites</h2><p className="text-sm text-muted-foreground">Resend or revoke unaccepted workspace invitations.</p></div>
         <PendingInvitesList cooldownEndsAtByInviteId={cooldownEndsAtByInviteId} errorMessage={getRequestErrorMessage(pendingInvitesQuery.error)} invites={pendingInvitesQuery.data?.data.invites ?? []} isError={pendingInvitesQuery.isError} isLoading={workspacesQuery.isLoading || pendingInvitesQuery.isLoading} isResendingInviteId={resendInviteMutation.isPending ? resendInviteMutation.variables : undefined} onResend={(invite) => void handleResend(invite)} onRetry={() => void pendingInvitesQuery.refetch()} onRevoke={handleRevoke} />
       </section>
       <InviteMemberDialog onOpenChange={setIsInviteDialogOpen} open={isInviteDialogOpen} workspaceId={workspaceId} />
-      <EditMemberRolesDialog key={editingMember?.membershipId ?? "edit-member-roles-closed"} member={editingMember} onOpenChange={(open) => { if (!open) setEditingMember(null); }} onSubmit={handleRoleUpdate} open={editingMember !== null} submitting={updateMemberRolesMutation.isPending} />
+      <EditMemberRolesDialog isActorOwner={isActorOwner} isTargetOwner={editingMember?.userId === activeWorkspace?.ownerId} key={editingMember?.membershipId ?? "edit-member-roles-closed"} member={editingMember} onOpenChange={(open) => { if (!open) setEditingMember(null); }} onSubmit={handleRoleUpdate} open={editingMember !== null} submitting={updateMemberRolesMutation.isPending} />
       <AssignmentAvailabilityDialog key={availabilityMember?.membershipId ?? "assignment-availability-closed"} member={availabilityMember} onOpenChange={(open) => { if (!open) setAvailabilityMember(null); }} onSubmit={handleAssignmentAvailabilityUpdate} open={availabilityMember !== null} submitting={updateAssignmentAvailabilityMutation.isPending} />
       <RemoveMemberDialog key={removingMember?.membershipId ?? "remove-member-closed"} member={removingMember} onOpenChange={(open) => { if (!open) setRemovingMember(null); }} onRemove={handleMemberRemoval} open={removingMember !== null} submitting={removeMemberMutation.isPending} />
+      <TransferOwnershipDialog key={transferTarget?.membershipId ?? "transfer-ownership-closed"} member={transferTarget} onConfirm={handleTransferOwnership} onOpenChange={(open) => { if (!open) setTransferTarget(null); }} open={transferTarget !== null} submitting={transferOwnershipMutation.isPending} workspaceName={activeWorkspace?.name} />
     </div>
   );
 }

@@ -111,3 +111,17 @@ export const updateWorkspaceSettingsResponseSchema = z.object({
   message: z.string(),
   success: z.literal(true),
 });
+
+export const transferWorkspaceOwnershipInputSchema = z
+  .object({
+    targetUserId: z.string().trim().min(1, "Target user ID is required"),
+  })
+  .strict();
+
+export const transferWorkspaceOwnershipResponseSchema = z.object({
+  data: z.object({
+    workspace: workspaceSchema,
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});

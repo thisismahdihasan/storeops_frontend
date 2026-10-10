@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, Ellipsis, Pencil, UserRoundMinus } from "lucide-react";
+import { ArrowRightLeft, CalendarClock, Ellipsis, Pencil, UserRoundMinus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,15 +14,43 @@ import {
 import type { TeamMember } from "./team.types";
 
 type TeamMemberActionsProps = {
+  canTransferOwnership: boolean;
+  isActorAdmin: boolean;
+  isActorOwner: boolean;
+  isSelf: boolean;
+  isTargetOwner: boolean;
   member: TeamMember;
   onAssignmentAvailability: (member: TeamMember) => void;
   onEditRoles: (member: TeamMember) => void;
   onRemove: (member: TeamMember) => void;
+  onTransferOwnership: (member: TeamMember) => void;
 };
 
-export function TeamMemberActions({ member, onAssignmentAvailability, onEditRoles, onRemove }: TeamMemberActionsProps) {
+export function TeamMemberActions({
+  canTransferOwnership,
+  isActorAdmin,
+  isActorOwner,
+  isSelf,
+  isTargetOwner,
+  member,
+  onAssignmentAvailability,
+  onEditRoles,
+  onRemove,
+  onTransferOwnership,
+}: TeamMemberActionsProps) {
   const memberLabel = member.name ?? member.email;
   const hasWorkerRole = member.roles.includes("DESIGNER") || member.roles.includes("LISTER");
+  const targetIsAdmin = member.roles.includes("ADMIN");
+  const canManageRoles = isActorOwner || (!isTargetOwner && isActorAdmin);
+  const canRemove =
+    !isTargetOwner &&
+    !isSelf &&
+    (isActorOwner || (!targetIsAdmin && isActorAdmin));
+  const canManageAssignmentAvailability = canManageRoles && hasWorkerRole;
+
+  if (!canManageRoles && !canRemove && !canTransferOwnership) {
+    return null;
+  }
 
   return (
     <DropdownMenu>
@@ -30,21 +58,31 @@ export function TeamMemberActions({ member, onAssignmentAvailability, onEditRole
         <Ellipsis />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onEditRoles(member)}>
-          <Pencil />
-          Edit roles
-        </DropdownMenuItem>
-        {hasWorkerRole && (
+        {canManageRoles && (
+          <DropdownMenuItem onClick={() => onEditRoles(member)}>
+            <Pencil />
+            Edit roles
+          </DropdownMenuItem>
+        )}
+        {canManageAssignmentAvailability && (
           <DropdownMenuItem onClick={() => onAssignmentAvailability(member)}>
             <CalendarClock />
             Assignment availability
           </DropdownMenuItem>
         )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => onRemove(member)} variant="destructive">
-          <UserRoundMinus />
-          Remove member
-        </DropdownMenuItem>
+        {(canRemove || canTransferOwnership) && <DropdownMenuSeparator />}
+        {canTransferOwnership && (
+          <DropdownMenuItem className="text-amber-700 focus:text-amber-800 dark:text-amber-400 dark:focus:text-amber-300" onClick={() => onTransferOwnership(member)}>
+            <ArrowRightLeft />
+            Transfer ownership
+          </DropdownMenuItem>
+        )}
+        {canRemove && (
+          <DropdownMenuItem onClick={() => onRemove(member)} variant="destructive">
+            <UserRoundMinus />
+            Remove member
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

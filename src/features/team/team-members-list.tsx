@@ -22,16 +22,21 @@ const ROLE_LABELS = {
 } as const;
 
 type TeamMembersListProps = {
-  canManageMembers: boolean;
   errorMessage?: string;
+  isActorAdmin: boolean;
+  isActorOwner: boolean;
+  isTransferOwnershipAvailable: boolean;
   isError: boolean;
   isLoading: boolean;
   members: TeamMember[];
   onAssignmentAvailability: (member: TeamMember) => void;
   onEditRoles: (member: TeamMember) => void;
   onRemove: (member: TeamMember) => void;
+  onTransferOwnership: (member: TeamMember) => void;
   onRetry: () => void;
   workspaceId: string;
+  workspaceOwnerId: string | undefined;
+  currentUserId: string | undefined;
 };
 
 function formatJoinedAt(joinedAt: string) {
@@ -68,9 +73,14 @@ const AVAILABILITY_TONES: Record<keyof typeof AVAILABILITY_LABELS, StatusBadgeTo
   PAUSED: "warning",
 };
 
-function MemberRoles({ member }: { member: TeamMember }) {
+function MemberRoles({ member, isTargetOwner }: { member: TeamMember; isTargetOwner: boolean }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      {isTargetOwner && (
+        <Badge className="border-amber-500/30 bg-amber-500/10 font-mono text-[11px] text-amber-800 dark:text-amber-300" variant="secondary">
+          Owner
+        </Badge>
+      )}
       {member.roles.map((role) => (
         <Badge className="font-mono text-[11px]" key={role} variant="secondary">
           {ROLE_LABELS[role]}
@@ -124,16 +134,21 @@ function MemberAssignmentStatus({ member }: { member: TeamMember }) {
 }
 
 export function TeamMembersList({
-  canManageMembers,
   errorMessage,
+  isActorAdmin,
+  isActorOwner,
   isError,
   isLoading,
+  isTransferOwnershipAvailable,
   members,
   onAssignmentAvailability,
   onEditRoles,
   onRemove,
+  onTransferOwnership,
   onRetry,
   workspaceId,
+  workspaceOwnerId,
+  currentUserId,
 }: TeamMembersListProps) {
   if (isLoading) return <div className="flex min-h-56 items-center justify-center gap-2 rounded-xl border border-border bg-card p-6" role="status"><Loader2 className="size-5 animate-spin text-primary" /><span className="text-sm text-muted-foreground">Loading members…</span></div>;
   if (isError) return <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center" role="alert"><p className="font-medium text-destructive">Could not load workspace members</p><p className="mt-1 text-sm text-muted-foreground">{errorMessage ?? "Please try again."}</p><Button className="mt-4" onClick={onRetry} type="button" variant="outline">Try again</Button></div>;
@@ -157,28 +172,40 @@ export function TeamMembersList({
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {members.map((member, index) => (
+            {members.map((member, index) => {
+              const isTargetOwner = member.userId === workspaceOwnerId;
+              const isSelf = member.userId === currentUserId;
+              const canTransferOwnership =
+                isTransferOwnershipAvailable && !isTargetOwner;
+
+              return (
               <tr className="align-middle" key={member.membershipId}>
                 <td className="w-12 px-4 py-4 text-center font-mono text-xs font-medium text-foreground/70 tabular-nums">
                   {index + 1}
                 </td>
                 <td className="max-w-80 px-5 py-4"><MemberIdentity member={member} /></td>
-                <td className="px-5 py-4"><MemberRoles member={member} /></td>
+                <td className="px-5 py-4"><MemberRoles isTargetOwner={isTargetOwner} member={member} /></td>
                 <td className="px-5 py-4"><MemberAssignmentStatus member={member} /></td>
                 <td className="whitespace-nowrap px-5 py-4 text-muted-foreground">{formatJoinedAt(member.joinedAt)}</td>
                 <td className="px-5 py-4">
                   <div className="flex items-center justify-end gap-2">
                     <Button nativeButton={false} render={<Link href={`/w/${workspaceId}/team/${member.userId}`} />} size="sm" variant="outline">View Activity</Button>
-                    {canManageMembers && <TeamMemberActions member={member} onAssignmentAvailability={onAssignmentAvailability} onEditRoles={onEditRoles} onRemove={onRemove} />}
+                    <TeamMemberActions canTransferOwnership={canTransferOwnership} isActorAdmin={isActorAdmin} isActorOwner={isActorOwner} isSelf={isSelf} isTargetOwner={isTargetOwner} member={member} onAssignmentAvailability={onAssignmentAvailability} onEditRoles={onEditRoles} onRemove={onRemove} onTransferOwnership={onTransferOwnership} />
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
       <ul className="divide-y divide-border sm:hidden">
-        {members.map((member, index) => (
+        {members.map((member, index) => {
+          const isTargetOwner = member.userId === workspaceOwnerId;
+          const isSelf = member.userId === currentUserId;
+          const canTransferOwnership = isTransferOwnershipAvailable && !isTargetOwner;
+
+          return (
           <li className="space-y-3 p-4" key={member.membershipId}>
             <div className="flex items-center gap-3">
               <span className="font-mono text-xs font-medium text-foreground/70 tabular-nums shrink-0">
@@ -190,7 +217,7 @@ export function TeamMembersList({
             </div>
             <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Roles</p>
-              <MemberRoles member={member} />
+              <MemberRoles isTargetOwner={isTargetOwner} member={member} />
             </div>
             <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Assignment Status</p>
@@ -199,10 +226,11 @@ export function TeamMembersList({
             <p className="text-xs text-muted-foreground">Joined {formatJoinedAt(member.joinedAt)}</p>
             <div className="flex gap-2">
               <Button className="min-w-0 flex-1" nativeButton={false} render={<Link href={`/w/${workspaceId}/team/${member.userId}`} />} size="sm" variant="outline">View Activity</Button>
-              {canManageMembers && <TeamMemberActions member={member} onAssignmentAvailability={onAssignmentAvailability} onEditRoles={onEditRoles} onRemove={onRemove} />}
+              <TeamMemberActions canTransferOwnership={canTransferOwnership} isActorAdmin={isActorAdmin} isActorOwner={isActorOwner} isSelf={isSelf} isTargetOwner={isTargetOwner} member={member} onAssignmentAvailability={onAssignmentAvailability} onEditRoles={onEditRoles} onRemove={onRemove} onTransferOwnership={onTransferOwnership} />
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );

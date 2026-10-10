@@ -31,6 +31,8 @@ const ROLE_OPTIONS: Array<{
 const ASSIGNMENT_WORKER_ROLES: WorkspaceRole[] = ["DESIGNER", "LISTER"];
 
 type EditMemberRolesDialogProps = {
+  isActorOwner: boolean;
+  isTargetOwner: boolean;
   member: TeamMember | null;
   onOpenChange: (open: boolean) => void;
   onSubmit: (roles: WorkspaceRole[]) => Promise<void>;
@@ -43,6 +45,8 @@ function sameRoles(left: WorkspaceRole[], right: WorkspaceRole[]) {
 }
 
 export function EditMemberRolesDialog({
+  isActorOwner,
+  isTargetOwner,
   member,
   onOpenChange,
   onSubmit,
@@ -121,18 +125,22 @@ export function EditMemberRolesDialog({
             <div className="grid gap-2 pt-1 sm:grid-cols-2">
               {ROLE_OPTIONS.map((role) => {
                 const inputId = `team-member-role-${member.userId}-${role.value.toLowerCase()}`;
-                const selected = roles.includes(role.value);
+                const isAdminRole = role.value === "ADMIN";
+                const adminRoleLocked = isAdminRole && (isTargetOwner || !isActorOwner);
+                const selected = isTargetOwner && isAdminRole
+                  ? true
+                  : roles.includes(role.value);
 
                 return (
                   <label
-                    className="flex cursor-pointer gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+                    className="flex cursor-pointer gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60"
                     htmlFor={inputId}
                     key={role.value}
                   >
                     <input
                       checked={selected}
                       className="mt-0.5 size-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      disabled={submitting}
+                      disabled={submitting || adminRoleLocked}
                       id={inputId}
                       onChange={() => toggleRole(role.value)}
                       type="checkbox"
@@ -145,6 +153,16 @@ export function EditMemberRolesDialog({
                 );
               })}
             </div>
+            {isTargetOwner && (
+              <p className="pt-1 text-xs text-muted-foreground">
+                The workspace owner must retain the Admin role.
+              </p>
+            )}
+            {!isTargetOwner && !isActorOwner && (
+              <p className="pt-1 text-xs text-muted-foreground">
+                Only the workspace owner can assign or remove the Admin role.
+              </p>
+            )}
             {hasNewWorkerRole && (
               <p className="pt-1 text-xs text-muted-foreground" role="status">
                 New Designer and Lister roles start with automatic assignments enabled.

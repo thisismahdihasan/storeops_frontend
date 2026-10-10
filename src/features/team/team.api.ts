@@ -9,6 +9,7 @@ import {
   updateMemberAssignmentAvailabilityResponseSchema,
   updateMemberRolesResponseSchema,
 } from "./team.schemas";
+import { transferWorkspaceOwnershipResponseSchema } from "@/features/workspace/workspace.schemas";
 import type {
   CreateWorkspaceInviteInput,
   CreateWorkspaceInviteResponse,
@@ -21,6 +22,10 @@ import type {
   UpdateMemberRolesInput,
   UpdateMemberRolesResponse,
 } from "./team.types";
+import type {
+  TransferWorkspaceOwnershipInput,
+  TransferWorkspaceOwnershipResponse,
+} from "@/features/workspace/workspace.types";
 
 export function teamMembersQueryKey(workspaceId: string) {
   return ["team", workspaceId, "members"] as const;
@@ -171,6 +176,26 @@ export async function removeMember(
 
   if (!parsedResponse.success) {
     throw new ApiError(502, "The service returned an unexpected member removal response.");
+  }
+
+  return parsedResponse.data;
+}
+
+export async function transferWorkspaceOwnership(
+  workspaceId: string,
+  input: TransferWorkspaceOwnershipInput,
+): Promise<TransferWorkspaceOwnershipResponse> {
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/transfer-ownership`,
+    {
+      json: { targetUserId: input.targetUserId },
+      method: "POST",
+    },
+  );
+  const parsedResponse = transferWorkspaceOwnershipResponseSchema.safeParse(response);
+
+  if (!parsedResponse.success) {
+    throw new ApiError(502, "The service returned an unexpected ownership transfer response.");
   }
 
   return parsedResponse.data;

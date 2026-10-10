@@ -82,3 +82,15 @@ export type UpdateWorkspaceSettingsResponse = {
   message: string;
   success: true;
 };
+
+export type TransferWorkspaceOwnershipInput = {
+  targetUserId: string;
+};
+
+export type TransferWorkspaceOwnershipResponse = {
+  data: {
+    workspace: Workspace;
+  };
+  message: string;
+  success: true;
+};
