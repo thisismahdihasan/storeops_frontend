@@ -125,3 +125,25 @@ export const transferWorkspaceOwnershipResponseSchema = z.object({
   message: z.string(),
   success: z.literal(true),
 });
+
+export const scheduleWorkspaceDeletionInputSchema = z
+  .object({
+    workspaceName: z.string().trim().min(1, "Workspace name is required"),
+  })
+  .strict();
+
+export const scheduleWorkspaceDeletionResponseSchema = z.object({
+  data: z.object({
+    workspace: workspaceSchema,
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});
+
+export const restoreWorkspaceResponseSchema = z.object({
+  data: z.object({
+    workspace: workspaceSchema,
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});

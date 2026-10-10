@@ -65,7 +65,10 @@ export function WorkspaceSwitcher({
   const canOpenSwitcher = workspaces.length > 0;
 
   const handleSelectWorkspace = (workspace: WorkspaceWithMembership) => {
-    if (workspace.deletionScheduledAt !== null) {
+    if (
+      workspace.deletionScheduledAt !== null &&
+      workspace.ownerId !== currentUserId
+    ) {
       toast.warning(getPendingWorkspaceWarning(workspace));
       return;
     }

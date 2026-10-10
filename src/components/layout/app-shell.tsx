@@ -11,6 +11,7 @@ import { useCurrentSession } from "@/features/auth/use-current-session";
 import { NOTIFICATIONS_PAGE_LIMIT } from "@/features/notifications/notifications.constants";
 import { useNotifications } from "@/features/notifications/use-notifications";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { useRestoreWorkspace } from "@/features/workspace/use-workspace-deletion";
 import { MobileNav } from "./mobile-nav";
 import { NavigationContextProvider } from "./navigation-context";
 import {
@@ -23,6 +24,7 @@ import {
 } from "./navigation.config";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
+import { PendingWorkspaceOverlay } from "./pending-workspace-overlay";
 
 export type AppShellProps = {
   activeWorkspaceId: string;
@@ -44,16 +46,23 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
 
   const sessionQuery = useCurrentSession();
   const workspacesQuery = useWorkspaces(sessionQuery.isSuccess);
+  const user = sessionQuery.data?.data.user;
+  const workspaces = workspacesQuery.data?.data.workspaces ?? [];
+  const activeWorkspace = workspaces.find((ws) => ws.id === activeWorkspaceId);
+  const currentUserId = user?.id;
+  const isPending = activeWorkspace?.deletionScheduledAt != null;
+  const isOwner = activeWorkspace?.ownerId === currentUserId;
   const notificationsQuery = useNotifications(
     activeWorkspaceId,
     1,
     NOTIFICATIONS_PAGE_LIMIT,
-    sessionQuery.isSuccess,
+    sessionQuery.isSuccess &&
+      !workspacesQuery.isLoading &&
+      Boolean(activeWorkspace) &&
+      !isPending,
   );
+  const restoreWorkspaceMutation = useRestoreWorkspace(activeWorkspaceId);
 
-  const user = sessionQuery.data?.data.user;
-  const workspaces = workspacesQuery.data?.data.workspaces ?? [];
-  const activeWorkspace = workspaces.find((ws) => ws.id === activeWorkspaceId);
   const roles = activeWorkspace?.membership.roles ?? [];
   const routeSegments = pathname.split("/").slice(3);
   const routeNavigationMode = resolveNavigationModeForRouteSegments(
@@ -62,6 +71,10 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
   );
   const unreadNotificationsCount =
     notificationsQuery.data?.data.unreadCount ?? 0;
+  const alternativeWorkspaceId = workspaces.find(
+    (workspace) =>
+      workspace.id !== activeWorkspaceId && workspace.deletionScheduledAt === null,
+  )?.id;
 
   const selectedModeForWorkspace =
     selectedNavigationMode?.workspaceId === activeWorkspaceId
@@ -175,7 +188,11 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
 
   return (
     <NavigationContextProvider mode={navigationMode}>
-      <div className="flex min-h-screen bg-background">
+      <div
+        aria-hidden={isPending}
+        className={`flex min-h-screen bg-background ${isPending ? "pointer-events-none blur-sm opacity-40" : ""}`}
+        inert={isPending}
+      >
       {/* Desktop Sidebar */}
       <Sidebar
         activeWorkspaceId={activeWorkspaceId}
@@ -199,7 +216,9 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
         />
 
         <main className="flex-1 overflow-y-auto">
-          {!isAllowed ? (
+          {isPending ? (
+            <div className="min-h-full bg-muted/20" />
+          ) : !isAllowed ? (
             <div className="flex h-96 flex-col items-center justify-center p-6 text-center">
               <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xs">
                 <ShieldAlert className="mx-auto size-10 text-muted-foreground" />
@@ -251,6 +270,18 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
         user={user}
       />
       </div>
+      {isPending && (
+        <PendingWorkspaceOverlay
+          alternativeWorkspaceId={alternativeWorkspaceId}
+          isOwner={isOwner}
+          onRestore={async () => {
+            await restoreWorkspaceMutation.mutateAsync();
+          }}
+          permanentDeletionAt={activeWorkspace.permanentDeletionAt}
+          restoring={restoreWorkspaceMutation.isPending}
+          workspaceName={activeWorkspace.name}
+        />
+      )}
     </NavigationContextProvider>
   );
 }

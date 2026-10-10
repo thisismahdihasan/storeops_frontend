@@ -1,21 +1,33 @@
 "use client";
 
-import { useWorkspaces } from "./use-workspaces";
-import { useUpdateWorkspaceSettings } from "./use-update-workspace-settings";
-import { Switch } from "@/components/ui/switch";
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { useCurrentSession } from "@/features/auth/use-current-session";
 import { StorageCleanupSettingsCard } from "@/features/storage-cleanup/storage-cleanup-settings-card";
+import { Switch } from "@/components/ui/switch";
+
+import { DeleteWorkspaceDialog } from "./delete-workspace-dialog";
+import { useWorkspaces } from "./use-workspaces";
+import { useScheduleWorkspaceDeletion } from "./use-workspace-deletion";
+import { useUpdateWorkspaceSettings } from "./use-update-workspace-settings";
 
 type WorkspaceSettingsViewProps = {
   workspaceId: string;
 };
 
 export function WorkspaceSettingsView({ workspaceId }: WorkspaceSettingsViewProps) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const currentSessionQuery = useCurrentSession();
   const workspacesQuery = useWorkspaces();
   const workspace = workspacesQuery.data?.data.workspaces.find(
     (ws) => ws.id === workspaceId
   );
   
   const updateSettingsMutation = useUpdateWorkspaceSettings(workspaceId);
+  const scheduleDeletionMutation = useScheduleWorkspaceDeletion(workspaceId);
+  const currentUserId = currentSessionQuery.data?.data.user.id;
+  const isOwner = workspace?.ownerId === currentUserId;
 
   const handleDesignerToggle = (checked: boolean) => {
     updateSettingsMutation.mutate({ designerAutoAssignmentEnabled: checked });
@@ -23,6 +35,10 @@ export function WorkspaceSettingsView({ workspaceId }: WorkspaceSettingsViewProp
 
   const handleListerToggle = (checked: boolean) => {
     updateSettingsMutation.mutate({ listerAutoAssignmentEnabled: checked });
+  };
+
+  const handleScheduleDeletion = async (workspaceName: string) => {
+    await scheduleDeletionMutation.mutateAsync({ workspaceName });
   };
 
   if (!workspace) {
@@ -107,6 +123,32 @@ export function WorkspaceSettingsView({ workspaceId }: WorkspaceSettingsViewProp
         onUpdateSettings={updateSettingsMutation.mutate}
         isUpdating={updateSettingsMutation.isPending}
       />
+
+      {isOwner && (
+        <section className="rounded-xl border border-destructive/30 bg-destructive/5 shadow-xs">
+          <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Danger Zone</h2>
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                Schedule this workspace for deletion. You will have a 3-day grace period to restore it before permanent cleanup.
+              </p>
+            </div>
+            <Button onClick={() => setIsDeleteDialogOpen(true)} type="button" variant="destructive">
+              Delete Workspace
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {isOwner && (
+        <DeleteWorkspaceDialog
+          onOpenChange={setIsDeleteDialogOpen}
+          onSchedule={handleScheduleDeletion}
+          open={isDeleteDialogOpen}
+          submitting={scheduleDeletionMutation.isPending}
+          workspaceName={workspace.name}
+        />
+      )}
     </main>
   );
 }

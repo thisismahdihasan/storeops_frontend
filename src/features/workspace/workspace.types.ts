@@ -94,3 +94,23 @@ export type TransferWorkspaceOwnershipResponse = {
   message: string;
   success: true;
 };
+
+export type ScheduleWorkspaceDeletionInput = {
+  workspaceName: string;
+};
+
+export type ScheduleWorkspaceDeletionResponse = {
+  data: {
+    workspace: Workspace;
+  };
+  message: string;
+  success: true;
+};
+
+export type RestoreWorkspaceResponse = {
+  data: {
+    workspace: Workspace;
+  };
+  message: string;
+  success: true;
+};
