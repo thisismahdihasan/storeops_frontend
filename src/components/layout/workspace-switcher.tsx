@@ -36,19 +36,15 @@ const getWorkspaceSubtitle = (
 };
 
 const getPendingWorkspaceWarning = (workspace: WorkspaceWithMembership) => {
-  const remainingMs = workspace.permanentDeletionAt
-    ? new Date(workspace.permanentDeletionAt).getTime() - Date.now()
-    : 0;
+  const deadline = workspace.permanentDeletionAt
+    ? new Date(workspace.permanentDeletionAt).getTime()
+    : Number.NaN;
 
-  if (remainingMs <= 0) {
-    return `${workspace.name} — permanent deletion in progress`;
+  if (!Number.isNaN(deadline) && deadline <= Date.now()) {
+    return `${workspace.name} is no longer available`;
   }
 
-  const remainingHours = Math.max(
-    1,
-    Math.ceil(remainingMs / (1000 * 60 * 60))
-  );
-  return `${workspace.name} is scheduled for deletion · ${remainingHours}h remaining`;
+  return `${workspace.name} is scheduled for deletion`;
 };
 
 export function WorkspaceSwitcher({

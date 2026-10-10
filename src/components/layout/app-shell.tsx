@@ -79,6 +79,12 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
     (workspace) =>
       workspace.id !== activeWorkspaceId && workspace.deletionScheduledAt === null,
   );
+  const alternativeWorkspaceRoute = alternativeWorkspace
+    ? resolveDefaultRouteForRoles(
+        alternativeWorkspace.membership.roles,
+        alternativeWorkspace.id,
+      )
+    : "/";
 
   const selectedModeForWorkspace =
     selectedNavigationMode?.workspaceId === activeWorkspaceId
@@ -319,7 +325,7 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
       </div>
       {isPending && (
         <PendingWorkspaceOverlay
-          alternativeWorkspaceId={alternativeWorkspace?.id}
+          alternativeWorkspaceRoute={alternativeWorkspaceRoute}
           isOwner={isOwner}
           onRestore={async () => {
             await restoreWorkspaceMutation.mutateAsync();

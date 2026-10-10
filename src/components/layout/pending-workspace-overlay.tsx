@@ -22,7 +22,7 @@ import { getWorkspaces } from "@/features/workspace/workspace.api";
 import { workspacesQueryKey } from "@/features/workspace/use-workspaces";
 
 type PendingWorkspaceOverlayProps = {
-  alternativeWorkspaceId: string | undefined;
+  alternativeWorkspaceRoute: string;
   isOwner: boolean;
   onRestore: () => Promise<void>;
   permanentDeletionAt: string | null;
@@ -67,7 +67,7 @@ function formatCountdownValue(value: number) {
 }
 
 export function PendingWorkspaceOverlay({
-  alternativeWorkspaceId,
+  alternativeWorkspaceRoute,
   isOwner,
   onRestore,
   permanentDeletionAt,
@@ -88,9 +88,9 @@ export function PendingWorkspaceOverlay({
             <Button
               className="w-full"
               nativeButton={false}
-              render={<Link href={alternativeWorkspaceId ? `/w/${alternativeWorkspaceId}` : "/"} />}
+              render={<Link href={alternativeWorkspaceRoute} />}
             >
-              {alternativeWorkspaceId ? "Go to another active workspace" : "Return to Home"}
+              {alternativeWorkspaceRoute !== "/" ? "Go to another active workspace" : "Return to Home"}
             </Button>
           </div>
         </div>
@@ -98,17 +98,18 @@ export function PendingWorkspaceOverlay({
     );
   }
 
-  return <OwnerPendingWorkspaceOverlay onRestore={onRestore} permanentDeletionAt={permanentDeletionAt} restoring={restoring} workspaceId={workspaceId} />;
+  return <OwnerPendingWorkspaceOverlay alternativeWorkspaceRoute={alternativeWorkspaceRoute} onRestore={onRestore} permanentDeletionAt={permanentDeletionAt} restoring={restoring} workspaceId={workspaceId} />;
 }
 
 type OwnerPendingWorkspaceOverlayProps = Pick<
   PendingWorkspaceOverlayProps,
-  "onRestore" | "permanentDeletionAt" | "restoring"
+  "alternativeWorkspaceRoute" | "onRestore" | "permanentDeletionAt" | "restoring"
 > & {
   workspaceId: string;
 };
 
 function OwnerPendingWorkspaceOverlay({
+  alternativeWorkspaceRoute,
   onRestore,
   permanentDeletionAt,
   restoring,
@@ -235,14 +236,21 @@ function OwnerPendingWorkspaceOverlay({
             </div>
           )}
         </div>
-        {!isExpired && (
-          <AlertDialogFooter>
+        <AlertDialogFooter className="flex-col sm:flex-col">
+          <Button
+            nativeButton={false}
+            render={<Link href={alternativeWorkspaceRoute} />}
+            variant="outline"
+          >
+            {alternativeWorkspaceRoute !== "/" ? "Go to another workspace" : "Return to Home"}
+          </Button>
+          {!isExpired && (
             <AlertDialogAction disabled={restoring} onClick={() => void handleRestore()}>
               {restoring ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
               Restore Workspace
             </AlertDialogAction>
-          </AlertDialogFooter>
-        )}
+          )}
+        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
