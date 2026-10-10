@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertCircle, ShieldAlert, Store } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { EditProfileDialog } from "@/features/auth/edit-profile-dialog";
@@ -47,11 +48,14 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
   const sessionQuery = useCurrentSession();
   const workspacesQuery = useWorkspaces(sessionQuery.isSuccess);
   const user = sessionQuery.data?.data.user;
-  const workspaces = workspacesQuery.data?.data.workspaces ?? [];
+  const workspaceList = workspacesQuery.data?.data.workspaces;
+  const workspaces = workspaceList ?? [];
   const activeWorkspace = workspaces.find((ws) => ws.id === activeWorkspaceId);
   const currentUserId = user?.id;
   const isPending = activeWorkspace?.deletionScheduledAt != null;
   const isOwner = activeWorkspace?.ownerId === currentUserId;
+  const wasWorkspaceKnownRef = useRef(Boolean(activeWorkspace));
+  const redirectedRef = useRef(false);
   const notificationsQuery = useNotifications(
     activeWorkspaceId,
     1,
@@ -71,10 +75,10 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
   );
   const unreadNotificationsCount =
     notificationsQuery.data?.data.unreadCount ?? 0;
-  const alternativeWorkspaceId = workspaces.find(
+  const alternativeWorkspace = workspaces.find(
     (workspace) =>
       workspace.id !== activeWorkspaceId && workspace.deletionScheduledAt === null,
-  )?.id;
+  );
 
   const selectedModeForWorkspace =
     selectedNavigationMode?.workspaceId === activeWorkspaceId
@@ -104,6 +108,42 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
       router.push(`/w/${activeWorkspaceId}/research`);
     }
   };
+
+  useEffect(() => {
+    if (activeWorkspace) {
+      wasWorkspaceKnownRef.current = true;
+      return;
+    }
+
+    if (
+      !wasWorkspaceKnownRef.current ||
+      !sessionQuery.isSuccess ||
+      !workspacesQuery.isSuccess ||
+      redirectedRef.current
+    ) {
+      return;
+    }
+
+    redirectedRef.current = true;
+    const nextWorkspace = workspaceList?.find(
+      (workspace) =>
+        workspace.id !== activeWorkspaceId &&
+        workspace.deletionScheduledAt === null,
+    );
+    const targetRoute = nextWorkspace
+      ? resolveDefaultRouteForRoles(nextWorkspace.membership.roles, nextWorkspace.id)
+      : "/";
+
+    toast.warning("This workspace is no longer available.");
+    router.replace(targetRoute);
+  }, [
+    activeWorkspace,
+    activeWorkspaceId,
+    router,
+    sessionQuery.isSuccess,
+    workspaceList,
+    workspacesQuery.isSuccess,
+  ]);
 
   // Handle loading states
   if (sessionQuery.isLoading || workspacesQuery.isLoading) {
@@ -158,13 +198,20 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
             You do not have an active membership in this workspace, or it may not exist.
           </p>
           <div className="mt-6 flex flex-col gap-2">
-            {workspaces.length > 0 ? (
+            {alternativeWorkspace ? (
               <Button
                 nativeButton={false}
-                render={<Link href={`/w/${workspaces[0].id}`} />}
+                render={
+                  <Link
+                    href={resolveDefaultRouteForRoles(
+                      alternativeWorkspace.membership.roles,
+                      alternativeWorkspace.id,
+                    )}
+                  />
+                }
                 className="w-full"
               >
-                Go to {workspaces[0].name}
+                Go to {alternativeWorkspace.name}
               </Button>
             ) : (
               <Button
@@ -272,13 +319,14 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
       </div>
       {isPending && (
         <PendingWorkspaceOverlay
-          alternativeWorkspaceId={alternativeWorkspaceId}
+          alternativeWorkspaceId={alternativeWorkspace?.id}
           isOwner={isOwner}
           onRestore={async () => {
             await restoreWorkspaceMutation.mutateAsync();
           }}
           permanentDeletionAt={activeWorkspace.permanentDeletionAt}
           restoring={restoreWorkspaceMutation.isPending}
+          workspaceId={activeWorkspace.id}
           workspaceName={activeWorkspace.name}
         />
       )}
