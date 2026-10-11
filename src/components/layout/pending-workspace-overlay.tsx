@@ -19,10 +19,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { getWorkspaces } from "@/features/workspace/workspace.api";
+import { CreateWorkspaceDialog } from "@/features/workspace/create-workspace-dialog";
 import { workspacesQueryKey } from "@/features/workspace/use-workspaces";
 
 type PendingWorkspaceOverlayProps = {
-  alternativeWorkspaceRoute: string;
+  alternativeWorkspaceRoute: string | null;
   isOwner: boolean;
   onRestore: () => Promise<void>;
   permanentDeletionAt: string | null;
@@ -75,41 +76,85 @@ export function PendingWorkspaceOverlay({
   workspaceId,
   workspaceName,
 }: PendingWorkspaceOverlayProps) {
-  if (!isOwner) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-        <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-center shadow-lg">
-          <TriangleAlert className="mx-auto size-10 text-amber-600" />
-          <h2 className="mt-4 text-lg font-bold text-foreground">Workspace Scheduled for Deletion</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {workspaceName} is currently scheduled for deletion by its owner. Access to workspace operations is suspended. Only the workspace owner can restore this workspace.
-          </p>
-          <div className="mt-6">
-            <Button
-              className="w-full"
-              nativeButton={false}
-              render={<Link href={alternativeWorkspaceRoute} />}
-            >
-              {alternativeWorkspaceRoute !== "/" ? "Go to another active workspace" : "Return to Home"}
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  return <OwnerPendingWorkspaceOverlay alternativeWorkspaceRoute={alternativeWorkspaceRoute} onRestore={onRestore} permanentDeletionAt={permanentDeletionAt} restoring={restoring} workspaceId={workspaceId} />;
+  return (
+    <>
+      {isOwner ? (
+        <OwnerPendingWorkspaceOverlay
+          alternativeWorkspaceRoute={alternativeWorkspaceRoute}
+          isCreateOpen={isCreateOpen}
+          onCreateWorkspace={() => setIsCreateOpen(true)}
+          onRestore={onRestore}
+          permanentDeletionAt={permanentDeletionAt}
+          restoring={restoring}
+          workspaceId={workspaceId}
+        />
+      ) : (
+        <NonOwnerPendingScreen
+          alternativeWorkspaceRoute={alternativeWorkspaceRoute}
+          onCreateWorkspace={() => setIsCreateOpen(true)}
+          workspaceName={workspaceName}
+        />
+      )}
+      <CreateWorkspaceDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
+    </>
+  );
 }
 
 type OwnerPendingWorkspaceOverlayProps = Pick<
   PendingWorkspaceOverlayProps,
   "alternativeWorkspaceRoute" | "onRestore" | "permanentDeletionAt" | "restoring"
 > & {
+  isCreateOpen: boolean;
+  onCreateWorkspace: () => void;
   workspaceId: string;
 };
 
+type NonOwnerPendingScreenProps = Pick<
+  PendingWorkspaceOverlayProps,
+  "alternativeWorkspaceRoute" | "workspaceName"
+> & {
+  onCreateWorkspace: () => void;
+};
+
+function NonOwnerPendingScreen({
+  alternativeWorkspaceRoute,
+  onCreateWorkspace,
+  workspaceName,
+}: NonOwnerPendingScreenProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-center shadow-lg">
+        <TriangleAlert className="mx-auto size-10 text-amber-600" />
+        <h2 className="mt-4 text-lg font-bold text-foreground">Workspace Scheduled for Deletion</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {workspaceName} is currently scheduled for deletion by its owner. Access to workspace operations is suspended. Only the workspace owner can restore this workspace.
+        </p>
+        <div className="mt-6">
+          {alternativeWorkspaceRoute !== null ? (
+            <Button
+              className="w-full"
+              nativeButton={false}
+              render={<Link href={alternativeWorkspaceRoute} />}
+            >
+              Go to another active workspace
+            </Button>
+          ) : (
+            <Button className="w-full" onClick={onCreateWorkspace}>
+              Create Workspace
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OwnerPendingWorkspaceOverlay({
   alternativeWorkspaceRoute,
+  isCreateOpen,
+  onCreateWorkspace,
   onRestore,
   permanentDeletionAt,
   restoring,
@@ -195,7 +240,7 @@ function OwnerPendingWorkspaceOverlay({
   };
 
   return (
-    <AlertDialog open>
+    <AlertDialog open={!isCreateOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-amber-500/10 text-amber-700 dark:text-amber-300">
@@ -237,13 +282,19 @@ function OwnerPendingWorkspaceOverlay({
           )}
         </div>
         <AlertDialogFooter className="flex-col sm:flex-col">
-          <Button
-            nativeButton={false}
-            render={<Link href={alternativeWorkspaceRoute} />}
-            variant="outline"
-          >
-            {alternativeWorkspaceRoute !== "/" ? "Go to another workspace" : "Return to Home"}
-          </Button>
+          {alternativeWorkspaceRoute !== null ? (
+            <Button
+              nativeButton={false}
+              render={<Link href={alternativeWorkspaceRoute} />}
+              variant="outline"
+            >
+              Go to another workspace
+            </Button>
+          ) : (
+            <Button onClick={onCreateWorkspace} variant="outline">
+              Create Workspace
+            </Button>
+          )}
           {!isExpired && (
             <AlertDialogAction disabled={restoring} onClick={() => void handleRestore()}>
               {restoring ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}

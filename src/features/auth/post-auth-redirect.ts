@@ -32,10 +32,12 @@ export function resolvePostAuthDestination(
   }
 
   if (workspaces.length > 0) {
-    const firstWorkspace = workspaces[0];
+    const targetWorkspace =
+      workspaces.find((workspace) => workspace.deletionScheduledAt === null) ??
+      workspaces[0];
     return resolveDefaultRouteForRoles(
-      firstWorkspace.membership.roles,
-      firstWorkspace.id,
+      targetWorkspace.membership.roles,
+      targetWorkspace.id,
     );
   }
 

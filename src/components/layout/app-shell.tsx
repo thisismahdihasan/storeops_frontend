@@ -13,6 +13,7 @@ import { NOTIFICATIONS_PAGE_LIMIT } from "@/features/notifications/notifications
 import { useNotifications } from "@/features/notifications/use-notifications";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { useRestoreWorkspace } from "@/features/workspace/use-workspace-deletion";
+import { CreateWorkspaceDialog } from "@/features/workspace/create-workspace-dialog";
 import { MobileNav } from "./mobile-nav";
 import { NavigationContextProvider } from "./navigation-context";
 import {
@@ -40,6 +41,8 @@ type SelectedNavigationMode = {
 export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isMissingWorkspaceCreateOpen, setIsMissingWorkspaceCreateOpen] =
+    useState(false);
   const [selectedNavigationMode, setSelectedNavigationMode] =
     useState<SelectedNavigationMode | null>(null);
   const pathname = usePathname();
@@ -84,7 +87,7 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
         alternativeWorkspace.membership.roles,
         alternativeWorkspace.id,
       )
-    : "/";
+    : null;
 
   const selectedModeForWorkspace =
     selectedNavigationMode?.workspaceId === activeWorkspaceId
@@ -131,23 +134,18 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
     }
 
     redirectedRef.current = true;
-    const nextWorkspace = workspaceList?.find(
-      (workspace) =>
-        workspace.id !== activeWorkspaceId &&
-        workspace.deletionScheduledAt === null,
-    );
-    const targetRoute = nextWorkspace
-      ? resolveDefaultRouteForRoles(nextWorkspace.membership.roles, nextWorkspace.id)
-      : "/";
+    if (alternativeWorkspaceRoute === null) {
+      return;
+    }
 
     toast.warning("This workspace is no longer available.");
-    router.replace(targetRoute);
+    router.replace(alternativeWorkspaceRoute);
   }, [
     activeWorkspace,
     activeWorkspaceId,
+    alternativeWorkspaceRoute,
     router,
     sessionQuery.isSuccess,
-    workspaceList,
     workspacesQuery.isSuccess,
   ]);
 
@@ -194,43 +192,45 @@ export function AppShell({ activeWorkspaceId, children }: AppShellProps) {
   // Handle workspace not found or no membership
   if (!activeWorkspace) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
-        <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-center shadow-xs">
-          <Store className="mx-auto size-10 text-muted-foreground" />
-          <h2 className="mt-4 text-lg font-bold text-foreground">
-            Workspace Access Restricted
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            You do not have an active membership in this workspace, or it may not exist.
-          </p>
-          <div className="mt-6 flex flex-col gap-2">
-            {alternativeWorkspace ? (
-              <Button
-                nativeButton={false}
-                render={
-                  <Link
-                    href={resolveDefaultRouteForRoles(
-                      alternativeWorkspace.membership.roles,
-                      alternativeWorkspace.id,
-                    )}
-                  />
-                }
-                className="w-full"
-              >
-                Go to {alternativeWorkspace.name}
-              </Button>
-            ) : (
-              <Button
-                nativeButton={false}
-                render={<Link href="/" />}
-                className="w-full"
-              >
-                Return to Home
-              </Button>
-            )}
+      <>
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-center shadow-xs">
+            <Store className="mx-auto size-10 text-muted-foreground" />
+            <h2 className="mt-4 text-lg font-bold text-foreground">
+              Workspace Access Restricted
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You do not have an active membership in this workspace, or it may not exist.
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              {alternativeWorkspace && alternativeWorkspaceRoute !== null ? (
+                <Button
+                  nativeButton={false}
+                  render={
+                    <Link
+                      href={alternativeWorkspaceRoute}
+                    />
+                  }
+                  className="w-full"
+                >
+                  Go to {alternativeWorkspace.name}
+                </Button>
+              ) : (
+                <Button
+                  className="w-full"
+                  onClick={() => setIsMissingWorkspaceCreateOpen(true)}
+                >
+                  Create Workspace
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+        <CreateWorkspaceDialog
+          open={isMissingWorkspaceCreateOpen}
+          onOpenChange={setIsMissingWorkspaceCreateOpen}
+        />
+      </>
     );
   }
 

@@ -28,10 +28,12 @@ export default function HomePage() {
 
   useEffect(() => {
     if (currentUser && workspacesQuery.isSuccess && workspaces.length > 0) {
-      const firstWs = workspaces[0];
+      const targetWorkspace =
+        workspaces.find((workspace) => workspace.deletionScheduledAt === null) ??
+        workspaces[0];
       const targetRoute = resolveDefaultRouteForRoles(
-        firstWs.membership.roles,
-        firstWs.id,
+        targetWorkspace.membership.roles,
+        targetWorkspace.id,
       );
       router.replace(targetRoute);
     }
