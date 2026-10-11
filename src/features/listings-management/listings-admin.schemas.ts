@@ -17,6 +17,7 @@ export function parseListingAdminFiltersFromParams(
   const listerIdParam = searchParams.get("listerId") ?? undefined;
   const assignmentParam = searchParams.get("assignment");
   const pageParam = searchParams.get("page");
+  const sortParam = searchParams.get("sort");
 
   const parsedStatus =
     statusParam && VALID_LISTING_STATUSES.has(statusParam)
@@ -41,6 +42,10 @@ export function parseListingAdminFiltersFromParams(
       searchParam && searchParam.trim().length > 0
         ? searchParam.trim()
         : undefined,
+    sort:
+      sortParam === "newest" || sortParam === "oldest" || sortParam === "updated"
+        ? sortParam
+        : "updated",
     status: assignment ? undefined : parsedStatus,
   };
 }

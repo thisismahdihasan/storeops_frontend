@@ -31,6 +31,12 @@ export function DesignerWorkFilters({ filters, onChange }: DesignerWorkFiltersPr
     if (status !== filters.status) onChange({ page: 1, status });
   };
 
+  const selectSort = (value: string) => {
+    if (value === "fifo" || value === "newest") {
+      onChange({ page: 1, sort: value });
+    }
+  };
+
   return (
     <div className="space-y-3 rounded-xl border border-border bg-card p-3 shadow-xs sm:p-4">
       <div
@@ -60,6 +66,15 @@ export function DesignerWorkFilters({ filters, onChange }: DesignerWorkFiltersPr
           );
         })}
       </div>
+      <select
+        aria-label="Sort assigned design work"
+        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+        onChange={(event) => selectSort(event.target.value)}
+        value={filters.sort ?? "fifo"}
+      >
+        <option value="fifo">Oldest assigned first</option>
+        <option value="newest">Newest assigned first</option>
+      </select>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input aria-label="Search assigned design work" className="pl-9 pr-9" onChange={(event) => setSearchInput(event.target.value)} placeholder="Search title, Etsy listing ID, or URL" value={searchInput} />

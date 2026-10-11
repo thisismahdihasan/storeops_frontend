@@ -28,6 +28,9 @@ export async function getAdminDesignList(
   if (filters.search) {
     params.set("search", filters.search);
   }
+  if (filters.sort) {
+    params.set("sort", filters.sort);
+  }
 
   const query = params.toString();
   const endpoint = `/api/v1/workspaces/${workspaceId}/design${query ? `?${query}` : ""}`;
@@ -41,4 +44,3 @@ export async function getAdminDesignList(
 
   return parsed.data.data;
 }
-

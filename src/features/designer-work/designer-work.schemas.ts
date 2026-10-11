@@ -14,6 +14,7 @@ export const designerWorkFiltersSchema = z.object({
   page: z.number().int().positive().default(1),
   search: z.string().trim().min(1).optional(),
   status: designerWorkStatusSchema.optional(),
+  sort: z.enum(["fifo", "newest"]).optional(),
 });
 
 const queueUserSchema = z.object({

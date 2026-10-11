@@ -54,5 +54,6 @@ export type AdminDesignFilterParams = {
   limit?: number;
   page?: number;
   search?: string;
+  sort?: "updated" | "newest" | "oldest";
   status?: ResearchStatus;
 };

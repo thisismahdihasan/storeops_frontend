@@ -35,6 +35,7 @@ export function parseResearchFiltersFromParams(
   const createdByParam = searchParams.get("createdBy") ?? undefined;
   const assignmentParam = searchParams.get("assignment");
   const pageParam = searchParams.get("page");
+  const sortParam = searchParams.get("sort");
 
   const validStatuses = new Set<string>([
     "RESEARCHED",
@@ -69,6 +70,10 @@ export function parseResearchFiltersFromParams(
     limit: 20,
     page: parsedPage,
     search: searchParam && searchParam.trim().length > 0 ? searchParam.trim() : undefined,
+    sort:
+      sortParam === "oldest" || sortParam === "updated" || sortParam === "newest"
+        ? sortParam
+        : "newest",
     assignment,
     status: assignment ? undefined : parsedStatus,
   };
@@ -166,6 +171,17 @@ export function ResearchFilters({
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (event.target.value === "oldest" || event.target.value === "updated") {
+      params.set("sort", event.target.value);
+    } else {
+      params.delete("sort");
+    }
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   const handleResetFilters = () => {
     setSearchInput("");
     router.push(pathname);
@@ -255,6 +271,16 @@ export function ResearchFilters({
         label="Created date"
         allLabel="All dates"
       />
+      <select
+        aria-label="Sort research"
+        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+        onChange={handleSortChange}
+        value={currentFilters.sort ?? "newest"}
+      >
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="updated">Recently updated</option>
+      </select>
     </FilterToolbarLayout>
   );
 }

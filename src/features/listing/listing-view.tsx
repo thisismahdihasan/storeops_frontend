@@ -25,12 +25,13 @@ function parseListingFilters(searchParams: SearchParamsReader): ListingFiltersVa
     limit: 20,
     page: Number.isInteger(page) && page > 0 ? page : 1,
     search: searchParams.get("search")?.trim() || undefined,
+    sort: searchParams.get("sort") || undefined,
     status: searchParams.get("status") || "READY_FOR_LISTING",
   });
 
   return parsed.success
     ? parsed.data
-    : { limit: 20, page: 1, status: "READY_FOR_LISTING" };
+    : { limit: 20, page: 1, sort: "fifo", status: "READY_FOR_LISTING" };
 }
 
 type ListingViewProps = { workspaceId: string };
@@ -50,16 +51,22 @@ export function ListingView({ workspaceId }: ListingViewProps) {
   const updateFilters = useCallback(
     (changes: Partial<ListingFiltersValue>) => {
       const next = { ...filters, ...changes };
-      const params = new URLSearchParams();
+      const params = new URLSearchParams(searchParams.toString());
       if (next.status !== "READY_FOR_LISTING") {
         params.set("status", next.status);
+      } else {
+        params.delete("status");
       }
       if (next.search) params.set("search", next.search);
+      else params.delete("search");
+      if (next.sort !== "fifo") params.set("sort", next.sort);
+      else params.delete("sort");
       if (next.page > 1) params.set("page", next.page.toString());
+      else params.delete("page");
       const query = params.toString();
       router.push(query ? `${pathname}?${query}` : pathname);
     },
-    [filters, pathname, router],
+    [filters, pathname, router, searchParams],
   );
 
   if (

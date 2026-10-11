@@ -202,6 +202,7 @@ export type ResearchListFilterParams = {
   limit?: number;
   page?: number;
   search?: string;
+  sort?: "newest" | "oldest" | "updated";
   status?: ResearchStatus;
 };
 

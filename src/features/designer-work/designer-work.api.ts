@@ -16,6 +16,7 @@ function buildQueueQuery(filters: DesignerWorkFilters): string {
   if (filters.page > 1) searchParams.set("page", filters.page.toString());
   if (filters.status) searchParams.set("status", filters.status);
   if (filters.search) searchParams.set("search", filters.search);
+  if (filters.sort) searchParams.set("sort", filters.sort);
   const query = searchParams.toString();
   return query ? `?${query}` : "";
 }

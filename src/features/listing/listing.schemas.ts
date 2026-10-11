@@ -10,6 +10,7 @@ export const listingFiltersSchema = z
     limit: z.literal(20).default(20),
     page: z.number().int().positive().default(1),
     search: z.string().trim().min(1).max(100).optional(),
+    sort: z.enum(["fifo", "newest"]).default("fifo"),
     status: listingStatusSchema.default("READY_FOR_LISTING"),
   })
   .strict();

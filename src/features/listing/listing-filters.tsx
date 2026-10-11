@@ -30,6 +30,12 @@ export function ListingFilters({ filters, onChange }: ListingFiltersProps) {
     if (status !== filters.status) onChange({ page: 1, status });
   };
 
+  const selectSort = (value: string) => {
+    if (value === "fifo" || value === "newest") {
+      onChange({ page: 1, sort: value });
+    }
+  };
+
   return (
     <section className="space-y-3 rounded-xl border border-border bg-card p-3 shadow-xs sm:p-4">
       <div
@@ -56,6 +62,16 @@ export function ListingFilters({ filters, onChange }: ListingFiltersProps) {
           );
         })}
       </div>
+
+      <select
+        aria-label="Sort listings"
+        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+        onChange={(event) => selectSort(event.target.value)}
+        value={filters.sort}
+      >
+        <option value="fifo">Oldest assigned first</option>
+        <option value="newest">Newest assigned first</option>
+      </select>
 
       <div className="relative">
         <Search

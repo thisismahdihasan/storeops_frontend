@@ -38,6 +38,9 @@ export async function getAdminListingList(
   if (filters.search) {
     params.set("search", filters.search);
   }
+  if (filters.sort) {
+    params.set("sort", filters.sort);
+  }
 
   const query = params.toString();
   const endpoint = `/api/v1/workspaces/${workspaceId}/listing${query ? `?${query}` : ""}`;

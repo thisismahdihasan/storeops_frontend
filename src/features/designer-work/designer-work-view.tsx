@@ -20,9 +20,9 @@ import { useDesignerWorkQueue, useReportDesignIssue, useStartCorrection, useStar
 
 function parseDesignerWorkFilters(searchParams: URLSearchParams): DesignerWorkFiltersValue {
   const page = Number(searchParams.get("page"));
-  const candidate = { limit: 20, page: Number.isInteger(page) && page > 0 ? page : 1, search: searchParams.get("search")?.trim() || undefined, status: searchParams.get("status") || undefined };
+  const candidate = { limit: 20, page: Number.isInteger(page) && page > 0 ? page : 1, search: searchParams.get("search")?.trim() || undefined, status: searchParams.get("status") || undefined, sort: searchParams.get("sort") || undefined };
   const parsed = designerWorkFiltersSchema.safeParse(candidate);
-  return parsed.success ? parsed.data : { limit: 20, page: 1 };
+  return parsed.success ? parsed.data : { limit: 20, page: 1, sort: "fifo" };
 }
 
 function getActionErrorMessage(error: unknown, fallback: string): string {
@@ -48,13 +48,18 @@ export function DesignerWorkView({ workspaceId }: DesignerWorkViewProps) {
 
   const updateFilters = useCallback((changes: Partial<DesignerWorkFiltersValue>) => {
     const next = { ...filters, ...changes };
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
     if (next.status) params.set("status", next.status);
+    else params.delete("status");
     if (next.search) params.set("search", next.search);
+    else params.delete("search");
+    if (next.sort && next.sort !== "fifo") params.set("sort", next.sort);
+    else params.delete("sort");
     if (next.page > 1) params.set("page", next.page.toString());
+    else params.delete("page");
     const query = params.toString();
     router.push(query ? `${pathname}?${query}` : pathname);
-  }, [filters, pathname, router]);
+  }, [filters, pathname, router, searchParams]);
 
   const refreshQueueAfterConflict = () => { void queueQuery.refetch(); };
   const handleOpenWork = (work: DesignerWorkItem) => {
@@ -88,7 +93,7 @@ export function DesignerWorkView({ workspaceId }: DesignerWorkViewProps) {
           <h1 className="mt-1 flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
             <Palette className="size-6 text-primary" />My Work
           </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Your active design assignments, ordered by most recently assigned.</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Your active design assignments, ordered by oldest assignment first.</p>
         </div>
         {queueQuery.data && (
           <CountBadge

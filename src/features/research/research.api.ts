@@ -72,6 +72,10 @@ function buildResearchListQueryString(filter?: ResearchListFilterParams): string
     searchParams.set("createdBy", filter.createdBy.trim());
   }
 
+  if (filter.sort) {
+    searchParams.set("sort", filter.sort);
+  }
+
   if (filter.page && filter.page > 1) {
     searchParams.set("page", filter.page.toString());
   }

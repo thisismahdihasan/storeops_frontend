@@ -39,6 +39,7 @@ function buildQueueQuery(filters: ListingFilters): string {
   });
 
   if (filters.search) searchParams.set("search", filters.search);
+  searchParams.set("sort", filters.sort);
   return `?${searchParams.toString()}`;
 }
 

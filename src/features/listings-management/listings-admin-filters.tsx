@@ -109,6 +109,17 @@ export function ListingsAdminFilters({
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (event.target.value === "newest" || event.target.value === "oldest") {
+      params.set("sort", event.target.value);
+    } else {
+      params.delete("sort");
+    }
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   const handleResetFilters = () => {
     setSearchInput("");
     router.push(pathname);
@@ -198,6 +209,16 @@ export function ListingsAdminFilters({
         label="Activity date"
         allLabel="All dates"
       />
+      <select
+        aria-label="Sort listings"
+        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+        onChange={handleSortChange}
+        value={currentFilters.sort ?? "updated"}
+      >
+        <option value="updated">Recently updated</option>
+        <option value="newest">Newest researched</option>
+        <option value="oldest">Oldest researched</option>
+      </select>
     </FilterToolbarLayout>
   );
 }

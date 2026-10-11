@@ -22,6 +22,7 @@ export function parseDesignFiltersFromParams(
   const dateParam = searchParams.get("date") ?? undefined;
   const designerIdParam = searchParams.get("designerId") ?? undefined;
   const pageParam = searchParams.get("page");
+  const sortParam = searchParams.get("sort");
 
   const parsedStatus =
     statusParam && VALID_DESIGN_STATUSES.has(statusParam)
@@ -44,6 +45,10 @@ export function parseDesignFiltersFromParams(
       searchParam && searchParam.trim().length > 0
         ? searchParam.trim()
         : undefined,
+    sort:
+      sortParam === "newest" || sortParam === "oldest" || sortParam === "updated"
+        ? sortParam
+        : "updated",
     status: parsedStatus,
   };
 }
