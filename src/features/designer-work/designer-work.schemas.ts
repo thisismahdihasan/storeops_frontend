@@ -14,8 +14,19 @@ export const designerWorkFiltersSchema = z.object({
   page: z.number().int().positive().default(1),
   search: z.string().trim().min(1).optional(),
   status: designerWorkStatusSchema.optional(),
-  sort: z.enum(["fifo", "newest"]).optional(),
-});
+  sort: z
+    .enum(["fifo", "newest", "correction_fifo", "correction_newest"])
+    .optional(),
+}).refine(
+  (filters) =>
+    (filters.sort !== "correction_fifo" &&
+      filters.sort !== "correction_newest") ||
+    filters.status === "CORRECTION_NEEDED",
+  {
+    message: "Correction sort is only valid for CORRECTION_NEEDED status",
+    path: ["sort"],
+  },
+);
 
 const queueUserSchema = z.object({
   email: z.string().email(),

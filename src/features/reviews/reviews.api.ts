@@ -33,10 +33,12 @@ export async function getReviewQueue(
   workspaceId: string,
   page = 1,
   limit = 20,
+  sort: "fifo" | "newest" = "fifo",
 ): Promise<ReviewQueueResponse> {
   const params = new URLSearchParams({
     limit: String(limit),
     page: String(page),
+    sort,
   });
 
   const response = await apiRequest<unknown>(

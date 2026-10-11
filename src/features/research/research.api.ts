@@ -183,6 +183,9 @@ export async function getIssueItems(
   if (filter.search?.trim()) {
     searchParams.set("search", filter.search.trim());
   }
+  if (filter.sort) {
+    searchParams.set("sort", filter.sort);
+  }
 
   const response = await apiRequest<unknown>(
     `/api/v1/workspaces/${workspaceId}/research-items/issues?${searchParams.toString()}`,

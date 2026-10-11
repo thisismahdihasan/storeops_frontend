@@ -43,7 +43,11 @@ export function parseListingAdminFiltersFromParams(
         ? searchParam.trim()
         : undefined,
     sort:
-      sortParam === "newest" || sortParam === "oldest" || sortParam === "updated"
+      sortParam === "newest" ||
+      sortParam === "oldest" ||
+      sortParam === "updated" ||
+      sortParam === "ready_oldest" ||
+      sortParam === "ready_newest"
         ? sortParam
         : "updated",
     status: assignment ? undefined : parsedStatus,

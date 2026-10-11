@@ -44,6 +44,10 @@ function parseCorrectionsFilters(
     page: Number.isInteger(page) && page > 0 ? page : 1,
     search: searchParams.get("search")?.trim() || undefined,
     status: "CORRECTION_NEEDED",
+    sort:
+      searchParams.get("sort") === "correction_newest"
+        ? "correction_newest"
+        : "correction_fifo",
   };
 }
 
@@ -153,6 +157,7 @@ export function CorrectionsView({ workspaceId }: CorrectionsViewProps) {
       const params = new URLSearchParams();
       if (next.search) params.set("search", next.search);
       if (next.page && next.page > 1) params.set("page", next.page.toString());
+      params.set("sort", next.sort ?? "correction_fifo");
       const query = params.toString();
       router.push(query ? `${pathname}?${query}` : pathname);
     },
@@ -217,7 +222,7 @@ export function CorrectionsView({ workspaceId }: CorrectionsViewProps) {
 
       {/* Search Filter */}
       <form
-        className="flex max-w-md items-center gap-2"
+        className="flex max-w-xl flex-wrap items-center gap-2"
         onSubmit={handleSearchSubmit}
       >
         <div className="relative flex-1">
@@ -244,6 +249,23 @@ export function CorrectionsView({ workspaceId }: CorrectionsViewProps) {
         <Button size="sm" type="submit" variant="secondary">
           Search
         </Button>
+        <select
+          aria-label="Sort corrections"
+          className="h-9 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground"
+          onChange={(event) =>
+            updateFilters({
+              page: 1,
+              sort:
+                event.target.value === "correction_newest"
+                  ? "correction_newest"
+                  : "correction_fifo",
+            })
+          }
+          value={filters.sort}
+        >
+          <option value="correction_fifo">Oldest correction first</option>
+          <option value="correction_newest">Newest correction first</option>
+        </select>
       </form>
 
       {/* Content Area */}

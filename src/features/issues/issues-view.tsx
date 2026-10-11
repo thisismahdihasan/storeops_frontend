@@ -63,9 +63,10 @@ export function IssuesView({ workspaceId }: IssuesViewProps) {
   const isAdmin = activeWorkspace?.membership.roles.includes("ADMIN") ?? false;
   const search = searchParams.get("search")?.trim() || undefined;
   const page = parsePage(searchParams.get("page"));
+  const sort = searchParams.get("sort") === "newest" ? "newest" : "fifo";
   const issuesQuery = useIssueItems(
     workspaceId,
-    { limit: ISSUE_PAGE_LIMIT, page, search },
+    { limit: ISSUE_PAGE_LIMIT, page, search, sort },
     isAdmin,
   );
   const membersQuery = useTeamMembers(workspaceId, isAdmin);
@@ -130,7 +131,7 @@ export function IssuesView({ workspaceId }: IssuesViewProps) {
         </p>
       </header>
 
-      <IssuesFilters search={search} />
+      <IssuesFilters search={search} sort={sort} />
 
       {issuesQuery.isLoading ? (
         <IssuesLoadingState />

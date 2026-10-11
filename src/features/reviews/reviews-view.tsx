@@ -95,10 +95,12 @@ export function ReviewsView({ workspaceId }: ReviewsViewProps) {
     activeWorkspace?.membership.roles.includes("ADMIN") ?? false;
 
   const page = parsePage(searchParams.get("page"));
+  const sort = searchParams.get("sort") === "newest" ? "newest" : "fifo";
   const queueQuery = useReviewQueue(
     workspaceId,
     page,
     DEFAULT_PAGE_LIMIT,
+    sort,
     isAdmin,
   );
 
@@ -109,6 +111,13 @@ export function ReviewsView({ workspaceId }: ReviewsViewProps) {
     } else {
       params.set("page", String(newPage));
     }
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  function handleSortChange(nextSort: "fifo" | "newest") {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("sort", nextSort);
+    params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
   }
 
@@ -155,6 +164,25 @@ export function ReviewsView({ workspaceId }: ReviewsViewProps) {
           />
         )}
       </header>
+
+      <div>
+        <label className="sr-only" htmlFor="reviews-sort">
+          Sort design reviews
+        </label>
+        <select
+          className="h-9 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground"
+          id="reviews-sort"
+          onChange={(event) =>
+            handleSortChange(
+              event.target.value === "newest" ? "newest" : "fifo",
+            )
+          }
+          value={sort}
+        >
+          <option value="fifo">Oldest submission first</option>
+          <option value="newest">Newest submission first</option>
+        </select>
+      </div>
 
       {/* Main Content Area */}
       {queueQuery.isLoading ? (

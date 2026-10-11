@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 
 type IssuesFiltersProps = {
   search: string | undefined;
+  sort: "fifo" | "newest";
 };
 
-export function IssuesFilters({ search }: IssuesFiltersProps) {
+export function IssuesFilters({ search, sort }: IssuesFiltersProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -43,8 +44,16 @@ export function IssuesFilters({ search }: IssuesFiltersProps) {
     return () => window.clearTimeout(timer);
   }, [pathname, router, searchInput, searchParams]);
 
+  const handleSortChange = (sort: "fifo" | "newest") => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set("sort", sort);
+    nextParams.delete("page");
+    const query = nextParams.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
+
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-xs">
       <label className="relative block" htmlFor="issues-search">
         <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
         <Input
@@ -66,6 +75,17 @@ export function IssuesFilters({ search }: IssuesFiltersProps) {
           </button>
         )}
       </label>
+      <select
+        aria-label="Sort issues"
+        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground"
+        onChange={(event) =>
+          handleSortChange(event.target.value === "newest" ? "newest" : "fifo")
+        }
+        value={sort}
+      >
+        <option value="fifo">Oldest report first</option>
+        <option value="newest">Newest report first</option>
+      </select>
     </div>
   );
 }

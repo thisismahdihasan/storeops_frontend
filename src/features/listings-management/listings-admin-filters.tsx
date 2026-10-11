@@ -111,7 +111,7 @@ export function ListingsAdminFilters({
 
   const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (event.target.value === "newest" || event.target.value === "oldest") {
+    if (event.target.value !== "updated") {
       params.set("sort", event.target.value);
     } else {
       params.delete("sort");
@@ -218,6 +218,8 @@ export function ListingsAdminFilters({
         <option value="updated">Recently updated</option>
         <option value="newest">Newest researched</option>
         <option value="oldest">Oldest researched</option>
+        <option value="ready_oldest">Ready for listing first</option>
+        <option value="ready_newest">Most recently ready</option>
       </select>
     </FilterToolbarLayout>
   );

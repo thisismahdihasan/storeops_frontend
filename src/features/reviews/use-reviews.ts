@@ -43,12 +43,13 @@ export function useReviewQueue(
   workspaceId: string,
   page = 1,
   limit = 20,
+  sort: "fifo" | "newest" = "fifo",
   enabled = true,
 ) {
   return useQuery({
     enabled: enabled && workspaceId.length > 0,
-    queryFn: () => getReviewQueue(workspaceId, page, limit),
-    queryKey: reviewsKeys.queue(workspaceId, page, limit),
+    queryFn: () => getReviewQueue(workspaceId, page, limit, sort),
+    queryKey: reviewsKeys.queue(workspaceId, page, limit, sort),
     retry: (failureCount, error) => shouldRetry(error, failureCount),
     staleTime: 15_000,
   });

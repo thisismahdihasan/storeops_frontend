@@ -54,7 +54,7 @@ export type AdminListingFilterParams = {
   listerId?: string;
   page?: number;
   search?: string;
-  sort?: "updated" | "newest" | "oldest";
+  sort?: "updated" | "newest" | "oldest" | "ready_oldest" | "ready_newest";
   status?: ResearchStatus;
 };
 

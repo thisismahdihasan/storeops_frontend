@@ -4,8 +4,12 @@ export const reviewsKeys = {
     ["reviews", workspaceId, "detail", reviewId] as const,
   details: (workspaceId: string) =>
     ["reviews", workspaceId, "detail"] as const,
-  queue: (workspaceId: string, page: number, limit: number) =>
-    ["reviews", workspaceId, "queue", { limit, page }] as const,
+  queue: (
+    workspaceId: string,
+    page: number,
+    limit: number,
+    sort: "fifo" | "newest",
+  ) => ["reviews", workspaceId, "queue", { limit, page, sort }] as const,
   queues: (workspaceId: string) =>
     ["reviews", workspaceId, "queue"] as const,
   workspace: (workspaceId: string) =>

@@ -209,7 +209,9 @@ export type ResearchListFilterParams = {
 export type IssueListFilterParams = Pick<
   ResearchListFilterParams,
   "limit" | "page" | "search"
->;
+> & {
+  sort?: "fifo" | "newest";
+};
 
 export type PreviewDuplicateData = {
   createdAt: string;
