@@ -125,7 +125,9 @@ export function useUpdateWorkspaceSettings(workspaceId: string) {
       }
       if (variables.finalAssetRetentionDays !== undefined) {
         toast.success(
-          `Retention period updated to ${variables.finalAssetRetentionDays} day${variables.finalAssetRetentionDays === 1 ? "" : "s"}.`
+          variables.finalAssetRetentionDays === 0
+            ? "Automatic cleanup set to delete on the next daily run."
+            : `Retention period updated to ${variables.finalAssetRetentionDays} day${variables.finalAssetRetentionDays === 1 ? "" : "s"}.`
         );
       }
     },

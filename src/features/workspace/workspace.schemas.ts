@@ -22,7 +22,7 @@ export const workspaceWithMembershipSchema = z.object({
   designerAutoAssignmentEnabled: z.boolean(),
   listerAutoAssignmentEnabled: z.boolean(),
   finalAssetAutoCleanupEnabled: z.boolean(),
-  finalAssetRetentionDays: z.number().int().min(1).max(365),
+  finalAssetRetentionDays: z.number().int().min(0).max(365),
   deletionScheduledAt: z.string().nullable(),
   id: z.string(),
   membership: workspaceMembershipSummarySchema,
@@ -80,7 +80,7 @@ export const updateWorkspaceSettingsInputSchema = z
     designerAutoAssignmentEnabled: z.boolean().optional(),
     listerAutoAssignmentEnabled: z.boolean().optional(),
     finalAssetAutoCleanupEnabled: z.boolean().optional(),
-    finalAssetRetentionDays: z.number().int().min(1).max(365).optional(),
+    finalAssetRetentionDays: z.number().int().min(0).max(365).optional(),
   })
   .strict()
   .refine(

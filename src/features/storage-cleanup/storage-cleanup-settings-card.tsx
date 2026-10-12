@@ -15,7 +15,7 @@ import type {
 } from "@/features/workspace/workspace.types";
 import { useStorageMetrics } from "./use-storage-metrics";
 
-const RETENTION_PRESETS = [1, 3, 7, 14, 30, 60, 90] as const;
+const RETENTION_PRESETS = [0, 3, 7, 14, 30, 60, 90] as const;
 
 type StorageCleanupSettingsCardProps = {
   workspace: WorkspaceWithMembership;
@@ -72,7 +72,7 @@ export function StorageCleanupSettingsCard({
     } else {
       setIsCustomMode(false);
       const days = parseInt(value, 10);
-      if (Number.isInteger(days) && days >= 1 && days <= 365) {
+      if (Number.isInteger(days) && days >= 0 && days <= 365) {
         onUpdateSettings({ finalAssetRetentionDays: days });
       }
     }
@@ -143,7 +143,7 @@ export function StorageCleanupSettingsCard({
               Retention period
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              How long to keep production ZIP packages after an item is listed. Automatic cleanup runs daily at 3:00 AM BDT.
+              Choose when listed production ZIP packages should be removed. &quot;Next cleanup run&quot; deletes them during the next daily cleanup at 3:00 AM BDT.
             </p>
           </div>
           <div className="flex flex-col items-start gap-2 self-start sm:items-end sm:self-auto">
@@ -157,7 +157,9 @@ export function StorageCleanupSettingsCard({
               >
                 {RETENTION_PRESETS.map((preset) => (
                   <option key={preset} value={preset}>
-                    {preset} {preset === 1 ? "day" : "days"}{preset === 30 ? " (default)" : ""}
+                    {preset === 0
+                      ? "Next cleanup run (3:00 AM BDT)"
+                      : `${preset} days${preset === 30 ? " (default)" : ""}`}
                   </option>
                 ))}
                 <option value="CUSTOM">Custom...</option>
