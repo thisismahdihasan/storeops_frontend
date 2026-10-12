@@ -199,11 +199,14 @@ export type ResearchListFilterParams = {
   assignment?: "UNASSIGNED";
   createdBy?: string;
   date?: string;
+  dateFrom?: string;
+  dateTo?: string;
   limit?: number;
   page?: number;
   search?: string;
   sort?: "newest" | "oldest" | "updated";
   status?: ResearchStatus;
+  statusGroup?: "all" | "waiting" | "in_design" | "needs_attention" | "in_listing" | "listed";
 };
 
 export type IssueListFilterParams = Pick<

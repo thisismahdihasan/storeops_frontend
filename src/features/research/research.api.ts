@@ -56,6 +56,10 @@ function buildResearchListQueryString(filter?: ResearchListFilterParams): string
     searchParams.set("status", filter.status);
   }
 
+  if (filter.statusGroup) {
+    searchParams.set("statusGroup", filter.statusGroup);
+  }
+
   if (filter.assignment === "UNASSIGNED") {
     searchParams.set("assignment", filter.assignment);
   }
@@ -66,6 +70,11 @@ function buildResearchListQueryString(filter?: ResearchListFilterParams): string
 
   if (filter.date && filter.date.trim().length > 0) {
     searchParams.set("date", filter.date.trim());
+  }
+
+  if (filter.dateFrom && filter.dateTo) {
+    searchParams.set("dateFrom", filter.dateFrom);
+    searchParams.set("dateTo", filter.dateTo);
   }
 
   if (filter.createdBy && filter.createdBy.trim().length > 0) {

@@ -10,9 +10,15 @@ import { ApiError } from "@/lib/api";
 import { getAssignmentAvailabilityState } from "@/features/workspace/workspace-assignment-availability";
 import { WorkerAssignmentStatusBanner } from "@/features/workspace/worker-assignment-status-banner";
 import { CountBadge } from "@/components/ui/count-badge";
+import { FilterToolbarLayout } from "@/components/filter-toolbar-layout";
+import { FilterSearchInput } from "@/components/filter-search-input";
+import { ActivityDateRangeFilter } from "@/features/role-activity/activity-date-range-filter";
+import { resolveActivityDateRange, type ActivityDateRangeIntent } from "@/features/role-activity/role-activity-date.utils";
+import { useListerHistory, useListerSummary } from "@/features/role-activity/use-role-activity";
 import { ListingAccessState } from "./listing-access-state";
 import { ListingFilters } from "./listing-filters";
 import { ListingList } from "./listing-list";
+import { ListingCompletedList } from "./listing-completed-list";
 import { listingFiltersSchema } from "./listing.schemas";
 import type { ListingFilters as ListingFiltersValue } from "./listing.types";
 import { useListingQueue } from "./use-listing";
@@ -41,12 +47,18 @@ export function ListingView({ workspaceId }: ListingViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const filters = parseListingFilters(searchParams);
+  const view = searchParams.get("view") === "completed" ? "completed" : "active";
+  const activityIntent: ActivityDateRangeIntent = { range: (["today", "7d", "30d", "custom"].includes(searchParams.get("range") ?? "") ? searchParams.get("range") : "all") as ActivityDateRangeIntent["range"], from: searchParams.get("from") ?? undefined, to: searchParams.get("to") ?? undefined };
+  const resolvedRange = resolveActivityDateRange(activityIntent);
+  const historyQuery = { page: filters.page, limit: 20, search: filters.search, sort: (searchParams.get("sort") === "oldest" ? "oldest" : "newest") as "newest" | "oldest", dateFrom: resolvedRange.dateFrom, dateTo: resolvedRange.dateTo };
   const workspacesQuery = useWorkspaces();
   const workspace = workspacesQuery.data?.data.workspaces.find(
     (item) => item.id === workspaceId,
   );
   const hasListerRole = workspace?.membership.roles.includes("LISTER") ?? false;
-  const queueQuery = useListingQueue(workspaceId, filters, hasListerRole);
+  const queueQuery = useListingQueue(workspaceId, filters, hasListerRole && view === "active");
+  const summaryQuery = useListerSummary(workspaceId, { dateFrom: resolvedRange.dateFrom, dateTo: resolvedRange.dateTo }, hasListerRole && resolvedRange.isValid);
+  const completedQuery = useListerHistory(workspaceId, historyQuery, hasListerRole && view === "completed" && resolvedRange.isValid);
 
   const updateFilters = useCallback(
     (changes: Partial<ListingFiltersValue>) => {
@@ -68,6 +80,23 @@ export function ListingView({ workspaceId }: ListingViewProps) {
     },
     [filters, pathname, router, searchParams],
   );
+  const updateCompleted = (changes: Partial<typeof historyQuery> & Partial<ActivityDateRangeIntent> & { view?: "active" | "completed" }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const nextView = changes.view ?? view;
+    if (nextView === "completed") params.set("view", "completed"); else params.delete("view");
+    if (changes.view === "completed" && !["newest", "oldest"].includes(searchParams.get("sort") ?? "")) params.delete("sort");
+    if (changes.search !== undefined) { if (changes.search) params.set("search", changes.search); else params.delete("search"); }
+    if (changes.sort !== undefined) { if (changes.sort === "oldest") params.set("sort", "oldest"); else params.delete("sort"); }
+    if (changes.range !== undefined) {
+      if (changes.range === "all") params.delete("range"); else params.set("range", changes.range);
+      if (changes.range !== "custom") { params.delete("from"); params.delete("to"); }
+    }
+    if (changes.from !== undefined) { if (changes.from) params.set("from", changes.from); else params.delete("from"); }
+    if (changes.to !== undefined) { if (changes.to) params.set("to", changes.to); else params.delete("to"); }
+    const page = changes.page ?? 1;
+    if (page > 1) params.set("page", String(page)); else params.delete("page");
+    const query = params.toString(); router.push(query ? `${pathname}?${query}` : pathname);
+  };
 
   if (
     workspacesQuery.data &&
@@ -100,13 +129,15 @@ export function ListingView({ workspaceId }: ListingViewProps) {
             Inspect approved work, download production files, and publish your assigned listings.
           </p>
         </div>
-        {queueQuery.data ? (
+        {view === "active" && queueQuery.data ? (
           <CountBadge
             count={queueQuery.data.data.pagination.total}
             label="listing"
           />
         ) : null}
       </header>
+      <div aria-label="Listing view" className="flex flex-wrap gap-2" role="group"><button aria-pressed={view === "active"} className={`rounded-md px-3 py-1.5 text-sm ${view === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`} onClick={() => updateCompleted({ view: "active" })} type="button">Active</button><button aria-pressed={view === "completed"} className={`rounded-md px-3 py-1.5 text-sm ${view === "completed" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`} onClick={() => updateCompleted({ view: "completed" })} type="button">Completed</button></div>
+      {summaryQuery.data && <section aria-label="Listing activity summary" className="flex flex-wrap gap-2"><button className="rounded-md border bg-card p-2 text-left text-xs" onClick={() => updateCompleted({ view: "active" })} type="button">Active <strong className="ml-1">{summaryQuery.data.data.active.total}</strong></button><span className="rounded-md border bg-card p-2 text-xs">In Progress <strong className="ml-1">{summaryQuery.data.data.active.inProgress}</strong></span><button className="rounded-md border bg-card p-2 text-left text-xs" onClick={() => updateCompleted({ view: "completed" })} type="button">Completed <strong className="ml-1">{summaryQuery.data.data.completed.filtered}</strong></button><span className="rounded-md border bg-card p-2 text-xs">All-time completed <strong className="ml-1">{summaryQuery.data.data.completed.allTime}</strong></span></section>}
 
       {workspace ? (
         <WorkerAssignmentStatusBanner
@@ -115,7 +146,7 @@ export function ListingView({ workspaceId }: ListingViewProps) {
         />
       ) : null}
 
-      <ListingFilters
+      {view === "active" ? <><ListingFilters
         filters={filters}
         key={filters.search ?? ""}
         onChange={updateFilters}
@@ -137,7 +168,7 @@ export function ListingView({ workspaceId }: ListingViewProps) {
         }}
         status={filters.status}
         workspaceId={workspaceId}
-      />
+      /></> : <><FilterToolbarLayout hasActiveFilters={Boolean(historyQuery.search || historyQuery.sort === "oldest" || activityIntent.range !== "all")} onClearFilters={() => updateCompleted({ search: "", sort: "newest", range: "all" })} searchSlot={<FilterSearchInput onSearch={(search) => updateCompleted({ search: search.trim() })} placeholder="Search completed listings" value={historyQuery.search ?? ""} />}><ActivityDateRangeFilter {...activityIntent} onChange={(next) => updateCompleted(next)} /><select aria-label="Sort completed listings" className="h-9 rounded-md border border-input bg-background px-2.5 text-xs" onChange={(event) => updateCompleted({ sort: event.target.value as "newest" | "oldest" })} value={historyQuery.sort}><option value="newest">Newest listed</option><option value="oldest">Oldest listed</option></select></FilterToolbarLayout><p className="text-xs text-muted-foreground">Date range applies to completed history; active counts are current.</p><ListingCompletedList data={completedQuery.data?.data} isError={completedQuery.isError} isLoading={completedQuery.isLoading} onPageChange={(page) => updateCompleted({ page })} onReset={() => updateCompleted({ search: "", sort: "newest", range: "all" })} onRetry={() => void completedQuery.refetch()} /></>}
     </main>
   );
 }

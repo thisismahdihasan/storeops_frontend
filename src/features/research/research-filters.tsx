@@ -11,6 +11,9 @@ import {
   type MemberFilterOption,
 } from "@/components/member-filter-select";
 import { Input } from "@/components/ui/input";
+import { FilterSearchInput } from "@/components/filter-search-input";
+import { ActivityDateRangeFilter } from "@/features/role-activity/activity-date-range-filter";
+import type { ActivityDateRangeIntent } from "@/features/role-activity/role-activity-date.utils";
 import type { ResearchListFilterParams, ResearchStatus } from "./research.types";
 
 const STATUS_OPTIONS: Array<{ label: string; value: ResearchStatus }> = [
@@ -36,6 +39,9 @@ export function parseResearchFiltersFromParams(
   const assignmentParam = searchParams.get("assignment");
   const pageParam = searchParams.get("page");
   const sortParam = searchParams.get("sort");
+  const statusGroupParam = searchParams.get("statusGroup");
+  const dateFromParam = searchParams.get("dateFrom") ?? undefined;
+  const dateToParam = searchParams.get("dateTo") ?? undefined;
 
   const validStatuses = new Set<string>([
     "RESEARCHED",
@@ -76,6 +82,11 @@ export function parseResearchFiltersFromParams(
         : "newest",
     assignment,
     status: assignment ? undefined : parsedStatus,
+    statusGroup: ["all", "waiting", "in_design", "needs_attention", "in_listing", "listed"].includes(statusGroupParam ?? "")
+      ? statusGroupParam as ResearchListFilterParams["statusGroup"]
+      : undefined,
+    dateFrom: dateFromParam,
+    dateTo: dateToParam,
   };
 }
 
@@ -83,11 +94,13 @@ type ResearchFiltersProps = {
   currentFilters: ResearchListFilterParams;
   isAdmin?: boolean;
   researchers?: MemberFilterOption[];
+  isActivityWorker?: boolean;
 };
 
 export function ResearchFilters({
   currentFilters,
   isAdmin = true,
+  isActivityWorker = false,
   researchers = [],
 }: ResearchFiltersProps) {
   const router = useRouter();
@@ -186,6 +199,30 @@ export function ResearchFilters({
     setSearchInput("");
     router.push(pathname);
   };
+
+  const updateWorkerParams = (changes: Partial<ActivityDateRangeIntent> & { search?: string; sort?: ResearchListFilterParams["sort"] }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (changes.search !== undefined) {
+      if (changes.search) params.set("search", changes.search); else params.delete("search");
+    }
+    if (changes.sort !== undefined) {
+      if (changes.sort === "newest") params.delete("sort"); else params.set("sort", changes.sort);
+    }
+    if (changes.range !== undefined) {
+      if (changes.range === "all") params.delete("range"); else params.set("range", changes.range);
+      if (changes.range !== "custom") { params.delete("from"); params.delete("to"); }
+    }
+    if (changes.from !== undefined) { if (changes.from) params.set("from", changes.from); else params.delete("from"); }
+    if (changes.to !== undefined) { if (changes.to) params.set("to", changes.to); else params.delete("to"); }
+    params.delete("page");
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
+
+  if (isActivityWorker) {
+    const range = (["today", "7d", "30d", "custom"].includes(searchParams.get("range") ?? "") ? searchParams.get("range") : "all") as ActivityDateRangeIntent["range"];
+    return <FilterToolbarLayout hasActiveFilters={Boolean(currentFilters.search || currentFilters.sort !== "newest" || range !== "all")} onClearFilters={() => router.push(pathname)} searchSlot={<FilterSearchInput onSearch={(search) => updateWorkerParams({ search: search.trim() })} placeholder="Search by title, listing ID, or Etsy URL..." value={currentFilters.search ?? ""} />}><ActivityDateRangeFilter from={searchParams.get("from") ?? undefined} onChange={(next) => updateWorkerParams(next)} range={range} to={searchParams.get("to") ?? undefined} /><select aria-label="Sort research" className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring" onChange={(event) => updateWorkerParams({ sort: event.target.value as ResearchListFilterParams["sort"] })} value={currentFilters.sort ?? "newest"}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="updated">Recently updated</option></select></FilterToolbarLayout>;
+  }
 
   const hasActiveFilters = Boolean(
     currentFilters.assignment ||
