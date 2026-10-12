@@ -31,7 +31,18 @@ export type DesignerHistoryItem = {
   assignedAt: string;
   completedAt: string;
   id: string;
-  researchItem: { etsyListingId: string; id: string; normalizedUrl: string; readyForListingAt: string | null; referenceImageUrl: string | null; status: ResearchStatus; title: string | null };
+  researchItem: {
+    etsyListingId: string;
+    finalAssets: Array<{
+      fileName: string;
+    }>;
+    id: string;
+    normalizedUrl: string;
+    readyForListingAt: string | null;
+    referenceImageUrl: string | null;
+    status: ResearchStatus;
+    title: string | null;
+  };
   startedAt: string | null;
 };
 
