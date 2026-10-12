@@ -26,9 +26,8 @@ export type StatusTone =
 
 export const DESIGNER_WORK_TABS: Array<{
   label: string;
-  status?: DesignerWorkStatus;
+  status: DesignerWorkStatus;
 }> = [
-  { label: "All" },
   { label: "Assigned", status: "ASSIGNED" },
   { label: "In Progress", status: "DESIGN_IN_PROGRESS" },
   { label: "Waiting for Review", status: "DESIGN_REVIEW" },

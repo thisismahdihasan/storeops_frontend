@@ -18,7 +18,7 @@ export type ResearcherActivitySummary = {
 };
 
 export type DesignerActivitySummary = {
-  active: { approved: number; correctionsNeeded: number; inProgress: number; inReview: number; total: number };
+  active: { approved: number; assigned: number; correctionsNeeded: number; inProgress: number; inReview: number; issueReported: number; total: number };
   completed: { allTime: number; filtered: number };
 };
 
