@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
 
 import { CountBadge } from "@/components/ui/count-badge";
+import { NativeSelect } from "@/components/native-select";
 import { Input } from "@/components/ui/input";
 
 import type { StorageCleanupFilter } from "./storage-cleanup.types";
@@ -82,8 +83,8 @@ export function StorageCleanupFilters({
           <label className="text-xs text-muted-foreground shrink-0" htmlFor="storage-status-filter">
             Status:
           </label>
-          <select
-            className="h-9 rounded-md border border-input bg-background px-2.5 py-1 text-xs text-foreground shadow-xs transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          <NativeSelect
+            className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 py-1 text-xs text-foreground shadow-xs transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             id="storage-status-filter"
             onChange={(e) => onFilterChange(e.target.value as StorageCleanupFilter)}
             value={filter}
@@ -91,7 +92,7 @@ export function StorageCleanupFilters({
             <option value="ELIGIBLE">Eligible</option>
             <option value="CLEANED">Cleaned Up</option>
             <option value="ALL">All Listed</option>
-          </select>
+          </NativeSelect>
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 
 import { DateFilterPicker } from "@/components/date-filter-picker";
+import { NativeSelect } from "@/components/native-select";
 import { FilterToolbarLayout } from "@/components/filter-toolbar-layout";
 import {
   MemberFilterSelect,
@@ -221,7 +222,7 @@ export function ResearchFilters({
 
   if (isActivityWorker) {
     const range = (["today", "7d", "30d", "custom"].includes(searchParams.get("range") ?? "") ? searchParams.get("range") : "all") as ActivityDateRangeIntent["range"];
-    return <FilterToolbarLayout hasActiveFilters={Boolean(currentFilters.search || currentFilters.sort !== "newest" || range !== "all")} onClearFilters={() => router.push(pathname)} searchSlot={<FilterSearchInput onSearch={(search) => updateWorkerParams({ search: search.trim() })} placeholder="Search by title, listing ID, or Etsy URL..." value={currentFilters.search ?? ""} />}><ActivityDateRangeFilter from={searchParams.get("from") ?? undefined} onChange={(next) => updateWorkerParams(next)} range={range} to={searchParams.get("to") ?? undefined} /><select aria-label="Sort research" className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring" onChange={(event) => updateWorkerParams({ sort: event.target.value as ResearchListFilterParams["sort"] })} value={currentFilters.sort ?? "newest"}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="updated">Recently updated</option></select></FilterToolbarLayout>;
+    return <FilterToolbarLayout hasActiveFilters={Boolean(currentFilters.search || currentFilters.sort !== "newest" || range !== "all")} onClearFilters={() => router.push(pathname)} searchSlot={<FilterSearchInput onSearch={(search) => updateWorkerParams({ search: search.trim() })} placeholder="Search by title, listing ID, or Etsy URL..." value={currentFilters.search ?? ""} />}><ActivityDateRangeFilter from={searchParams.get("from") ?? undefined} onChange={(next) => updateWorkerParams(next)} range={range} to={searchParams.get("to") ?? undefined} /><NativeSelect aria-label="Sort research" className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring" onChange={(event) => updateWorkerParams({ sort: event.target.value as ResearchListFilterParams["sort"] })} value={currentFilters.sort ?? "newest"}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="updated">Recently updated</option></NativeSelect></FilterToolbarLayout>;
   }
 
   const hasActiveFilters = Boolean(
@@ -274,10 +275,10 @@ export function ResearchFilters({
 
       {/* Status filter (Admin only) */}
       {isAdmin && (
-        <select
+        <NativeSelect
           value={currentFilters.status ?? "ALL"}
           onChange={handleStatusChange}
-          className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+          className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
           aria-label="Filter by status"
         >
           <option value="ALL">All Statuses</option>
@@ -286,19 +287,19 @@ export function ResearchFilters({
               {option.label}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       )}
 
       {isAdmin && (
-        <select
+        <NativeSelect
           aria-label="Filter by assignment"
-          className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+          className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
           onChange={handleAssignmentChange}
           value={currentFilters.assignment ?? "ALL"}
         >
           <option value="ALL">All assignments</option>
           <option value="UNASSIGNED">Unassigned</option>
-        </select>
+        </NativeSelect>
       )}
 
       {/* Date filter (single UTC calendar day) */}
@@ -308,16 +309,16 @@ export function ResearchFilters({
         label="Created date"
         allLabel="All dates"
       />
-      <select
+      <NativeSelect
         aria-label="Sort research"
-        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+        className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
         onChange={handleSortChange}
         value={currentFilters.sort ?? "newest"}
       >
         <option value="newest">Newest first</option>
         <option value="oldest">Oldest first</option>
         <option value="updated">Recently updated</option>
-      </select>
+      </NativeSelect>
     </FilterToolbarLayout>
   );
 }

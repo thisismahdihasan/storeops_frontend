@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 
 import { DateFilterPicker } from "@/components/date-filter-picker";
+import { NativeSelect } from "@/components/native-select";
 import { FilterToolbarLayout } from "@/components/filter-toolbar-layout";
 import {
   MemberFilterSelect,
@@ -175,9 +176,9 @@ export function ListingsAdminFilters({
 
       {/* Status Filter */}
       {isAdmin && (
-        <select
+        <NativeSelect
           aria-label="Filter by listing status"
-          className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+          className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
           onChange={handleStatusChange}
           value={currentFilters.status ?? "ALL"}
         >
@@ -187,19 +188,19 @@ export function ListingsAdminFilters({
               {option.label}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       )}
 
       {isAdmin && (
-        <select
+        <NativeSelect
           aria-label="Filter by assignment"
-          className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+          className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
           onChange={handleAssignmentChange}
           value={currentFilters.assignment ?? "ALL"}
         >
           <option value="ALL">All assignments</option>
           <option value="UNASSIGNED">Unassigned</option>
-        </select>
+        </NativeSelect>
       )}
 
       {/* Date Filter */}
@@ -209,9 +210,9 @@ export function ListingsAdminFilters({
         label="Activity date"
         allLabel="All dates"
       />
-      <select
+      <NativeSelect
         aria-label="Sort listings"
-        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+        className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
         onChange={handleSortChange}
         value={currentFilters.sort ?? "updated"}
       >
@@ -220,7 +221,7 @@ export function ListingsAdminFilters({
         <option value="oldest">Oldest researched</option>
         <option value="ready_oldest">Ready for listing first</option>
         <option value="ready_newest">Most recently ready</option>
-      </select>
+      </NativeSelect>
     </FilterToolbarLayout>
   );
 }

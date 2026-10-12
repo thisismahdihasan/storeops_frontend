@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 
 import { DateFilterPicker } from "@/components/date-filter-picker";
+import { NativeSelect } from "@/components/native-select";
 import { FilterToolbarLayout } from "@/components/filter-toolbar-layout";
 import {
   MemberFilterSelect,
@@ -162,10 +163,10 @@ export function DesignsFilters({
       />
 
       {/* Status Filter */}
-      <select
+      <NativeSelect
         value={currentFilters.status ?? "ALL"}
         onChange={handleStatusChange}
-        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+        className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
         aria-label="Filter by design status"
       >
         <option value="ALL">All Statuses</option>
@@ -174,7 +175,7 @@ export function DesignsFilters({
             {option.label}
           </option>
         ))}
-      </select>
+      </NativeSelect>
 
       {/* Date Filter */}
       <DateFilterPicker
@@ -183,16 +184,16 @@ export function DesignsFilters({
         label="Creation date"
         allLabel="All dates"
       />
-      <select
+      <NativeSelect
         aria-label="Sort designs"
-        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
+        className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
         onChange={handleSortChange}
         value={currentFilters.sort ?? "updated"}
       >
         <option value="updated">Recently updated</option>
         <option value="newest">Newest researched</option>
         <option value="oldest">Oldest researched</option>
-      </select>
+      </NativeSelect>
     </FilterToolbarLayout>
   );
 }

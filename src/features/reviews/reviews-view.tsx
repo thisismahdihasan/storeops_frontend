@@ -11,6 +11,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/native-select";
 import { CountBadge } from "@/components/ui/count-badge";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 
@@ -169,8 +170,8 @@ export function ReviewsView({ workspaceId }: ReviewsViewProps) {
         <label className="sr-only" htmlFor="reviews-sort">
           Sort design reviews
         </label>
-        <select
-          className="h-9 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground"
+        <NativeSelect
+          className="h-9 rounded-lg border border-border bg-background pl-2.5 pr-8 text-sm text-foreground"
           id="reviews-sort"
           onChange={(event) =>
             handleSortChange(
@@ -181,7 +182,7 @@ export function ReviewsView({ workspaceId }: ReviewsViewProps) {
         >
           <option value="fifo">Oldest submission first</option>
           <option value="newest">Newest submission first</option>
-        </select>
+        </NativeSelect>
       </div>
 
       {/* Main Content Area */}

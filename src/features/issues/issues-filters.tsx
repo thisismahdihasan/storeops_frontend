@@ -5,6 +5,7 @@ import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/native-select";
 
 type IssuesFiltersProps = {
   search: string | undefined;
@@ -75,9 +76,9 @@ export function IssuesFilters({ search, sort }: IssuesFiltersProps) {
           </button>
         )}
       </label>
-      <select
+      <NativeSelect
         aria-label="Sort issues"
-        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground"
+        className="h-9 rounded-md border border-input bg-background pl-2.5 pr-8 text-xs text-foreground"
         onChange={(event) =>
           handleSortChange(event.target.value === "newest" ? "newest" : "fifo")
         }
@@ -85,7 +86,7 @@ export function IssuesFilters({ search, sort }: IssuesFiltersProps) {
       >
         <option value="fifo">Oldest report first</option>
         <option value="newest">Newest report first</option>
-      </select>
+      </NativeSelect>
     </div>
   );
 }

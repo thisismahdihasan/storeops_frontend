@@ -21,6 +21,7 @@ import { useCallback, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/native-select";
 import { etsyExternalSubtleClass } from "@/lib/etsy-styles";
 import { cn } from "@/lib/utils";
 import {
@@ -249,9 +250,9 @@ export function CorrectionsView({ workspaceId }: CorrectionsViewProps) {
         <Button size="sm" type="submit" variant="secondary">
           Search
         </Button>
-        <select
+        <NativeSelect
           aria-label="Sort corrections"
-          className="h-9 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground"
+          className="h-9 rounded-lg border border-border bg-background pl-2.5 pr-8 text-sm text-foreground"
           onChange={(event) =>
             updateFilters({
               page: 1,
@@ -265,7 +266,7 @@ export function CorrectionsView({ workspaceId }: CorrectionsViewProps) {
         >
           <option value="correction_fifo">Oldest correction first</option>
           <option value="correction_newest">Newest correction first</option>
-        </select>
+        </NativeSelect>
       </form>
 
       {/* Content Area */}
