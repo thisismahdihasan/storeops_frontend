@@ -13,7 +13,6 @@ export type ResearcherActivitySummary = {
   inDesign: number;
   inListing: number;
   listed: number;
-  needsAttention: number;
   totalResearched: number;
   waiting: number;
 };
@@ -32,7 +31,7 @@ export type DesignerHistoryItem = {
   assignedAt: string;
   completedAt: string;
   id: string;
-  researchItem: { etsyListingId: string; id: string; readyForListingAt: string | null; referenceImageUrl: string | null; status: ResearchStatus; title: string | null };
+  researchItem: { etsyListingId: string; id: string; normalizedUrl: string; readyForListingAt: string | null; referenceImageUrl: string | null; status: ResearchStatus; title: string | null };
   startedAt: string | null;
 };
 
@@ -40,7 +39,7 @@ export type ListerHistoryItem = {
   assignedAt: string;
   completedAt: string;
   id: string;
-  researchItem: { etsyListingId: string; id: string; listingResult: { etsyListingUrl: string | null; listedAt: string } | null; status: ResearchStatus; title: string | null };
+  researchItem: { etsyListingId: string; id: string; listingResult: { etsyListingUrl: string | null; listedAt: string } | null; normalizedUrl: string; referenceImageUrl: string | null; status: ResearchStatus; title: string | null };
   startedAt: string | null;
 };
 

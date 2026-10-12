@@ -82,7 +82,7 @@ export function parseResearchFiltersFromParams(
         : "newest",
     assignment,
     status: assignment ? undefined : parsedStatus,
-    statusGroup: ["all", "waiting", "in_design", "needs_attention", "in_listing", "listed"].includes(statusGroupParam ?? "")
+    statusGroup: ["all", "waiting", "in_design", "in_listing", "listed"].includes(statusGroupParam ?? "")
       ? statusGroupParam as ResearchListFilterParams["statusGroup"]
       : undefined,
     dateFrom: dateFromParam,

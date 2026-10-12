@@ -178,7 +178,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
     router.push(pathname);
   };
 
-  const selectStatusGroup = (statusGroup: NonNullable<ResearchItemListItem["status"]> | "all" | "waiting" | "in_design" | "needs_attention" | "in_listing" | "listed") => {
+  const selectStatusGroup = (statusGroup: "all" | "waiting" | "in_design" | "in_listing" | "listed") => {
     const params = new URLSearchParams(searchParams.toString());
     if (statusGroup === "all") params.delete("statusGroup"); else params.set("statusGroup", statusGroup);
     params.delete("status");
@@ -308,8 +308,8 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
 
       {isMyResearchContext && (
         <section aria-label="Research activity summary" className="flex flex-wrap gap-2">
-          {summaryQuery.isLoading ? [0, 1, 2, 3, 4, 5].map((item) => <div className="h-16 w-28 animate-pulse rounded-lg bg-muted" key={item} />) : summaryQuery.data ? [
-            ["Total Researched", "all", summaryQuery.data.data.totalResearched], ["Waiting", "waiting", summaryQuery.data.data.waiting], ["In Design", "in_design", summaryQuery.data.data.inDesign], ["Needs Attention", "needs_attention", summaryQuery.data.data.needsAttention], ["In Listing", "in_listing", summaryQuery.data.data.inListing], ["Listed", "listed", summaryQuery.data.data.listed],
+          {summaryQuery.isLoading ? [0, 1, 2, 3, 4].map((item) => <div className="h-16 w-28 animate-pulse rounded-lg bg-muted" key={item} />) : summaryQuery.data ? [
+            ["Total Researched", "all", summaryQuery.data.data.totalResearched], ["Waiting", "waiting", summaryQuery.data.data.waiting], ["In Design", "in_design", summaryQuery.data.data.inDesign], ["In Listing", "in_listing", summaryQuery.data.data.inListing], ["Listed", "listed", summaryQuery.data.data.listed],
           ].map(([label, group, count]) => <button aria-pressed={(currentFilters.statusGroup ?? "all") === group} className={`min-w-28 rounded-lg border p-3 text-left transition-colors ${(currentFilters.statusGroup ?? "all") === group ? "border-primary bg-primary/10" : "border-border bg-card hover:bg-muted"}`} key={String(group)} onClick={() => selectStatusGroup(String(group) as Parameters<typeof selectStatusGroup>[0])} type="button"><span className="block text-xs text-muted-foreground">{label}</span><strong className="text-lg">{Number(count).toLocaleString()}</strong></button>) : <p className="text-xs text-muted-foreground">Activity summary is unavailable. <button className="underline" onClick={() => void summaryQuery.refetch()} type="button">Retry</button></p>}
         </section>
       )}

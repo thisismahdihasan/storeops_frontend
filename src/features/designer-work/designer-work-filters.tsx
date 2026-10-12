@@ -1,89 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Search, X } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-
 import { cn } from "@/lib/utils";
-
 import { DESIGNER_WORK_TABS } from "./designer-work.types";
-import type { DesignerWorkFilters, DesignerWorkStatus } from "./designer-work.types";
+import type { DesignerWorkStatus } from "./designer-work.types";
 
-type DesignerWorkFiltersProps = {
-  filters: DesignerWorkFilters;
-  onChange: (next: Partial<DesignerWorkFilters>) => void;
-};
+type WorkStatus = DesignerWorkStatus | "completed" | undefined;
+type Props = { onSortChange: (sort: "fifo" | "newest") => void; onStatusChange: (status: WorkStatus) => void; sort: "fifo" | "newest"; status: WorkStatus };
 
-export function DesignerWorkFilters({ filters, onChange }: DesignerWorkFiltersProps) {
-  const [searchInput, setSearchInput] = useState(filters.search ?? "");
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const search = searchInput.trim() || undefined;
-      if (search !== filters.search) onChange({ page: 1, search });
-    }, 350);
-    return () => window.clearTimeout(timer);
-  }, [filters.search, onChange, searchInput]);
-
-  const selectStatus = (status?: DesignerWorkStatus) => {
-    if (status !== filters.status) onChange({ page: 1, status });
-  };
-
-  const selectSort = (value: string) => {
-    if (value === "fifo" || value === "newest") {
-      onChange({ page: 1, sort: value });
-    }
-  };
-
-  return (
-    <div className="space-y-3 rounded-xl border border-border bg-card p-3 shadow-xs sm:p-4">
-      <div
-        aria-label="Filter work by status"
-        className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none"
-        role="group"
-      >
-        {DESIGNER_WORK_TABS.map((tab) => {
-          const isSelected = tab.status === filters.status;
-          return (
-            <Button
-              key={tab.label}
-              aria-pressed={isSelected}
-              className={cn(
-                "shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
-                isSelected
-                  ? "bg-secondary text-secondary-foreground font-semibold shadow-xs"
-                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-              )}
-              onClick={() => selectStatus(tab.status)}
-              size="sm"
-              type="button"
-              variant={isSelected ? "secondary" : "ghost"}
-            >
-              {tab.label}
-            </Button>
-          );
-        })}
-      </div>
-      <select
-        aria-label="Sort assigned design work"
-        className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground outline-hidden focus:ring-1 focus:ring-ring"
-        onChange={(event) => selectSort(event.target.value)}
-        value={filters.sort ?? "fifo"}
-      >
-        <option value="fifo">Oldest assigned first</option>
-        <option value="newest">Newest assigned first</option>
-      </select>
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input aria-label="Search assigned design work" className="pl-9 pr-9" onChange={(event) => setSearchInput(event.target.value)} placeholder="Search title, Etsy listing ID, or URL" value={searchInput} />
-        {searchInput && (
-          <button aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setSearchInput("")} type="button">
-            <X className="size-4" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
+export function DesignerWorkFilters({ onSortChange, onStatusChange, sort, status }: Props) {
+  const tabs = [...DESIGNER_WORK_TABS, { label: "Completed", status: "completed" as const }];
+  return <section className="space-y-3 rounded-xl border border-border bg-card p-3 shadow-xs sm:p-4"><div aria-label="Filter design work by status" className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none" role="tablist">{tabs.map((tab) => <Button aria-selected={tab.status === status} className={cn("shrink-0", tab.status === status && "font-semibold shadow-xs")} key={tab.label} onClick={() => onStatusChange(tab.status)} role="tab" size="sm" type="button" variant={tab.status === status ? "secondary" : "ghost"}>{tab.label}</Button>)}</div>{status !== "completed" ? <select aria-label="Sort assigned design work" className="h-9 rounded-md border border-input bg-background px-2.5 text-xs" onChange={(event) => onSortChange(event.target.value as "fifo" | "newest")} value={sort}><option value="fifo">Oldest assigned first</option><option value="newest">Newest assigned first</option></select> : null}</section>;
 }

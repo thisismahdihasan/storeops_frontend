@@ -206,7 +206,7 @@ export type ResearchListFilterParams = {
   search?: string;
   sort?: "newest" | "oldest" | "updated";
   status?: ResearchStatus;
-  statusGroup?: "all" | "waiting" | "in_design" | "needs_attention" | "in_listing" | "listed";
+  statusGroup?: "all" | "waiting" | "in_design" | "in_listing" | "listed";
 };
 
 export type IssueListFilterParams = Pick<

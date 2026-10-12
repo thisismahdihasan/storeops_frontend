@@ -1,166 +1,61 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Palette } from "lucide-react";
 import { toast } from "sonner";
-
 import { ApiError } from "@/lib/api";
-import { useWorkspaces } from "@/features/workspace/use-workspaces";
-import { getAssignmentAvailabilityState } from "@/features/workspace/workspace-assignment-availability";
-
-import { WorkerAssignmentStatusBanner } from "@/features/workspace/worker-assignment-status-banner";
 import { CountBadge } from "@/components/ui/count-badge";
 import { FilterToolbarLayout } from "@/components/filter-toolbar-layout";
 import { FilterSearchInput } from "@/components/filter-search-input";
+import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { getAssignmentAvailabilityState } from "@/features/workspace/workspace-assignment-availability";
+import { WorkerAssignmentStatusBanner } from "@/features/workspace/worker-assignment-status-banner";
 import { ActivityDateRangeFilter } from "@/features/role-activity/activity-date-range-filter";
 import { resolveActivityDateRange, type ActivityDateRangeIntent } from "@/features/role-activity/role-activity-date.utils";
 import { useDesignerHistory, useDesignerSummary } from "@/features/role-activity/use-role-activity";
+import { DesignerCompletedList } from "./designer-completed-list";
 import { DesignerWorkFilters } from "./designer-work-filters";
 import { DesignerWorkList } from "./designer-work-list";
-import { DesignerCompletedList } from "./designer-completed-list";
 import { ReportIssueDialog } from "./report-issue-dialog";
-import { designerWorkFiltersSchema } from "./designer-work.schemas";
-import type { DesignerWorkFilters as DesignerWorkFiltersValue, DesignerWorkItem, ReportIssueFormValues } from "./designer-work.types";
+import type { DesignerWorkItem, DesignerWorkStatus, ReportIssueFormValues } from "./designer-work.types";
 import { useDesignerWorkQueue, useReportDesignIssue, useStartCorrection, useStartDesignWork } from "./use-designer-work";
 
-function parseDesignerWorkFilters(searchParams: URLSearchParams): DesignerWorkFiltersValue {
-  const page = Number(searchParams.get("page"));
-  const candidate = { limit: 20, page: Number.isInteger(page) && page > 0 ? page : 1, search: searchParams.get("search")?.trim() || undefined, status: searchParams.get("status") || undefined, sort: searchParams.get("sort") || undefined };
-  const parsed = designerWorkFiltersSchema.safeParse(candidate);
-  return parsed.success ? parsed.data : { limit: 20, page: 1, sort: "fifo" };
+const activeStatuses: DesignerWorkStatus[] = ["ASSIGNED", "DESIGN_IN_PROGRESS", "DESIGN_REVIEW", "CORRECTION_NEEDED", "ISSUE_REPORTED", "DESIGN_APPROVED"];
+const intent = (params: URLSearchParams): ActivityDateRangeIntent => ({ range: (["today", "7d", "30d", "custom"].includes(params.get("range") ?? "") ? params.get("range") : "all") as ActivityDateRangeIntent["range"], from: params.get("from") ?? undefined, to: params.get("to") ?? undefined });
+
+function getCompletedBadgeLabel(range: ActivityDateRangeIntent["range"]): { label: string; pluralLabel: string } {
+  switch (range) {
+    case "today":
+      return { label: "completed today", pluralLabel: "completed today" };
+    case "7d":
+      return { label: "completed in last 7 days", pluralLabel: "completed in last 7 days" };
+    case "30d":
+      return { label: "completed in last 30 days", pluralLabel: "completed in last 30 days" };
+    default:
+      return { label: "completed", pluralLabel: "completed" };
+  }
 }
 
-function getActionErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError && error.status === 409) return `${error.message} The queue has been refreshed.`;
-  return error instanceof Error ? error.message : fallback;
-}
-
-type DesignerWorkViewProps = { workspaceId: string };
-
-export function DesignerWorkView({ workspaceId }: DesignerWorkViewProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const filters = parseDesignerWorkFilters(searchParams);
-  const view = searchParams.get("view") === "completed" ? "completed" : "active";
-  const activityIntent: ActivityDateRangeIntent = { range: (["today", "7d", "30d", "custom"].includes(searchParams.get("range") ?? "") ? searchParams.get("range") : "all") as ActivityDateRangeIntent["range"], from: searchParams.get("from") ?? undefined, to: searchParams.get("to") ?? undefined };
-  const resolvedRange = resolveActivityDateRange(activityIntent);
-  const historyQuery = { page: filters.page, limit: 20, search: filters.search, sort: (searchParams.get("sort") === "oldest" ? "oldest" : "newest") as "newest" | "oldest", dateFrom: resolvedRange.dateFrom, dateTo: resolvedRange.dateTo };
-  const workspacesQuery = useWorkspaces();
-  const activeWorkspace = workspacesQuery.data?.data.workspaces.find((workspace) => workspace.id === workspaceId);
-  const hasDesignerRole = activeWorkspace?.membership.roles.includes("DESIGNER") ?? false;
-  const queueQuery = useDesignerWorkQueue(workspaceId, filters, hasDesignerRole && view === "active");
-  const summaryQuery = useDesignerSummary(workspaceId, { dateFrom: resolvedRange.dateFrom, dateTo: resolvedRange.dateTo }, hasDesignerRole && resolvedRange.isValid);
-  const completedQuery = useDesignerHistory(workspaceId, historyQuery, hasDesignerRole && view === "completed" && resolvedRange.isValid);
-  const startWorkMutation = useStartDesignWork(workspaceId);
-  const reportIssueMutation = useReportDesignIssue(workspaceId);
-  const startCorrectionMutation = useStartCorrection(workspaceId);
-  const [issueWork, setIssueWork] = useState<DesignerWorkItem | null>(null);
-
-  const updateFilters = useCallback((changes: Partial<DesignerWorkFiltersValue>) => {
-    const next = { ...filters, ...changes };
-    const params = new URLSearchParams(searchParams.toString());
-    if (next.status) params.set("status", next.status);
-    else params.delete("status");
-    if (next.search) params.set("search", next.search);
-    else params.delete("search");
-    if (next.sort && next.sort !== "fifo") params.set("sort", next.sort);
-    else params.delete("sort");
-    if (next.page > 1) params.set("page", next.page.toString());
-    else params.delete("page");
-    const query = params.toString();
-    router.push(query ? `${pathname}?${query}` : pathname);
-  }, [filters, pathname, router, searchParams]);
-  const updateCompleted = (changes: Partial<typeof historyQuery> & Partial<ActivityDateRangeIntent> & { view?: "active" | "completed" }) => {
-    const params = new URLSearchParams(searchParams.toString());
-    const nextView = changes.view ?? view;
-    if (nextView === "completed") params.set("view", "completed"); else params.delete("view");
-    if (changes.view === "completed" && !["newest", "oldest"].includes(searchParams.get("sort") ?? "")) params.delete("sort");
-    if (changes.search !== undefined) { if (changes.search) params.set("search", changes.search); else params.delete("search"); }
-    if (changes.sort !== undefined) { if (changes.sort === "oldest") params.set("sort", "oldest"); else params.delete("sort"); }
-    if (changes.range !== undefined) {
-      if (changes.range === "all") params.delete("range"); else params.set("range", changes.range);
-      if (changes.range !== "custom") { params.delete("from"); params.delete("to"); }
-    }
-    if (changes.from !== undefined) { if (changes.from) params.set("from", changes.from); else params.delete("from"); }
-    if (changes.to !== undefined) { if (changes.to) params.set("to", changes.to); else params.delete("to"); }
-    const nextPage = changes.page ?? 1;
-    if (nextPage > 1) params.set("page", String(nextPage)); else params.delete("page");
-    const query = params.toString(); router.push(query ? `${pathname}?${query}` : pathname);
-  };
-
-  const refreshQueueAfterConflict = () => { void queueQuery.refetch(); };
-  const handleOpenWork = (work: DesignerWorkItem) => {
-    router.push(`/w/${workspaceId}/design/${work.researchItem.id}`);
-  };
-  const handleStartWork = async (work: DesignerWorkItem) => {
-    try {
-      await startWorkMutation.mutateAsync(work.researchItem.id);
-      toast.success("Design work started.");
-      router.push(`/w/${workspaceId}/design/${work.researchItem.id}`);
-    } catch (error) {
-      toast.error(getActionErrorMessage(error, "Unable to start work."));
-      if (error instanceof ApiError && error.status === 409) refreshQueueAfterConflict();
-    }
-  };
-  const handleStartCorrection = async (work: DesignerWorkItem) => {
-    try { await startCorrectionMutation.mutateAsync(work.researchItem.id); toast.success("Correction work started."); }
-    catch (error) { toast.error(getActionErrorMessage(error, "Unable to start correction.")); if (error instanceof ApiError && error.status === 409) refreshQueueAfterConflict(); }
-  };
-  const handleReportIssue = async (values: ReportIssueFormValues) => {
-    if (!issueWork) return;
-    try { await reportIssueMutation.mutateAsync({ researchItemId: issueWork.researchItem.id, values }); toast.success("Design issue reported. Waiting for Admin action."); setIssueWork(null); }
-    catch (error) { toast.error(getActionErrorMessage(error, "Unable to report the issue.")); if (error instanceof ApiError && error.status === 409) refreshQueueAfterConflict(); }
-  };
-
-  return (
-    <div className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
-      <header className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Designer workflow</p>
-          <h1 className="mt-1 flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
-            <Palette className="size-6 text-primary" />My Work
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Your active design assignments, ordered by oldest assignment first.</p>
-        </div>
-        {view === "active" && queueQuery.data && (
-          <CountBadge
-            count={queueQuery.data.data.pagination.total}
-            label="active assignment"
-          />
-        )}
-      </header>
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Work view"><button aria-pressed={view === "active"} className={`rounded-md px-3 py-1.5 text-sm ${view === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`} onClick={() => updateCompleted({ view: "active" })} type="button">Active Work</button><button aria-pressed={view === "completed"} className={`rounded-md px-3 py-1.5 text-sm ${view === "completed" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`} onClick={() => updateCompleted({ view: "completed" })} type="button">Completed</button></div>
-      {summaryQuery.data && <section className="flex flex-wrap gap-2" aria-label="Design activity summary"><button className="rounded-md border bg-card p-2 text-left text-xs" onClick={() => updateCompleted({ view: "active" })} type="button">Active <strong className="ml-1">{summaryQuery.data.data.active.total}</strong></button><span className="rounded-md border bg-card p-2 text-xs">In Review <strong className="ml-1">{summaryQuery.data.data.active.inReview}</strong></span><span className="rounded-md border bg-card p-2 text-xs">Corrections <strong className="ml-1">{summaryQuery.data.data.active.correctionsNeeded}</strong></span><button className="rounded-md border bg-card p-2 text-left text-xs" onClick={() => updateCompleted({ view: "completed" })} type="button">Completed <strong className="ml-1">{summaryQuery.data.data.completed.filtered}</strong></button><span className="rounded-md border bg-card p-2 text-xs">All-time completed <strong className="ml-1">{summaryQuery.data.data.completed.allTime}</strong></span></section>}
-      {activeWorkspace ? (
-        <WorkerAssignmentStatusBanner
-          membership={activeWorkspace.membership}
-          role="DESIGNER"
-        />
-      ) : null}
-      {view === "active" ? <><DesignerWorkFilters key={filters.search ?? ""} filters={filters} onChange={updateFilters} />
-      <DesignerWorkList
-        availabilityState={
-          activeWorkspace
-            ? getAssignmentAvailabilityState(activeWorkspace.membership, "DESIGNER")
-            : "AVAILABLE"
-        }
-        data={queueQuery.data?.data}
-        filtersActive={Boolean(filters.search || filters.status)}
-        isError={queueQuery.isError}
-        isLoading={queueQuery.isLoading || workspacesQuery.isLoading}
-        onOpenWork={handleOpenWork}
-        onPageChange={(page) => updateFilters({ page })}
-        onReportIssue={setIssueWork}
-        onRetry={() => void queueQuery.refetch()}
-        onStartCorrection={(work) => void handleStartCorrection(work)}
-        onStartWork={(work) => void handleStartWork(work)}
-        startingCorrectionItemId={startCorrectionMutation.isPending ? startCorrectionMutation.variables : undefined}
-        startingWorkItemId={startWorkMutation.isPending ? startWorkMutation.variables : undefined}
-        workspaceId={workspaceId}
-      /></> : <><FilterToolbarLayout hasActiveFilters={Boolean(historyQuery.search || historyQuery.sort === "oldest" || activityIntent.range !== "all")} onClearFilters={() => updateCompleted({ search: "", sort: "newest", range: "all" })} searchSlot={<FilterSearchInput onSearch={(search) => updateCompleted({ search: search.trim() })} placeholder="Search completed designs" value={historyQuery.search ?? ""} />}><ActivityDateRangeFilter {...activityIntent} onChange={(next) => updateCompleted(next)} /><select aria-label="Sort completed designs" className="h-9 rounded-md border border-input bg-background px-2.5 text-xs" onChange={(event) => updateCompleted({ sort: event.target.value as "newest" | "oldest" })} value={historyQuery.sort}><option value="newest">Newest completed</option><option value="oldest">Oldest completed</option></select></FilterToolbarLayout><p className="text-xs text-muted-foreground">Date range applies to completed history; active counts are current.</p><DesignerCompletedList data={completedQuery.data?.data} isError={completedQuery.isError} isLoading={completedQuery.isLoading} onPageChange={(page) => updateCompleted({ page })} onReset={() => updateCompleted({ search: "", sort: "newest", range: "all" })} onRetry={() => void completedQuery.refetch()} workspaceId={workspaceId} /></>}
-      {view === "active" && <ReportIssueDialog isSubmitting={reportIssueMutation.isPending} onOpenChange={(open) => !open && setIssueWork(null)} onSubmit={(values) => void handleReportIssue(values)} open={issueWork !== null} workTitle={issueWork?.researchItem.title || `Etsy Listing #${issueWork?.researchItem.etsyListingId ?? ""}`} />}
-    </div>
-  );
+export function DesignerWorkView({ workspaceId }: { workspaceId: string }) {
+  const pathname = usePathname(); const router = useRouter(); const params = useSearchParams();
+  const rawStatus = params.get("status"); const isCompleted = rawStatus === "completed";
+  const status = activeStatuses.includes(rawStatus as DesignerWorkStatus) ? rawStatus as DesignerWorkStatus : undefined;
+  const page = Math.max(1, Number(params.get("page")) || 1); const activeSort = params.get("sort") === "newest" ? "newest" : "fifo";
+  const rangeIntent = intent(params); const range = resolveActivityDateRange(rangeIntent);
+  const historyQuery = { page, limit: 20, search: params.get("search")?.trim() || undefined, sort: params.get("sort") === "oldest" ? "oldest" as const : "newest" as const, dateFrom: range.dateFrom, dateTo: range.dateTo };
+  const workspaces = useWorkspaces(); const workspace = workspaces.data?.data.workspaces.find((item) => item.id === workspaceId); const hasRole = workspace?.membership.roles.includes("DESIGNER") ?? false;
+  const queue = useDesignerWorkQueue(workspaceId, { limit: 20, page, status, sort: activeSort }, hasRole && !isCompleted);
+  const summary = useDesignerSummary(workspaceId, { dateFrom: range.dateFrom, dateTo: range.dateTo }, hasRole && range.isValid);
+  const history = useDesignerHistory(workspaceId, historyQuery, hasRole && isCompleted && range.isValid);
+  const start = useStartDesignWork(workspaceId); const correction = useStartCorrection(workspaceId); const report = useReportDesignIssue(workspaceId); const [issueWork, setIssueWork] = useState<DesignerWorkItem | null>(null);
+  const update = (changes: Record<string, string | undefined>) => { const next = new URLSearchParams(params.toString()); Object.entries(changes).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key)); const query = next.toString(); router.push(query ? `${pathname}?${query}` : pathname); };
+  const selectStatus = (next: DesignerWorkStatus | "completed" | undefined) => { if (next === "completed") update({ status: "completed", page: undefined, sort: undefined }); else update({ status: next, page: undefined, sort: undefined, search: undefined, range: undefined, from: undefined, to: undefined }); };
+  const updateHistory = (changes: Partial<typeof historyQuery> & Partial<ActivityDateRangeIntent>) => { const mapped: Record<string, string | undefined> = { page: changes.page && changes.page > 1 ? String(changes.page) : undefined, search: changes.search, sort: changes.sort === "oldest" ? "oldest" : changes.sort === "newest" ? undefined : undefined }; if (changes.range !== undefined) { mapped.range = changes.range === "all" ? undefined : changes.range; if (changes.range !== "custom") { mapped.from = undefined; mapped.to = undefined; } } if (changes.from !== undefined) mapped.from = changes.from; if (changes.to !== undefined) mapped.to = changes.to; update(mapped); };
+  const actionError = (error: unknown, fallback: string) => error instanceof ApiError && error.status === 409 ? `${error.message} The queue has been refreshed.` : error instanceof Error ? error.message : fallback;
+  const doStart = async (item: DesignerWorkItem) => { try { await start.mutateAsync(item.researchItem.id); toast.success("Design work started."); router.push(`/w/${workspaceId}/design/${item.researchItem.id}`); } catch (error) { toast.error(actionError(error, "Unable to start work.")); if (error instanceof ApiError && error.status === 409) void queue.refetch(); } };
+  const doCorrection = async (item: DesignerWorkItem) => { try { await correction.mutateAsync(item.researchItem.id); toast.success("Correction work started."); } catch (error) { toast.error(actionError(error, "Unable to start correction.")); if (error instanceof ApiError && error.status === 409) void queue.refetch(); } };
+  const doReport = async (values: ReportIssueFormValues) => { if (!issueWork) return; try { await report.mutateAsync({ researchItemId: issueWork.researchItem.id, values }); toast.success("Design issue reported. Waiting for Admin action."); setIssueWork(null); } catch (error) { toast.error(actionError(error, "Unable to report the issue.")); } };
+  const completedBadge = getCompletedBadgeLabel(rangeIntent.range);
+  return <div className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8"><header className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">Designer workflow</p><h1 className="mt-1 flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl"><Palette className="size-6 text-primary" />My Work</h1><p className="mt-1 max-w-2xl text-sm text-muted-foreground">Your design assignments and completed history.</p></div>{summary.data ? <CountBadge count={isCompleted ? summary.data.data.completed.filtered : summary.data.data.active.total} label={isCompleted ? completedBadge.label : "active assignment"} pluralLabel={isCompleted ? completedBadge.pluralLabel : "active assignments"} /> : null}</header>{summary.data ? <section aria-label="Design activity summary" className="flex flex-wrap gap-2"><button className="rounded-md border bg-card p-2 text-left text-xs" onClick={() => selectStatus(undefined)} type="button">Active <strong className="ml-1">{summary.data.data.active.total}</strong></button><button className="rounded-md border bg-card p-2 text-left text-xs" onClick={() => selectStatus("DESIGN_REVIEW")} type="button">In Review <strong className="ml-1">{summary.data.data.active.inReview}</strong></button><button className="rounded-md border bg-card p-2 text-left text-xs" onClick={() => selectStatus("CORRECTION_NEEDED")} type="button">Corrections <strong className="ml-1">{summary.data.data.active.correctionsNeeded}</strong></button><button className="rounded-md border bg-card p-2 text-left text-xs" onClick={() => selectStatus("completed")} type="button">Completed <strong className="ml-1">{summary.data.data.completed.allTime}</strong></button></section> : null}{workspace ? <WorkerAssignmentStatusBanner membership={workspace.membership} role="DESIGNER" /> : null}<DesignerWorkFilters onSortChange={(sort) => update({ sort: sort === "fifo" ? undefined : sort, page: undefined })} onStatusChange={selectStatus} sort={activeSort} status={isCompleted ? "completed" : status} />{isCompleted ? <><FilterToolbarLayout hasActiveFilters={Boolean(historyQuery.search || historyQuery.sort === "oldest" || rangeIntent.range !== "all")} onClearFilters={() => updateHistory({ search: "", sort: "newest", range: "all" })} searchSlot={<FilterSearchInput onSearch={(search) => updateHistory({ search: search.trim() })} placeholder="Search completed designs" value={historyQuery.search ?? ""} />}><ActivityDateRangeFilter {...rangeIntent} onChange={updateHistory} /><select aria-label="Sort completed designs" className="h-9 rounded-md border border-input bg-background px-2.5 text-xs" onChange={(event) => updateHistory({ sort: event.target.value as "newest" | "oldest" })} value={historyQuery.sort}><option value="newest">Newest completed</option><option value="oldest">Oldest completed</option></select></FilterToolbarLayout><p className="text-xs text-muted-foreground">Date range applies to completed history; active counts are current.</p><DesignerCompletedList data={history.data?.data} isError={history.isError} isLoading={history.isLoading} onPageChange={(next) => updateHistory({ page: next })} onReset={() => updateHistory({ search: "", sort: "newest", range: "all" })} onRetry={() => void history.refetch()} workspaceId={workspaceId} /></> : <DesignerWorkList availabilityState={workspace ? getAssignmentAvailabilityState(workspace.membership, "DESIGNER") : "AVAILABLE"} data={queue.data?.data} filtersActive={Boolean(status)} isError={queue.isError} isLoading={queue.isLoading || workspaces.isLoading} onOpenWork={(item) => router.push(`/w/${workspaceId}/design/${item.researchItem.id}`)} onPageChange={(next) => update({ page: String(next) })} onReportIssue={setIssueWork} onRetry={() => void queue.refetch()} onStartCorrection={(item) => void doCorrection(item)} onStartWork={(item) => void doStart(item)} startingCorrectionItemId={correction.isPending ? correction.variables : undefined} startingWorkItemId={start.isPending ? start.variables : undefined} workspaceId={workspaceId} />} {!isCompleted ? <ReportIssueDialog isSubmitting={report.isPending} onOpenChange={(open) => !open && setIssueWork(null)} onSubmit={(values) => void doReport(values)} open={issueWork !== null} workTitle={issueWork?.researchItem.title || `Etsy Listing #${issueWork?.researchItem.etsyListingId ?? ""}`} /> : null}</div>;
 }
