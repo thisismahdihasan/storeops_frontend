@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, Copy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -95,9 +95,8 @@ export function ListingDetailView({
   if (!detailQuery.data) return <ListingDetailSkeleton />;
 
   const detail = detailQuery.data.data;
-  const title =
-    detail.researchItem.title ||
-    `Etsy Listing #${detail.researchItem.etsyListingId}`;
+  const storedTitle = detail.researchItem.title;
+  const title = storedTitle || `Etsy Listing #${detail.researchItem.etsyListingId}`;
   const statusMeta = getListingStatusMeta(detail.researchItem.status);
 
   const handleStart = async () => {
@@ -125,6 +124,17 @@ export function ListingDetailView({
     }
   };
 
+  const handleCopyTitle = async () => {
+    if (!storedTitle) return;
+
+    try {
+      await navigator.clipboard.writeText(storedTitle);
+      toast.success("Listing title copied");
+    } catch {
+      toast.error("Could not copy listing title");
+    }
+  };
+
   return (
     <main className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
       <header className="space-y-4 border-b border-border pb-5">
@@ -141,9 +151,24 @@ export function ListingDetailView({
             <p className="font-mono text-xs text-muted-foreground">
               Etsy #{detail.researchItem.etsyListingId}
             </p>
-            <h1 className="mt-1 break-words text-2xl font-bold tracking-tight sm:text-3xl">
-              {title}
-            </h1>
+            <div className="mt-1 flex min-w-0 items-start gap-2">
+              <h1 className="min-w-0 flex-1 break-words text-2xl font-bold tracking-tight sm:text-3xl">
+                {title}
+              </h1>
+              {storedTitle && (
+                <Button
+                  aria-label="Copy listing title"
+                  className="shrink-0"
+                  onClick={() => void handleCopyTitle()}
+                  size="icon-sm"
+                  title="Copy listing title"
+                  type="button"
+                  variant="outline"
+                >
+                  <Copy className="size-3.5" />
+                </Button>
+              )}
+            </div>
           </div>
           <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
         </div>

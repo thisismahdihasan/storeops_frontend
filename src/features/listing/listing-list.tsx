@@ -93,6 +93,8 @@ export function ListingList({
 function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceId: string }) {
   const { researchItem } = item;
   const title = researchItem.title?.trim() || null;
+  const displayTitle =
+    researchItem.title || `Etsy Listing #${researchItem.etsyListingId}`;
   const statusMeta = getListingStatusMeta(researchItem.status);
   const isReady = researchItem.status === "READY_FOR_LISTING";
   const detailActionLabel = isReady ? "Open" : "Continue";
@@ -163,11 +165,9 @@ function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceI
             </p>
             <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
           </div>
-          {title ? (
-            <h2 className="break-words text-xs font-medium leading-snug">
-              {title}
-            </h2>
-          ) : null}
+          <h2 className="break-words text-xs font-medium leading-snug">
+            {displayTitle}
+          </h2>
         </div>
 
         <div className="grid grid-cols-2 items-center gap-1.5 pt-0.5 @[320px]:flex @[320px]:justify-between">
