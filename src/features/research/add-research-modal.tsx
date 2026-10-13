@@ -81,8 +81,9 @@ export function AddResearchModal({
   const lastPreviewedUrlRef = useRef<string>("");
   const previewRequestIdRef = useRef(0);
 
-  // Manual image state for when Etsy image is missing
+  // Manual image state for fallback and optional Etsy-image overrides.
   const [manualFile, setManualFile] = useState<File | null>(null);
+  const [isManualOverrideOpen, setIsManualOverrideOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -105,6 +106,7 @@ export function AddResearchModal({
       setPreviewResult(null);
       setPreviewError(null);
       setManualFile(null);
+      setIsManualOverrideOpen(false);
       setSubmitError(null);
       lastPreviewedUrlRef.current = "";
       resetPreview();
@@ -180,6 +182,7 @@ export function AddResearchModal({
       lastPreviewedUrlRef.current = "";
       setPreviewResult(null);
       setManualFile(null);
+      setIsManualOverrideOpen(false);
       form.setValue("targetProduct", "", { shouldDirty: false });
     }
 
@@ -277,6 +280,8 @@ export function AddResearchModal({
   const isReuse = previewResult?.alreadyExists === true;
   const hasAutoImage = Boolean(previewResult?.referenceImageUrl);
   const hasImage = hasAutoImage || Boolean(manualFile);
+  const showManualPicker =
+    !hasAutoImage || isManualOverrideOpen || Boolean(manualFile);
   const canSubmit =
     Boolean(previewResult) &&
     (previewResult?.alreadyExists ? previewResult.canAddAgain : true);
@@ -285,6 +290,12 @@ export function AddResearchModal({
     isPreviewLoading ||
     !canSubmit ||
     !hasImage;
+
+  const handleRevertToEtsyImage = () => {
+    setManualFile(null);
+    setIsManualOverrideOpen(false);
+    setSubmitError(null);
+  };
 
   return (
     <>
@@ -510,22 +521,65 @@ export function AddResearchModal({
                       </div>
 
                       {/* Image Availability State */}
-                      {hasAutoImage ? (
+                      {hasAutoImage && manualFile ? (
+                        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-400">
+                          <div>
+                            <p className="font-medium">Manual override active</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              This image will be used instead of the Etsy image.
+                            </p>
+                          </div>
+                          <Button
+                            className="ml-auto"
+                            disabled={isCreating}
+                            onClick={handleRevertToEtsyImage}
+                            size="xs"
+                            type="button"
+                            variant="outline"
+                          >
+                            Use Etsy Image
+                          </Button>
+                        </div>
+                      ) : hasAutoImage ? (
                         <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                           <CheckCircle2 className="size-3.5" />
                           <span>Reference image detected from Etsy</span>
+                          {!isManualOverrideOpen && (
+                            <Button
+                              disabled={isCreating}
+                              onClick={() => setIsManualOverrideOpen(true)}
+                              size="xs"
+                              type="button"
+                              variant="outline"
+                            >
+                              Choose Manual Image
+                            </Button>
+                          )}
                         </div>
                       ) : null}
                     </div>
                   </div>
                 </div>
 
-                {/* Section 4: Inline Manual Image Picker (Shown ONLY when Etsy image is missing) */}
-                {!hasAutoImage && (
+                {/* Section 4: Inline manual image fallback or override picker */}
+                {showManualPicker && (
                   <div className="space-y-2 rounded-xl border border-border bg-card p-4">
-                    <p className="text-xs font-semibold text-foreground">
-                      Upload Reference Image
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-foreground">
+                        {hasAutoImage ? "Manual Reference Image" : "Upload Reference Image"}
+                      </p>
+                      {hasAutoImage && isManualOverrideOpen && !manualFile && (
+                        <Button
+                          disabled={isCreating}
+                          onClick={() => setIsManualOverrideOpen(false)}
+                          size="xs"
+                          type="button"
+                          variant="outline"
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
                     <p className="text-[11px] text-muted-foreground">
                       Attach a clear visual reference image for designers (JPEG, PNG, or WebP up to 10MB).
                     </p>
@@ -535,7 +589,10 @@ export function AddResearchModal({
                         id="inline-research-image-picker"
                         onChange={(file) => {
                           setManualFile(file);
-                          if (file) setSubmitError(null);
+                          if (file) {
+                            setSubmitError(null);
+                            setIsManualOverrideOpen(true);
+                          }
                         }}
                         value={manualFile}
                       />
