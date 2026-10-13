@@ -8,6 +8,7 @@ import { designerWorkKeys } from "@/features/designer-work/use-designer-work";
 import { listingKeys } from "@/features/listing/listing.keys";
 import { notificationKeys } from "@/features/notifications/notifications.keys";
 import { researchKeys } from "@/features/research/use-research";
+import { roleActivityKeys } from "@/features/role-activity/role-activity.keys";
 import { ApiError } from "@/lib/api";
 
 import { getDesignDetail, postDesignAction, uploadReview } from "./design-workspace.api";
@@ -30,10 +31,14 @@ function useDesignInvalidation(workspaceId: string, researchItemId: string) {
   return (includeDashboard = false, includeHandoff = false) => {
     void queryClient.invalidateQueries({ queryKey: designWorkspaceKeys.detail(workspaceId, researchItemId) });
     void queryClient.invalidateQueries({ queryKey: designerWorkKeys.queues(workspaceId) });
+    void queryClient.invalidateQueries({ queryKey: roleActivityKeys.designerSummaries(workspaceId) });
     void queryClient.invalidateQueries({ queryKey: researchKeys.detail(workspaceId, researchItemId) });
     if (includeDashboard) void queryClient.invalidateQueries({ queryKey: ["dashboard", workspaceId] });
     if (includeHandoff) {
       void queryClient.invalidateQueries({ queryKey: listingKeys.queues(workspaceId) });
+      void queryClient.invalidateQueries({ queryKey: roleActivityKeys.designerHistories(workspaceId) });
+      void queryClient.invalidateQueries({ queryKey: roleActivityKeys.listerSummaries(workspaceId) });
+      void queryClient.invalidateQueries({ queryKey: roleActivityKeys.researcherSummaries(workspaceId) });
       void queryClient.invalidateQueries({ queryKey: notificationKeys.all(workspaceId) });
     }
   };

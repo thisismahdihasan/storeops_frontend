@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { listingKeys } from "@/features/listing/listing.keys";
 import { notificationKeys } from "@/features/notifications/notifications.keys";
+import { roleActivityKeys } from "@/features/role-activity/role-activity.keys";
 
 import {
   assignLister,
@@ -57,6 +58,9 @@ export function useAssignLister(workspaceId: string) {
         queryKey: listingKeys.queues(workspaceId),
       });
       void queryClient.invalidateQueries({
+        queryKey: roleActivityKeys.listerSummaries(workspaceId),
+      });
+      void queryClient.invalidateQueries({
         queryKey: ["dashboard", workspaceId],
       });
       void queryClient.invalidateQueries({
@@ -81,6 +85,9 @@ export function useBulkAssignListers(workspaceId: string) {
       });
       void queryClient.invalidateQueries({
         queryKey: listingKeys.queues(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: roleActivityKeys.listerSummaries(workspaceId),
       });
       void queryClient.invalidateQueries({
         queryKey: ["dashboard", workspaceId],

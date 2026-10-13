@@ -7,6 +7,7 @@ import {
   reassignResearchDesigner,
 } from "@/features/research/research.api";
 import { researchKeys } from "@/features/research/use-research";
+import { roleActivityKeys } from "@/features/role-activity/role-activity.keys";
 import type { IssueListFilterParams } from "@/features/research/research.types";
 import { ApiError } from "@/lib/api";
 
@@ -56,6 +57,9 @@ export function useReassignIssue(workspaceId: string) {
       });
       void queryClient.invalidateQueries({
         queryKey: ["designer-work", workspaceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: roleActivityKeys.designerSummaries(workspaceId),
       });
       void queryClient.invalidateQueries({
         queryKey: ["design-workspace", workspaceId],

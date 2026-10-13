@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { researchKeys } from "@/features/research/use-research";
+import { roleActivityKeys } from "@/features/role-activity/role-activity.keys";
 import { ApiError } from "@/lib/api";
 
 import {
@@ -29,6 +30,9 @@ export function useBackfillListingAssignments(workspaceId: string) {
       });
       void queryClient.invalidateQueries({
         queryKey: researchKeys.details(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: roleActivityKeys.listerSummaries(workspaceId),
       });
       void queryClient.invalidateQueries({
         queryKey: ["dashboard", workspaceId],
@@ -82,7 +86,7 @@ function useListingInvalidation(
 ) {
   const queryClient = useQueryClient();
 
-  return (refetchDetail: boolean) => {
+  return (refetchDetail: boolean, includesCompletion = false) => {
     void queryClient.invalidateQueries({
       queryKey: listingKeys.queues(workspaceId),
     });
@@ -96,6 +100,17 @@ function useListingInvalidation(
     void queryClient.invalidateQueries({
       queryKey: researchKeys.detail(workspaceId, researchItemId),
     });
+    void queryClient.invalidateQueries({
+      queryKey: roleActivityKeys.listerSummaries(workspaceId),
+    });
+    if (includesCompletion) {
+      void queryClient.invalidateQueries({
+        queryKey: roleActivityKeys.listerHistories(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: roleActivityKeys.researcherSummaries(workspaceId),
+      });
+    }
     void queryClient.invalidateQueries({
       queryKey: ["dashboard", workspaceId],
     });
@@ -127,8 +142,8 @@ export function useCompleteListing(
     mutationFn: (values: CompleteListingFormValues) =>
       completeListing(workspaceId, researchItemId, values),
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 409) invalidate(true);
+      if (error instanceof ApiError && error.status === 409) invalidate(true, true);
     },
-    onSuccess: () => invalidate(false),
+    onSuccess: () => invalidate(false, true),
   });
 }

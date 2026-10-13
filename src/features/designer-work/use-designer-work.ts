@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api";
 import { researchKeys } from "@/features/research/use-research";
+import { roleActivityKeys } from "@/features/role-activity/role-activity.keys";
 
 import { getDesignerWorkQueue, reportDesignIssue, startCorrection, startDesignWork } from "./designer-work.api";
 import type { DesignerWorkFilters, ReportIssueFormValues } from "./designer-work.types";
@@ -22,6 +23,7 @@ function useDesignerWorkInvalidation(workspaceId: string) {
   const queryClient = useQueryClient();
   return (researchItemId: string, includeDashboard = false) => {
     void queryClient.invalidateQueries({ queryKey: designerWorkKeys.queues(workspaceId) });
+    void queryClient.invalidateQueries({ queryKey: roleActivityKeys.designerSummaries(workspaceId) });
     void queryClient.invalidateQueries({ queryKey: researchKeys.detail(workspaceId, researchItemId) });
     if (includeDashboard) void queryClient.invalidateQueries({ queryKey: ["dashboard", workspaceId] });
   };

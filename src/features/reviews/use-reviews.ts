@@ -6,6 +6,7 @@ import { dashboardKeys } from "@/features/dashboard/use-dashboard";
 import { designWorkspaceKeys } from "@/features/design-workspace/use-design-workspace";
 import { designerWorkKeys } from "@/features/designer-work/use-designer-work";
 import { researchKeys } from "@/features/research/use-research";
+import { roleActivityKeys } from "@/features/role-activity/role-activity.keys";
 import { ApiError } from "@/lib/api";
 
 import {
@@ -115,6 +116,11 @@ export function useReviewActionInvalidation(workspaceId: string) {
     invalidations.push(
       queryClient.invalidateQueries({
         queryKey: designerWorkKeys.queues(workspaceId),
+      }),
+    );
+    invalidations.push(
+      queryClient.invalidateQueries({
+        queryKey: roleActivityKeys.designerSummaries(workspaceId),
       }),
     );
 
