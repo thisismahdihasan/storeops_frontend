@@ -198,6 +198,12 @@ export const etsyListingUrlSchema = z
 // Client-side validation schema for Add Research form
 export const createResearchFormSchema = z.object({
   etsyUrl: etsyListingUrlSchema,
+  targetProduct: z
+    .string()
+    .trim()
+    .max(100, "Product / Use cannot exceed 100 characters")
+    .optional()
+    .default(""),
 });
 
 export const bulkAssignResearchResponseSchema = z.object({

@@ -8,7 +8,6 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
-  Calendar,
   CheckCircle2,
   ExternalLink,
   ImageIcon,
@@ -16,7 +15,6 @@ import {
   Plus,
   RefreshCw,
   Search,
-  User,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,22 +29,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { ApiError } from "@/lib/api";
 import { etsyExternalInlineClass } from "@/lib/etsy-styles";
 import { cn } from "@/lib/utils";
-import { DuplicateAlertModal } from "./duplicate-alert-modal";
 import { ReferenceImagePicker } from "./reference-image-picker";
 import { DuplicateResearchError } from "./research.api";
 import {
   createResearchFormSchema,
   etsyListingUrlSchema,
 } from "./research.schemas";
-import type {
-  DuplicateResearchData,
-  PreviewResearchResult,
-  ResearchStatus,
-} from "./research.types";
+import type { PreviewResearchResult } from "./research.types";
 import { useCreateResearchItem, usePreviewResearch } from "./use-research";
 
 export type AddResearchModalProps = {
@@ -56,38 +48,16 @@ export type AddResearchModalProps = {
 
 type AddResearchFormValues = {
   etsyUrl: string;
+  targetProduct?: string;
+};
+
+type AddResearchFormOutput = {
+  etsyUrl: string;
+  targetProduct: string;
 };
 
 function isValidEtsyListingUrl(url: string): boolean {
   return etsyListingUrlSchema.safeParse(url).success;
-}
-
-function getStatusTone(
-  status: ResearchStatus
-): "danger" | "info" | "neutral" | "success" | "warning" {
-  switch (status) {
-    case "CORRECTION_NEEDED":
-      return "warning";
-    case "ISSUE_REPORTED":
-      return "danger";
-    case "DESIGN_APPROVED":
-    case "LISTED":
-      return "success";
-    case "DESIGN_IN_PROGRESS":
-    case "DESIGN_REVIEW":
-    case "READY_FOR_LISTING":
-    case "LISTING_IN_PROGRESS":
-      return "info";
-    default:
-      return "neutral";
-  }
-}
-
-function formatStatusLabel(status: ResearchStatus): string {
-  return status
-    .split("_")
-    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(" ");
 }
 
 export function AddResearchModal({
@@ -95,8 +65,8 @@ export function AddResearchModal({
   workspaceId,
 }: AddResearchModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const form = useForm<AddResearchFormValues>({
-    defaultValues: { etsyUrl: "" },
+  const form = useForm<AddResearchFormValues, unknown, AddResearchFormOutput>({
+    defaultValues: { etsyUrl: "", targetProduct: "" },
     mode: "onChange",
     reValidateMode: "onChange",
     resolver: zodResolver(createResearchFormSchema),
@@ -114,10 +84,6 @@ export function AddResearchModal({
   const [manualFile, setManualFile] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Fallback 409 duplicate state (race condition during create)
-  const [raceConditionDuplicate, setRaceConditionDuplicate] =
-    useState<DuplicateResearchData | null>(null);
-
   const {
     isPending: isPreviewLoading,
     mutateAsync: previewResearch,
@@ -134,12 +100,11 @@ export function AddResearchModal({
     setIsOpen(open);
     if (!open) {
       previewRequestIdRef.current += 1;
-      form.reset({ etsyUrl: "" });
+      form.reset({ etsyUrl: "", targetProduct: "" });
       setPreviewResult(null);
       setPreviewError(null);
       setManualFile(null);
       setSubmitError(null);
-      setRaceConditionDuplicate(null);
       lastPreviewedUrlRef.current = "";
       resetPreview();
       resetCreate();
@@ -214,6 +179,7 @@ export function AddResearchModal({
       lastPreviewedUrlRef.current = "";
       setPreviewResult(null);
       setManualFile(null);
+      form.setValue("targetProduct", "", { shouldDirty: false });
     }
 
     form.setValue("etsyUrl", val, {
@@ -245,11 +211,15 @@ export function AddResearchModal({
     }
 
     setSubmitError(null);
+    const targetProduct = (form.getValues("targetProduct") ?? "").trim();
+    const isReuse = previewResult?.alreadyExists === true;
 
     try {
       const result = await createResearchItem({
         etsyUrl: targetUrl,
         image: manualFile || undefined,
+        reuseReference: isReuse,
+        targetProduct: targetProduct || undefined,
       });
 
       const newItem = result.data.researchItem;
@@ -262,8 +232,26 @@ export function AddResearchModal({
       toast.success(assignmentMessage);
       handleOpenChange(false);
     } catch (error) {
-      if (error instanceof DuplicateResearchError) {
-        setRaceConditionDuplicate(error.duplicateData);
+      const isRapidSubmissionGuard =
+        error instanceof ApiError &&
+        error.status === 409 &&
+        (error.data as { code?: string } | undefined)?.code ===
+          "RAPID_SUBMISSION_GUARD";
+
+      if (isRapidSubmissionGuard) {
+        setSubmitError(error.message);
+        toast.error(error.message);
+        return;
+      }
+
+      if (
+        error instanceof DuplicateResearchError ||
+        (error instanceof ApiError && error.status === 409)
+      ) {
+        toast.info(
+          "This reference was already added to the workspace. You can choose to Add Again.",
+        );
+        await executePreview(targetUrl);
         return;
       }
 
@@ -285,16 +273,17 @@ export function AddResearchModal({
 
   const urlError = form.formState.errors.etsyUrl?.message;
   const isEtsyUrlValid = isValidEtsyListingUrl(etsyUrl);
-  const isDuplicate = previewResult?.alreadyExists === true;
-  const duplicateInfo = previewResult?.duplicate;
-
+  const isReuse = previewResult?.alreadyExists === true;
   const hasAutoImage = Boolean(previewResult?.referenceImageUrl);
+  const hasImage = hasAutoImage || Boolean(manualFile);
+  const canSubmit =
+    Boolean(previewResult) &&
+    (previewResult?.alreadyExists ? previewResult.canAddAgain : true);
   const isAddDisabled =
     isCreating ||
     isPreviewLoading ||
-    !previewResult ||
-    isDuplicate ||
-    (!hasAutoImage && !manualFile);
+    !canSubmit ||
+    !hasImage;
 
   return (
     <>
@@ -316,7 +305,7 @@ export function AddResearchModal({
                 Add Research Item
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Paste an Etsy product listing URL. We will check the listing and verify for duplicates before creation.
+                Paste an Etsy product listing URL. We will check the listing before creation.
               </DialogDescription>
             </DialogHeader>
 
@@ -343,7 +332,7 @@ export function AddResearchModal({
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        if (previewResult && !isDuplicate && !isAddDisabled) {
+                        if (previewResult && !isAddDisabled) {
                           void handleCreate();
                         } else if (isValidEtsyListingUrl(etsyUrl)) {
                           void executePreview(etsyUrl);
@@ -386,6 +375,48 @@ export function AddResearchModal({
               )}
             </div>
 
+            {previewResult && isReuse && !isPreviewLoading && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs">
+                <div className="flex items-center gap-2 font-semibold text-amber-700 dark:text-amber-400">
+                  <AlertCircle className="size-4 shrink-0" />
+                  <span>Reference Already Used</span>
+                </div>
+                {previewResult.canViewUsageDetails ? (
+                  <p className="mt-2 text-muted-foreground">
+                    Used {previewResult.usageCount} times in this workspace.
+                  </p>
+                ) : previewResult.currentUserUsageCount > 0 &&
+                  previewResult.currentUserLatestOccurrence ? (
+                  <div className="mt-2 space-y-3 text-muted-foreground">
+                    <p>
+                      Used {previewResult.usageCount} times in this workspace. You last added it on {new Date(previewResult.currentUserLatestOccurrence.createdAt).toLocaleDateString()}
+                      {previewResult.currentUserLatestOccurrence.targetProduct
+                        ? ` for ${previewResult.currentUserLatestOccurrence.targetProduct}`
+                        : ""}.
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        handleOpenChange(false);
+                        onOpenExistingDetail(
+                          previewResult.currentUserLatestOccurrence!.researchItemId,
+                        );
+                      }}
+                      className="gap-1.5"
+                    >
+                      <span>View Your Previous Item</span>
+                      <ArrowRight className="size-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-muted-foreground">
+                    This reference has already been used {previewResult.usageCount} times in this workspace.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Preview Loading State */}
             {isPreviewLoading && (
               <div className="flex h-32 items-center justify-center rounded-xl border border-border bg-muted/20">
@@ -422,77 +453,8 @@ export function AddResearchModal({
               </div>
             )}
 
-            {/* Preview Result: Duplicate State */}
-            {previewResult && isDuplicate && !isPreviewLoading && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
-                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-semibold text-xs">
-                  <AlertCircle className="size-4 shrink-0" />
-                  <span>{duplicateInfo ? "Listing Already Exists in Workspace" : "Already added"}</span>
-                </div>
-
-                <p className="text-xs text-muted-foreground">
-                  {duplicateInfo
-                    ? "This Etsy listing was already added to this workspace. Adding duplicates is not allowed."
-                    : "This Etsy listing has already been added to this workspace."}
-                </p>
-
-                {!duplicateInfo && (
-                  <p className="text-xs text-muted-foreground">
-                    You can’t add the same listing twice.
-                  </p>
-                )}
-
-                {duplicateInfo && (
-                  <>
-                    <div className="space-y-2 rounded-lg border border-border bg-card/70 p-3 text-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Status:</span>
-                        <StatusBadge
-                          label={formatStatusLabel(duplicateInfo.currentStatus)}
-                          tone={getStatusTone(duplicateInfo.currentStatus)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-1.5 text-muted-foreground">
-                          <User className="size-3.5" />
-                          <span>Added by:</span>
-                        </span>
-                        <span className="font-medium text-foreground">
-                          {duplicateInfo.createdBy.name || duplicateInfo.createdBy.email}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-1.5 text-muted-foreground">
-                          <Calendar className="size-3.5" />
-                          <span>Date added:</span>
-                        </span>
-                        <span className="text-foreground">
-                          {new Date(duplicateInfo.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end pt-1">
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => {
-                          handleOpenChange(false);
-                          onOpenExistingDetail(duplicateInfo.researchItemId);
-                        }}
-                        className="gap-1.5"
-                      >
-                        <span>View Existing Item</span>
-                        <ArrowRight className="size-3.5" />
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
             {/* Section 3: Listing Preview (Ready to add or requires manual image) */}
-            {previewResult && !isDuplicate && !isPreviewLoading && (
+            {previewResult && !isPreviewLoading && (
               <div className="space-y-4">
                 <div className="rounded-xl border border-border bg-muted/20 p-4">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -579,6 +541,24 @@ export function AddResearchModal({
               </div>
             )}
 
+            {previewResult && !isPreviewLoading && (
+              <div className="space-y-2">
+                <label
+                  htmlFor="research-target-product"
+                  className="text-xs font-medium text-foreground"
+                >
+                  Product / Use <span className="font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <Input
+                  id="research-target-product"
+                  placeholder="e.g. Mug, T-Shirt, Tote Bag, Poster"
+                  maxLength={100}
+                  disabled={isCreating}
+                  {...form.register("targetProduct")}
+                />
+              </div>
+            )}
+
             {/* Submission Error Alert */}
             {submitError && (
               <div
@@ -602,7 +582,7 @@ export function AddResearchModal({
                 Cancel
               </Button>
 
-              {previewResult && !isDuplicate && (
+              {previewResult && (
                 <Button
                   type="button"
                   size="sm"
@@ -618,7 +598,7 @@ export function AddResearchModal({
                   ) : (
                     <>
                       <Plus className="size-3.5" />
-                      <span>Add Research</span>
+                      <span>{isReuse ? "Add Again" : "Add Research"}</span>
                     </>
                   )}
                 </Button>
@@ -628,17 +608,6 @@ export function AddResearchModal({
         </DialogContent>
       </Dialog>
 
-      {/* Fallback race-condition duplicate alert modal */}
-      <DuplicateAlertModal
-        open={raceConditionDuplicate !== null}
-        duplicateData={raceConditionDuplicate}
-        onClose={() => setRaceConditionDuplicate(null)}
-        onViewExistingItem={(id) => {
-          setRaceConditionDuplicate(null);
-          handleOpenChange(false);
-          onOpenExistingDetail(id);
-        }}
-      />
     </>
   );
 }
