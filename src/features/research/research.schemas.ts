@@ -65,6 +65,7 @@ export const safeResearchItemSchema = z.object({
   originalUrl: z.string(),
   referenceImageUrl: z.string().nullable(),
   status: researchStatusSchema,
+  targetProduct: z.string().nullable(),
   title: z.string().nullable(),
   updatedAt: z.string(),
   workspaceId: z.string(),
@@ -89,8 +90,10 @@ export const researchItemListItemSchema = z.object({
   referenceImageUrl: z.string().nullable(),
   reviewActivity: researchReviewActivitySchema,
   status: researchStatusSchema,
+  targetProduct: z.string().nullable(),
   title: z.string().nullable(),
   updatedAt: z.string(),
+  usageCount: z.number().int().positive(),
   workspaceId: z.string(),
 });
 
@@ -141,6 +144,7 @@ export const researchDetailResponseSchema = z.object({
       originalUrl: z.string(),
       referenceImageUrl: z.string().nullable(),
       status: researchStatusSchema,
+      targetProduct: z.string().nullable(),
       title: z.string().nullable(),
       updatedAt: z.string(),
       workspaceId: z.string(),
@@ -205,20 +209,28 @@ export const bulkAssignResearchResponseSchema = z.object({
   success: z.literal(true),
 });
 
-export const previewDuplicateDataSchema = z.object({
-  createdAt: z.string(),
-  createdBy: userSummarySchema,
-  currentStatus: researchStatusSchema,
-  researchItemId: z.string(),
-});
-
 export const previewResearchResultSchema = z.object({
   alreadyExists: z.boolean(),
-  duplicate: previewDuplicateDataSchema.nullable(),
+  canAddAgain: z.boolean(),
+  canViewUsageDetails: z.boolean(),
+  currentUserLatestOccurrence: z.object({
+    createdAt: z.string(),
+    researchItemId: z.string(),
+    status: researchStatusSchema,
+    targetProduct: z.string().nullable(),
+  }).nullable(),
+  currentUserUsageCount: z.number().int().nonnegative(),
+  duplicate: z.object({
+    createdAt: z.string(),
+    createdBy: userSummarySchema,
+    currentStatus: researchStatusSchema,
+    researchItemId: z.string(),
+  }).nullable().optional(),
   etsyListingId: z.string(),
   normalizedUrl: z.string(),
   referenceImageUrl: z.string().nullable(),
   title: z.string().nullable(),
+  usageCount: z.number().int().nonnegative(),
 });
 
 export const previewResearchResponseSchema = z.object({
@@ -265,6 +277,24 @@ export const syncAssignmentsResponseSchema = z.object({
     assignedCount: z.number().int().nonnegative(),
     designerCount: z.number().int().nonnegative(),
     remainingUnassignedCount: z.number().int().nonnegative(),
+  }),
+  message: z.string(),
+  success: z.literal(true),
+});
+
+export const referenceHistoryResponseSchema = z.object({
+  data: z.object({
+    items: z.array(z.object({
+      createdAt: z.string(),
+      createdBy: z.object({
+        id: z.string(),
+        name: z.string().nullable(),
+      }),
+      id: z.string(),
+      status: researchStatusSchema,
+      targetProduct: z.string().nullable(),
+    })),
+    pagination: paginationMetaSchema,
   }),
   message: z.string(),
   success: z.literal(true),

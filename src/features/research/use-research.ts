@@ -15,6 +15,7 @@ import {
   deleteResearchItem,
   getResearchItemById,
   getResearchItems,
+  getReferenceUsageHistory,
   reassignResearchDesigner,
   previewResearchItem,
   syncResearchAssignments,
@@ -24,6 +25,7 @@ import {
 import type {
   BulkAssignResearchInput,
   CreateResearchInput,
+  ReferenceHistoryPaginationParams,
   ResearchListFilterParams,
 } from "./research.types";
 
@@ -44,6 +46,13 @@ export const researchKeys = {
     ["research", workspaceId, "list"] as const,
   referenceImage: (workspaceId: string, researchItemId: string) =>
     ["research", workspaceId, "reference-image", researchItemId] as const,
+  referenceHistories: (workspaceId: string) =>
+    ["research", workspaceId, "reference-history"] as const,
+  referenceHistory: (
+    workspaceId: string,
+    etsyListingId: string,
+    params: ReferenceHistoryPaginationParams = {},
+  ) => ["research", workspaceId, "reference-history", etsyListingId, params] as const,
   workspace: (workspaceId: string) =>
     ["research", workspaceId] as const,
 };
@@ -83,6 +92,23 @@ export function useResearchItemDetail(
   });
 }
 
+export function useReferenceUsageHistory(
+  workspaceId: string,
+  etsyListingId?: string | null,
+  params: ReferenceHistoryPaginationParams = {},
+  enabled = true,
+) {
+  const hasEtsyListingId = typeof etsyListingId === "string" && etsyListingId.length > 0;
+
+  return useQuery({
+    enabled: enabled && workspaceId.length > 0 && hasEtsyListingId,
+    queryFn: () => getReferenceUsageHistory(workspaceId, etsyListingId!, params),
+    queryKey: researchKeys.referenceHistory(workspaceId, etsyListingId ?? "", params),
+    retry: (failureCount, error) => !isAuthError(error) && failureCount < 1,
+    staleTime: 15_000,
+  });
+}
+
 export function useCreateResearchItem(workspaceId: string) {
   const queryClient = useQueryClient();
 
@@ -93,6 +119,9 @@ export function useCreateResearchItem(workspaceId: string) {
       // Invalidate research list
       void queryClient.invalidateQueries({
         queryKey: researchKeys.lists(workspaceId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: researchKeys.referenceHistories(workspaceId),
       });
       void queryClient.invalidateQueries({
         queryKey: roleActivityKeys.researcherSummaries(workspaceId),
@@ -313,5 +342,4 @@ export function useBulkAssignResearchDesigners(workspaceId: string) {
     },
   });
 }
-
 

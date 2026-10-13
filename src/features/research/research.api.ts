@@ -6,6 +6,7 @@ import {
   deleteResearchItemResponseSchema,
   duplicateResearchDataSchema,
   previewResearchResponseSchema,
+  referenceHistoryResponseSchema,
   reassignResearchResponseSchema,
   researchDetailResponseSchema,
   researchListResponseSchema,
@@ -26,6 +27,8 @@ import type {
   ResearchDetailResponse,
   ResearchListFilterParams,
   ResearchListResponse,
+  ReferenceHistoryPaginationParams,
+  ReferenceHistoryResponse,
   SyncAssignmentsResponse,
   UpdateResearchItemResponse,
   UploadReferenceImageResponse,
@@ -129,11 +132,21 @@ export async function createResearchItem(
       ? (() => {
           const formData = new FormData();
           formData.append("etsyUrl", input.etsyUrl.trim());
+          if (input.reuseReference) formData.append("reuseReference", "true");
+          if (input.targetProduct !== undefined && input.targetProduct !== null) {
+            formData.append("targetProduct", input.targetProduct);
+          }
           formData.append("image", manualImage);
           return { body: formData, method: "POST" as const };
         })()
       : {
-          json: { etsyUrl: input.etsyUrl.trim() },
+          json: {
+            etsyUrl: input.etsyUrl.trim(),
+            ...(input.reuseReference ? { reuseReference: true } : {}),
+            ...(input.targetProduct !== undefined
+              ? { targetProduct: input.targetProduct }
+              : {}),
+          },
           method: "POST" as const,
         };
 
@@ -175,6 +188,27 @@ export async function getResearchItems(
   const parsed = researchListResponseSchema.safeParse(response);
   if (!parsed.success) {
     throw new ApiError(502, "Unexpected research list response format.");
+  }
+
+  return parsed.data;
+}
+
+export async function getReferenceUsageHistory(
+  workspaceId: string,
+  etsyListingId: string,
+  params: ReferenceHistoryPaginationParams = {},
+): Promise<ReferenceHistoryResponse> {
+  const searchParams = new URLSearchParams();
+  if (params.page && params.page > 1) searchParams.set("page", String(params.page));
+  if (params.limit && params.limit !== 20) searchParams.set("limit", String(params.limit));
+  const query = searchParams.toString();
+  const response = await apiRequest<unknown>(
+    `/api/v1/workspaces/${workspaceId}/research-items/references/${etsyListingId}/history${query ? `?${query}` : ""}`,
+  );
+  const parsed = referenceHistoryResponseSchema.safeParse(response);
+
+  if (!parsed.success) {
+    throw new ApiError(502, "Unexpected reference usage history response format.");
   }
 
   return parsed.data;

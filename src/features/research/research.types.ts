@@ -61,6 +61,7 @@ export type SafeResearchItem = {
   originalUrl: string;
   referenceImageUrl: string | null;
   status: ResearchStatus;
+  targetProduct: string | null;
   title: string | null;
   updatedAt: string;
   workspaceId: string;
@@ -85,8 +86,10 @@ export type ResearchItemListItem = {
   referenceImageUrl: string | null;
   reviewActivity: ResearchReviewActivity;
   status: ResearchStatus;
+  targetProduct: string | null;
   title: string | null;
   updatedAt: string;
+  usageCount: number;
   workspaceId: string;
 };
 
@@ -102,6 +105,7 @@ export type ResearchItemDetail = {
   originalUrl: string;
   referenceImageUrl: string | null;
   status: ResearchStatus;
+  targetProduct: string | null;
   title: string | null;
   updatedAt: string;
   workspaceId: string;
@@ -165,6 +169,8 @@ export type BulkAssignResearchResponse = {
 export type CreateResearchInput = {
   etsyUrl: string;
   image?: File;
+  reuseReference?: boolean;
+  targetProduct?: string | null;
 };
 
 export type CreateResearchResponse = {
@@ -225,11 +231,21 @@ export type PreviewDuplicateData = {
 
 export type PreviewResearchResult = {
   alreadyExists: boolean;
-  duplicate: PreviewDuplicateData | null;
+  canAddAgain: boolean;
+  canViewUsageDetails: boolean;
+  currentUserLatestOccurrence: {
+    createdAt: string;
+    researchItemId: string;
+    status: ResearchStatus;
+    targetProduct: string | null;
+  } | null;
+  currentUserUsageCount: number;
+  duplicate?: PreviewDuplicateData | null;
   etsyListingId: string;
   normalizedUrl: string;
   referenceImageUrl: string | null;
   title: string | null;
+  usageCount: number;
 };
 
 export type PreviewResearchResponse = {
@@ -275,6 +291,33 @@ export type BacklogSyncResult = {
 
 export type SyncAssignmentsResponse = {
   data: BacklogSyncResult;
+  message: string;
+  success: true;
+};
+
+export type ReferenceHistoryItem = {
+  createdAt: string;
+  createdBy: {
+    id: string;
+    name: string | null;
+  };
+  id: string;
+  status: ResearchStatus;
+  targetProduct: string | null;
+};
+
+export type ReferenceHistoryPaginationParams = {
+  limit?: number;
+  page?: number;
+};
+
+export type ReferenceHistoryResult = {
+  items: ReferenceHistoryItem[];
+  pagination: PaginationMeta;
+};
+
+export type ReferenceHistoryResponse = {
+  data: ReferenceHistoryResult;
   message: string;
   success: true;
 };
