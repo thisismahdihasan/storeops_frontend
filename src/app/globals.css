@@ -161,6 +161,29 @@
   font-family: var(--font-stapel-display), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+.app-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted-foreground) transparent;
+}
+
+.app-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.app-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 9999px;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

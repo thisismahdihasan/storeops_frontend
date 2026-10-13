@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import {
   AlertCircle,
-  AlertTriangle,
   ArrowRight,
   CheckCircle2,
   ExternalLink,
@@ -299,7 +298,7 @@ export function AddResearchModal({
           }
         />
 
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[85vh] overflow-y-auto p-6">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[85vh] overflow-y-auto app-scrollbar p-6">
           <div className="space-y-5">
             {/* Section 1: Header */}
             <DialogHeader>
@@ -391,11 +390,13 @@ export function AddResearchModal({
                         handleOpenChange(false);
                         onOpenReferenceHistory?.(previewResult.etsyListingId);
                       }}
+                      className="gap-1.5 border-amber-500/40 bg-background/80 text-foreground transition-colors hover:border-amber-500/60 hover:bg-amber-500/15"
                       size="sm"
                       type="button"
                       variant="outline"
                     >
-                      View Previous Uses ({previewResult.usageCount})
+                      <span>View Previous Uses ({previewResult.usageCount})</span>
+                      <ArrowRight className="size-3.5" />
                     </Button>
                   </div>
                 ) : previewResult.currentUserUsageCount > 0 &&
@@ -514,14 +515,7 @@ export function AddResearchModal({
                           <CheckCircle2 className="size-3.5" />
                           <span>Reference image detected from Etsy</span>
                         </div>
-                      ) : (
-                        <div className="mt-2 flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-400">
-                          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-                          <span>
-                            Reference image was not found on Etsy. Add an image below to continue.
-                          </span>
-                        </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>

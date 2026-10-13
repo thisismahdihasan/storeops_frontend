@@ -123,7 +123,7 @@ export function ResearchItemDetailModal({
   return (
     <>
       <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-        <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto p-6 sm:max-w-2xl">
+        <DialogContent className="app-scrollbar max-h-[90vh] max-w-xl overflow-y-auto p-6 sm:max-w-2xl">
           {detailQuery.isLoading && (
             <div className="flex h-64 flex-col items-center justify-center gap-3">
               <Loader2 className="size-6 animate-spin text-primary" />

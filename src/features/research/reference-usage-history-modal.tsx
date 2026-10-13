@@ -55,7 +55,7 @@ export function ReferenceUsageHistoryModal({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <DialogContent className="max-h-[85vh] w-[calc(100vw-2rem)] overflow-y-auto p-6 sm:max-w-2xl">
+      <DialogContent className="app-scrollbar max-h-[85vh] w-[calc(100vw-2rem)] overflow-y-auto p-6 sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Reference Usage History</DialogTitle>
           <DialogDescription>

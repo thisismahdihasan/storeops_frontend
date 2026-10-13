@@ -84,7 +84,7 @@ export function Sidebar({
       ) : null}
 
       {/* Navigation Groups */}
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 pt-6 pb-4">
+      <nav className="app-scrollbar min-h-0 flex-1 overflow-y-auto px-3 pt-6 pb-4">
         {navigationGroups.map((group, groupIdx) => (
           <div
             key={group.title}
