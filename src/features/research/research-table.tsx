@@ -27,10 +27,11 @@ import { calculateSerialNumber } from "@/lib/serial-number";
 import { cn } from "@/lib/utils";
 import { DeleteResearchItemDialog } from "./delete-research-item-dialog";
 import { ReferencePreview } from "./reference-preview";
+import { ReferenceUsageBadge } from "./reference-usage-badge";
+import { formatStatusLabel, getStatusTone } from "./research-status";
 import type {
   ResearchItemListItem,
   ResearchListResult,
-  ResearchStatus,
 } from "./research.types";
 
 export type ResearchTableProps = {
@@ -46,6 +47,7 @@ export type ResearchTableProps = {
   onToggleAllEligible: () => void;
   onToggleSelection: (researchItemId: string) => void;
   onOpenDetail: (researchItemId: string) => void;
+  onOpenReferenceHistory?: (etsyListingId: string) => void;
   onPageChange: (newPage: number) => void;
   onResetFilters: () => void;
   onRetry: () => void;
@@ -53,34 +55,6 @@ export type ResearchTableProps = {
   userRoles: WorkspaceRole[];
   workspaceId: string;
 };
-
-function getStatusTone(
-  status: ResearchStatus
-): "danger" | "info" | "neutral" | "success" | "warning" {
-  switch (status) {
-    case "CORRECTION_NEEDED":
-      return "warning";
-    case "ISSUE_REPORTED":
-      return "danger";
-    case "DESIGN_APPROVED":
-    case "LISTED":
-      return "success";
-    case "DESIGN_IN_PROGRESS":
-    case "DESIGN_REVIEW":
-    case "READY_FOR_LISTING":
-    case "LISTING_IN_PROGRESS":
-      return "info";
-    default:
-      return "neutral";
-  }
-}
-
-function formatStatusLabel(status: ResearchStatus): string {
-  return status
-    .split("_")
-    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(" ");
-}
 
 export function ResearchTable({
   data,
@@ -95,6 +69,7 @@ export function ResearchTable({
   onToggleAllEligible,
   onToggleSelection,
   onOpenDetail,
+  onOpenReferenceHistory,
   onPageChange,
   onResetFilters,
   onRetry,
@@ -103,6 +78,7 @@ export function ResearchTable({
   workspaceId,
 }: ResearchTableProps) {
   const isAdmin = isManagementContext && userRoles.includes("ADMIN");
+  const canViewReferenceHistory = userRoles.includes("ADMIN");
   const canCreate = !isManagementContext && userRoles.includes("RESEARCHER");
   const showStatus = isAdmin || canCreate;
   const [deleteTarget, setDeleteTarget] =
@@ -256,6 +232,7 @@ export function ResearchTable({
                   onDeleteItem={(target) => setDeleteTarget(target)}
                   onToggleSelection={onToggleSelection}
                   onOpenDetail={onOpenDetail}
+                  onOpenReferenceHistory={canViewReferenceHistory ? onOpenReferenceHistory : undefined}
                   serialNumber={calculateSerialNumber(index, pagination)}
                   showStatus={showStatus}
                   userCanUpload={canCreate}
@@ -329,6 +306,7 @@ function ResearchTableRow({
   onDeleteItem,
   onToggleSelection,
   onOpenDetail,
+  onOpenReferenceHistory,
   serialNumber,
   showStatus,
   userCanUpload,
@@ -342,6 +320,7 @@ function ResearchTableRow({
   onDeleteItem: (item: ResearchItemListItem) => void;
   onToggleSelection: (researchItemId: string) => void;
   onOpenDetail: (id: string) => void;
+  onOpenReferenceHistory?: (etsyListingId: string) => void;
   serialNumber: number;
   showStatus: boolean;
   userCanUpload: boolean;
@@ -405,6 +384,10 @@ function ResearchTableRow({
           </button>
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
             <span className="font-mono">#{item.etsyListingId}</span>
+            <ReferenceUsageBadge
+              onClick={onOpenReferenceHistory ? () => onOpenReferenceHistory(item.etsyListingId) : undefined}
+              usageCount={item.usageCount}
+            />
             {!isAdmin ? (
               <a
                 href={item.normalizedUrl}

@@ -43,6 +43,7 @@ import { useCreateResearchItem, usePreviewResearch } from "./use-research";
 
 export type AddResearchModalProps = {
   onOpenExistingDetail: (researchItemId: string) => void;
+  onOpenReferenceHistory?: (etsyListingId: string) => void;
   workspaceId: string;
 };
 
@@ -62,6 +63,7 @@ function isValidEtsyListingUrl(url: string): boolean {
 
 export function AddResearchModal({
   onOpenExistingDetail,
+  onOpenReferenceHistory,
   workspaceId,
 }: AddResearchModalProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -382,17 +384,25 @@ export function AddResearchModal({
                   <span>Reference Already Used</span>
                 </div>
                 {previewResult.canViewUsageDetails ? (
-                  <p className="mt-2 text-muted-foreground">
-                    Used {previewResult.usageCount} times in this workspace.
-                  </p>
+                  <div className="mt-2 space-y-3 text-muted-foreground">
+                    <p>Used {previewResult.usageCount} times in this workspace.</p>
+                    <Button
+                      onClick={() => {
+                        handleOpenChange(false);
+                        onOpenReferenceHistory?.(previewResult.etsyListingId);
+                      }}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      View Previous Uses ({previewResult.usageCount})
+                    </Button>
+                  </div>
                 ) : previewResult.currentUserUsageCount > 0 &&
                   previewResult.currentUserLatestOccurrence ? (
                   <div className="mt-2 space-y-3 text-muted-foreground">
                     <p>
-                      Used {previewResult.usageCount} times in this workspace. You last added it on {new Date(previewResult.currentUserLatestOccurrence.createdAt).toLocaleDateString()}
-                      {previewResult.currentUserLatestOccurrence.targetProduct
-                        ? ` for ${previewResult.currentUserLatestOccurrence.targetProduct}`
-                        : ""}.
+                      Used {previewResult.usageCount} times in this workspace. You last added it on {new Date(previewResult.currentUserLatestOccurrence.createdAt).toLocaleDateString()}.
                     </p>
                     <Button
                       type="button"

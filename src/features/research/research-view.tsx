@@ -17,6 +17,7 @@ import { AddResearchModal } from "./add-research-modal";
 import { parseResearchFiltersFromParams, ResearchFilters } from "./research-filters";
 import { ResearchItemDetailModal } from "./research-item-detail-modal";
 import { ResearchTable } from "./research-table";
+import { ReferenceUsageHistoryModal } from "./reference-usage-history-modal";
 import { SyncUnassignedButton } from "./sync-unassigned-button";
 import type { ResearchItemListItem } from "./research.types";
 import { useAssignResearchDesigner, useResearchItems } from "./use-research";
@@ -124,6 +125,8 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
   const summaryQuery = useResearcherSummary(workspaceId, { dateFrom: resolvedActivityRange.dateFrom, dateTo: resolvedActivityRange.dateTo }, isMyResearchContext && resolvedActivityRange.isValid);
 
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [historyEtsyListingId, setHistoryEtsyListingId] =
+    useState<string | null>(null);
   const [assignDesignerItem, setAssignDesignerItem] =
     useState<ResearchItemListItem | null>(null);
   const [researchSelection, setResearchSelection] = useState<ResearchSelectionState>({
@@ -289,6 +292,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
               <AddResearchModal
                 workspaceId={workspaceId}
                 onOpenExistingDetail={(id) => setSelectedItemId(id)}
+                onOpenReferenceHistory={setHistoryEtsyListingId}
               />
             )}
           </div>
@@ -356,6 +360,7 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
         userRoles={userRoles}
         hasActiveFilters={hasActiveFilters}
         onOpenDetail={(id) => setSelectedItemId(id)}
+        onOpenReferenceHistory={setHistoryEtsyListingId}
         onPageChange={handlePageChange}
         onResetFilters={handleResetFilters}
         onOpenAddModal={() => {
@@ -380,6 +385,18 @@ export function ResearchView({ workspaceId }: ResearchViewProps) {
         workspaceId={workspaceId}
         userRoles={userRoles}
         isManagementContext={isManagementContext}
+      />
+
+      <ReferenceUsageHistoryModal
+        etsyListingId={historyEtsyListingId}
+        key={historyEtsyListingId ?? "closed"}
+        onClose={() => setHistoryEtsyListingId(null)}
+        onOpenItemDetail={(id) => {
+          setHistoryEtsyListingId(null);
+          setSelectedItemId(id);
+        }}
+        open={historyEtsyListingId !== null}
+        workspaceId={workspaceId}
       />
 
       <AssignDesignerDialog
