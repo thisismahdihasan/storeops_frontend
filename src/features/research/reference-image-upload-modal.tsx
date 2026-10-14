@@ -19,7 +19,7 @@ import { useUploadReferenceImage } from "./use-research";
 export type ReferenceImageUploadModalProps = {
   description?: string;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (referenceImageUrl: string) => void;
+  onSuccess?: () => void;
   open: boolean;
   researchItemId: string;
   title?: string;
@@ -56,14 +56,14 @@ export function ReferenceImageUploadModal({
 
     try {
       setUploadError(null);
-      const result = await uploadMutation.mutateAsync({
+      await uploadMutation.mutateAsync({
         file: selectedFile,
         researchItemId,
       });
 
       toast.success("Reference image uploaded successfully.");
       handleOpenChange(false);
-      onSuccess?.(result.data.referenceImageUrl);
+      onSuccess?.();
     } catch (error) {
       const message =
         error instanceof Error

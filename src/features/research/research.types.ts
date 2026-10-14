@@ -60,6 +60,7 @@ export type SafeResearchItem = {
   normalizedUrl: string;
   originalUrl: string;
   referenceImageUrl: string | null;
+  hasReferenceImage: boolean;
   status: ResearchStatus;
   targetProduct: string | null;
   title: string | null;
@@ -84,6 +85,7 @@ export type ResearchItemListItem = {
   normalizedUrl: string;
   originalUrl: string;
   referenceImageUrl: string | null;
+  hasReferenceImage: boolean;
   reviewActivity: ResearchReviewActivity;
   status: ResearchStatus;
   targetProduct: string | null;
@@ -104,6 +106,7 @@ export type ResearchItemDetail = {
   normalizedUrl: string;
   originalUrl: string;
   referenceImageUrl: string | null;
+  hasReferenceImage: boolean;
   status: ResearchStatus;
   targetProduct: string | null;
   title: string | null;
@@ -256,7 +259,7 @@ export type PreviewResearchResponse = {
 
 export type UploadReferenceImageResponse = {
   data: {
-    referenceImageUrl: string;
+    hasReferenceImage: true;
     researchItemId: string;
   };
   message: string;

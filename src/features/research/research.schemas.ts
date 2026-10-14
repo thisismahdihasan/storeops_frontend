@@ -64,6 +64,7 @@ export const safeResearchItemSchema = z.object({
   normalizedUrl: z.string(),
   originalUrl: z.string(),
   referenceImageUrl: z.string().nullable(),
+  hasReferenceImage: z.boolean(),
   status: researchStatusSchema,
   targetProduct: z.string().nullable(),
   title: z.string().nullable(),
@@ -88,6 +89,7 @@ export const researchItemListItemSchema = z.object({
   normalizedUrl: z.string(),
   originalUrl: z.string(),
   referenceImageUrl: z.string().nullable(),
+  hasReferenceImage: z.boolean(),
   reviewActivity: researchReviewActivitySchema,
   status: researchStatusSchema,
   targetProduct: z.string().nullable(),
@@ -143,6 +145,7 @@ export const researchDetailResponseSchema = z.object({
       normalizedUrl: z.string(),
       originalUrl: z.string(),
       referenceImageUrl: z.string().nullable(),
+      hasReferenceImage: z.boolean(),
       status: researchStatusSchema,
       targetProduct: z.string().nullable(),
       title: z.string().nullable(),
@@ -247,7 +250,7 @@ export const previewResearchResponseSchema = z.object({
 
 export const uploadReferenceImageResponseSchema = z.object({
   data: z.object({
-    referenceImageUrl: z.string(),
+    hasReferenceImage: z.literal(true),
     researchItemId: z.string(),
   }),
   message: z.string(),

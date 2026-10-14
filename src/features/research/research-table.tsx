@@ -361,7 +361,7 @@ function ResearchTableRow({
       <td className="px-3 py-3">
         <ReferencePreview
           canDownload={isAdmin}
-          referenceImageUrl={item.referenceImageUrl}
+          hasReferenceImage={item.hasReferenceImage}
           title={item.title}
           researchItemId={item.id}
           workspaceId={workspaceId}

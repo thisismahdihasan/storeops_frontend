@@ -96,6 +96,7 @@ export const adminListingItemSchema = z.object({
   normalizedUrl: z.string(),
   originalUrl: z.string(),
   referenceImageUrl: z.string().nullable(),
+  hasReferenceImage: z.boolean(),
   status: adminListingWorkflowStatusSchema,
   title: z.string().nullable(),
   updatedAt: z.string(),

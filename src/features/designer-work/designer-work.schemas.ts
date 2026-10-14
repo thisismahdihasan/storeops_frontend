@@ -42,6 +42,7 @@ const queueResearchItemSchema = z.object({
   normalizedUrl: z.string(),
   originalUrl: z.string(),
   referenceImageUrl: z.string().nullable(),
+  hasReferenceImage: z.boolean(),
   status: designerWorkStatusSchema,
   title: z.string().nullable(),
   updatedAt: z.string(),

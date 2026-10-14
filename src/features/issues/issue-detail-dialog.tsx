@@ -103,9 +103,9 @@ export function IssueDetailDialog({ issue, onOpenChange, open, workspaceId }: Is
               <div className="flex flex-wrap items-center gap-2">
                 <Button onClick={() => setIsReplaceImageOpen(true)} size="xs" type="button" variant="outline">
                   <Upload className="size-3" />
-                  {item.referenceImageUrl ? "Replace Image" : "Add Image"}
+                  {item.hasReferenceImage ? "Replace Image" : "Add Image"}
                 </Button>
-                {item.referenceImageUrl && (
+                {item.hasReferenceImage && (
                   <Button disabled={isDownloading} onClick={() => void handleDownload()} size="xs" type="button" variant="outline">
                     {isDownloading ? <Loader2 className="size-3 animate-spin" /> : <Download className="size-3" />}
                     Download
@@ -118,7 +118,7 @@ export function IssueDetailDialog({ issue, onOpenChange, open, workspaceId }: Is
             </div>
             <AuthenticatedReferenceImage
               alt={item.title || `Reference for Etsy listing ${item.etsyListingId}`}
-              hasImage={Boolean(item.referenceImageUrl)}
+              hasImage={item.hasReferenceImage}
               researchItemId={item.id}
               version={item.updatedAt}
               workspaceId={workspaceId}
@@ -158,11 +158,11 @@ export function IssueDetailDialog({ issue, onOpenChange, open, workspaceId }: Is
         workspaceId={workspaceId}
       />
       <ReferenceImageUploadModal
-        description={item.referenceImageUrl ? "Select a JPEG, PNG, or WebP image (up to 10MB) to replace the existing reference image." : undefined}
+        description={item.hasReferenceImage ? "Select a JPEG, PNG, or WebP image (up to 10MB) to replace the existing reference image." : undefined}
         onOpenChange={setIsReplaceImageOpen}
         open={isReplaceImageOpen}
         researchItemId={item.id}
-        title={item.referenceImageUrl ? "Replace Reference Image" : "Add Reference Image"}
+        title={item.hasReferenceImage ? "Replace Reference Image" : "Add Reference Image"}
         workspaceId={workspaceId}
       />
     </>

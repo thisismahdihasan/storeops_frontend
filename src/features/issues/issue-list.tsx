@@ -73,7 +73,7 @@ export function IssueList({
                   alt={issue.title || `Reference for Etsy listing ${issue.etsyListingId}`}
                   className="max-h-28"
                   containerClassName="h-28"
-                  hasImage={Boolean(issue.referenceImageUrl)}
+                  hasImage={issue.hasReferenceImage}
                   minHeightClassName="min-h-0"
                   researchItemId={issue.id}
                   version={issue.updatedAt}

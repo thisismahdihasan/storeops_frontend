@@ -240,7 +240,7 @@ function DesignerWorkCard({
               alt={`${item.title || `Etsy listing ${item.etsyListingId}`} reference thumbnail`}
               className="size-full rounded-none object-cover transition-transform duration-200 group-hover:scale-105"
               containerClassName="min-h-0 size-full p-0"
-              hasImage={Boolean(item.referenceImageUrl)}
+              hasImage={item.hasReferenceImage}
               researchItemId={item.id}
               version={item.updatedAt}
               workspaceId={workspaceId}
@@ -319,7 +319,7 @@ function DesignerWorkCard({
             alt={`${item.title || `Etsy listing ${item.etsyListingId}`} reference thumbnail`}
             className="size-full rounded-none object-cover transition-transform duration-200 group-hover:scale-105"
             containerClassName="min-h-0 size-full p-0"
-            hasImage={Boolean(item.referenceImageUrl)}
+            hasImage={item.hasReferenceImage}
             researchItemId={item.id}
             version={item.updatedAt}
             workspaceId={workspaceId}

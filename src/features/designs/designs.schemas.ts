@@ -104,6 +104,7 @@ export const adminDesignItemSchema = z.object({
   normalizedUrl: z.string(),
   originalUrl: z.string(),
   referenceImageUrl: z.string().nullable(),
+  hasReferenceImage: z.boolean(),
   status: adminDesignWorkflowStatusSchema,
   title: z.string().nullable(),
   updatedAt: z.string(),

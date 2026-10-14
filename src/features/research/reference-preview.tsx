@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -29,7 +28,7 @@ export type ReferencePreviewProps = {
   className?: string;
   normalizedUrl?: string;
   onOpenDetail?: () => void;
-  referenceImageUrl: string | null;
+  hasReferenceImage: boolean;
   researchItemId: string;
   title: string | null;
   userCanUpload?: boolean;
@@ -42,7 +41,7 @@ export function ReferencePreview({
   className,
   normalizedUrl,
   onOpenDetail,
-  referenceImageUrl,
+  hasReferenceImage,
   researchItemId,
   title,
   userCanUpload = false,
@@ -50,7 +49,6 @@ export function ReferencePreview({
   workspaceId,
 }: ReferencePreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const displayTitle = title || "Etsy Reference Preview";
@@ -70,7 +68,7 @@ export function ReferencePreview({
     }
   };
 
-  if (!referenceImageUrl || imageError) {
+  if (!hasReferenceImage) {
     if (onOpenDetail) {
       return (
         <button
@@ -115,12 +113,15 @@ export function ReferencePreview({
         )}
         title="Click to preview reference image"
       >
-        <img
-          src={referenceImageUrl}
+        <AuthenticatedReferenceImage
           alt={displayTitle}
-          onError={() => setImageError(true)}
           className="size-full object-cover transition-transform group-hover:scale-105"
-          loading="lazy"
+          containerClassName="min-h-0 size-full p-0"
+          hasImage={hasReferenceImage}
+          minHeightClassName="min-h-0"
+          researchItemId={researchItemId}
+          version={version}
+          workspaceId={workspaceId}
         />
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
           <Maximize2 className="size-3.5 text-white" />
@@ -141,7 +142,7 @@ export function ReferencePreview({
           <div className="relative mt-2 min-h-[250px] max-h-[60vh] w-full overflow-hidden rounded-lg border border-border bg-muted/30 p-2">
             <AuthenticatedReferenceImage
               alt={displayTitle}
-              hasImage={Boolean(referenceImageUrl)}
+              hasImage={hasReferenceImage}
               researchItemId={researchItemId}
               workspaceId={workspaceId}
               enabled={isOpen}

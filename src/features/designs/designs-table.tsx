@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlertCircle, ArrowUpRight, CheckSquare, ExternalLink, ImageIcon, Palette } from "lucide-react";
+import { AlertCircle, ArrowUpRight, CheckSquare, ExternalLink, Palette } from "lucide-react";
 
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { ResearchItemDetailModal } from "@/features/research/research-item-detail-modal";
+import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 import { etsyExternalInlineClass } from "@/lib/etsy-styles";
 import { calculateSerialNumber } from "@/lib/serial-number";
 import { cn } from "@/lib/utils";
@@ -181,21 +182,18 @@ export function DesignsTable({
 
                     {/* Reference Thumbnail */}
                     <td className="px-4 py-3">
-                      {item.referenceImageUrl ? (
-                        <div className="size-10 overflow-hidden rounded-md border border-border bg-muted">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={item.referenceImageUrl}
-                            alt=""
-                            className="size-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex size-10 items-center justify-center rounded-md border border-dashed border-border bg-muted/40">
-                          <ImageIcon className="size-4 text-muted-foreground" />
-                        </div>
-                      )}
+                      <div className="size-10 overflow-hidden rounded-md border border-border bg-muted">
+                        <AuthenticatedReferenceImage
+                          alt={`${item.title ?? `Etsy listing ${item.etsyListingId}`} reference thumbnail`}
+                          className="size-full object-cover"
+                          containerClassName="min-h-0 size-full p-0"
+                          hasImage={item.hasReferenceImage}
+                          minHeightClassName="min-h-0"
+                          researchItemId={item.id}
+                          version={item.updatedAt}
+                          workspaceId={workspaceId}
+                        />
+                      </div>
                     </td>
 
                     {/* Listing Title & ID */}

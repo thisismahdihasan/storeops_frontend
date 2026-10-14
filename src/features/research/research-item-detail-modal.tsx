@@ -237,12 +237,12 @@ export function ResearchItemDetailModal({
                       >
                         <Upload className="size-3" />
                         <span>
-                          {item.referenceImageUrl ? "Replace Image" : "Add Image"}
+                          {item.hasReferenceImage ? "Replace Image" : "Add Image"}
                         </span>
                       </Button>
                     )}
 
-                    {isAdmin && item.referenceImageUrl && (
+                    {isAdmin && item.hasReferenceImage && (
                       <Button
                         type="button"
                         size="xs"
@@ -279,7 +279,7 @@ export function ResearchItemDetailModal({
                 <div className="flex min-h-[220px] max-h-[380px] w-full items-center justify-center p-3">
                   <AuthenticatedReferenceImage
                     alt={item.title || "Reference image"}
-                    hasImage={Boolean(item.referenceImageUrl)}
+                    hasImage={item.hasReferenceImage}
                     researchItemId={item.id}
                     workspaceId={workspaceId}
                     userCanUpload={canManageImage}
@@ -506,12 +506,12 @@ export function ResearchItemDetailModal({
           workspaceId={workspaceId}
           researchItemId={item.id}
           title={
-            item.referenceImageUrl
+            item.hasReferenceImage
               ? "Replace Reference Image"
               : "Add Reference Image"
           }
           description={
-            item.referenceImageUrl
+            item.hasReferenceImage
               ? "Upload a new JPEG, PNG, or WebP image to replace the current reference image."
               : "Upload a JPEG, PNG, or WebP image (up to 10MB) to attach as reference for designers."
           }

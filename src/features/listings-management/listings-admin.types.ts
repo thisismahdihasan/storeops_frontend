@@ -30,6 +30,7 @@ export type AdminListingItem = {
   normalizedUrl: string;
   originalUrl: string;
   referenceImageUrl: string | null;
+  hasReferenceImage: boolean;
   status: ResearchStatus;
   title: string | null;
   updatedAt: string;

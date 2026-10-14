@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import {
@@ -8,7 +7,6 @@ import {
   Calendar,
   Clock,
   ExternalLink,
-  ImageIcon,
   RotateCcw,
   Search,
   ShieldAlert,
@@ -31,6 +29,7 @@ import {
 } from "@/features/designer-work/designer-work.types";
 import { useDesignerWorkQueue } from "@/features/designer-work/use-designer-work";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 
 type CorrectionsViewProps = {
   workspaceId: string;
@@ -376,18 +375,16 @@ function CorrectionCard({
         {/* Card Header: Thumbnail + Status Badge */}
         <div className="flex items-start justify-between gap-3">
           <div className="size-16 shrink-0 overflow-hidden rounded-xl border border-border/80 bg-muted/30">
-            {researchItem.referenceImageUrl ? (
-              <img
-                alt={title}
-                className="size-full object-cover"
-                loading="lazy"
-                src={researchItem.referenceImageUrl}
-              />
-            ) : (
-              <div className="flex size-full items-center justify-center text-muted-foreground/60">
-                <ImageIcon className="size-6" />
-              </div>
-            )}
+            <AuthenticatedReferenceImage
+              alt={title}
+              className="size-full object-cover"
+              containerClassName="min-h-0 size-full p-0"
+              hasImage={researchItem.hasReferenceImage}
+              minHeightClassName="min-h-0"
+              researchItemId={researchItem.id}
+              version={researchItem.updatedAt}
+              workspaceId={workspaceId}
+            />
           </div>
 
           <Badge
