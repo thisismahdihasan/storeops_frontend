@@ -203,6 +203,7 @@ export function DesignsTable({
                           type="button"
                           onClick={() => setSelectedDetailItemId(item.id)}
                           className="font-medium text-foreground line-clamp-1 text-left hover:underline"
+                          title={item.title || "Untitled design job"}
                         >
                           {item.title || "Untitled design job"}
                         </button>

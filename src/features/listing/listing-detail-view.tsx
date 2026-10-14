@@ -152,8 +152,19 @@ export function ListingDetailView({
               Etsy #{detail.researchItem.etsyListingId}
             </p>
             <div className="mt-1 flex min-w-0 items-start gap-2">
-              <h1 className="min-w-0 flex-1 break-words text-2xl font-bold tracking-tight sm:text-3xl">
-                {title}
+              <h1 className="min-w-0 w-full max-w-3xl flex-1 break-words text-lg font-bold tracking-tight sm:text-xl">
+                {storedTitle ? (
+                  <button
+                    className="block cursor-copy text-left"
+                    onClick={() => void handleCopyTitle()}
+                    title="Click to copy title"
+                    type="button"
+                  >
+                    {title}
+                  </button>
+                ) : (
+                  title
+                )}
               </h1>
               {storedTitle && (
                 <Button

@@ -165,7 +165,7 @@ function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceI
             </p>
             <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
           </div>
-          <h2 className="break-words text-xs font-medium leading-snug">
+          <h2 className="line-clamp-2 text-xs font-medium leading-snug" title={displayTitle}>
             {displayTitle}
           </h2>
         </div>

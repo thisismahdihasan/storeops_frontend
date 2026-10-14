@@ -90,7 +90,7 @@ export function IssueList({
                         #{issue.etsyListingId}
                       </span>
                     </div>
-                    <h2 className="mt-2 truncate text-base font-semibold text-foreground">
+                    <h2 className="mt-2 truncate text-base font-semibold text-foreground" title={issue.title || `Etsy Listing #${issue.etsyListingId}`}>
                       {issue.title || `Etsy Listing #${issue.etsyListingId}`}
                     </h2>
                     <a

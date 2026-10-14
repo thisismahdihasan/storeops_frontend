@@ -373,12 +373,13 @@ function ResearchTableRow({
       </td>
 
       {/* Etsy Listing / Title */}
-      <td className="max-w-xs px-4 py-3 sm:max-w-sm md:max-w-md">
+      <td className="w-72 max-w-72 px-4 py-3">
         <div className="flex flex-col gap-1">
           <button
             type="button"
             onClick={() => onOpenDetail(item.id)}
-            className="line-clamp-2 text-left font-medium text-foreground hover:underline"
+            className="truncate text-left font-medium text-foreground hover:underline"
+            title={item.title || `Etsy Listing #${item.etsyListingId}`}
           >
             {item.title || `Etsy Listing #${item.etsyListingId}`}
           </button>

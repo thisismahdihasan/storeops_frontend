@@ -95,11 +95,11 @@ export function DesignerCompletedList({
                 />
               </div>
               <div className="flex min-w-0 flex-1 flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                <div className="min-w-0 flex-1">
+              <div className="min-w-0 max-w-lg flex-1">
                   <p className="font-mono text-xs text-muted-foreground">
                     Etsy #{item.researchItem.etsyListingId}
                   </p>
-                  <h2 className="mt-1 break-words text-sm font-medium">{listingTitle}</h2>
+                  <h2 className="mt-1 max-w-md truncate text-sm font-medium" title={listingTitle}>{listingTitle}</h2>
                   <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                     <CalendarDays className="size-3.5" />
                     Completed{" "}

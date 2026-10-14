@@ -247,6 +247,7 @@ export function ListingsAdminTable({
                           type="button"
                           onClick={() => setSelectedDetailItemId(item.id)}
                           className="font-medium text-foreground line-clamp-1 text-left hover:underline"
+                          title={item.title || "Untitled listing item"}
                         >
                           {item.title || "Untitled listing item"}
                         </button>

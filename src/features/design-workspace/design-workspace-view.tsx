@@ -203,7 +203,7 @@ export function DesignWorkspaceView({
         </Button>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
-            <h1 className="break-words text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            <h1 className="w-full max-w-3xl break-words font-ui text-lg font-bold tracking-tight text-foreground sm:text-xl">
               {title}
             </h1>
             <p className="mt-1 font-mono text-xs text-muted-foreground">

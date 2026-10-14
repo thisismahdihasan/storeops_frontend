@@ -253,6 +253,7 @@ function DesignerWorkCard({
                 className="truncate text-left text-sm font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={handleCardOpen}
                 type="button"
+                title={item.title || `Etsy Listing #${item.etsyListingId}`}
               >
                 {item.title || `Etsy Listing #${item.etsyListingId}`}
               </button>
@@ -327,13 +328,14 @@ function DesignerWorkCard({
         </button>
 
         {/* Column 2: Details & Metadata */}
-        <div className="min-w-0 space-y-2 py-0.5">
+          <div className="min-w-0 max-w-lg space-y-2 py-0.5">
           <div className="space-y-0.5">
             <button
               aria-label={`Open design workspace for ${item.title || `Etsy listing ${item.etsyListingId}`}`}
-              className="block truncate text-left text-base font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+              className="block max-w-80 truncate text-left text-base font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
               onClick={handleCardOpen}
               type="button"
+              title={item.title || `Etsy Listing #${item.etsyListingId}`}
             >
               {item.title || `Etsy Listing #${item.etsyListingId}`}
             </button>
