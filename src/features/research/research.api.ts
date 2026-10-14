@@ -128,24 +128,15 @@ export async function createResearchItem(
 ): Promise<CreateResearchResponse> {
   try {
     const manualImage = input.image instanceof File ? input.image : undefined;
-    const requestOptions = manualImage
-      ? (() => {
-          const formData = new FormData();
-          formData.append("etsyUrl", input.etsyUrl.trim());
-          if (input.reuseReference) formData.append("reuseReference", "true");
-          if (input.targetProduct !== undefined && input.targetProduct !== null) {
-            formData.append("targetProduct", input.targetProduct);
-          }
-          formData.append("image", manualImage);
-          return { body: formData, method: "POST" as const };
-        })()
-      : {
+    const uploadSessionToken = manualImage ? await uploadManualReferenceImage(workspaceId, manualImage, "CREATE_RESEARCH_REFERENCE_IMAGE") : undefined;
+    const requestOptions = {
           json: {
             etsyUrl: input.etsyUrl.trim(),
             ...(input.reuseReference ? { reuseReference: true } : {}),
             ...(input.targetProduct !== undefined
               ? { targetProduct: input.targetProduct }
               : {}),
+            ...(uploadSessionToken ? { uploadSessionToken } : {}),
           },
           method: "POST" as const,
         };
@@ -324,13 +315,12 @@ export async function uploadResearchReferenceImage(
   researchItemId: string,
   file: File,
 ): Promise<UploadReferenceImageResponse> {
-  const formData = new FormData();
-  formData.append("image", file);
+  const uploadSessionToken = await uploadManualReferenceImage(workspaceId, file, "REPLACE_RESEARCH_REFERENCE_IMAGE", researchItemId);
 
   const response = await apiRequest<unknown>(
     `/api/v1/workspaces/${workspaceId}/research-items/${researchItemId}/reference-image`,
     {
-      body: formData,
+      json: { uploadSessionToken },
       method: "POST",
     },
   );
@@ -344,6 +334,25 @@ export async function uploadResearchReferenceImage(
   }
 
   return parsed.data;
+}
+
+async function uploadManualReferenceImage(
+  workspaceId: string,
+  file: File,
+  purpose: "CREATE_RESEARCH_REFERENCE_IMAGE" | "REPLACE_RESEARCH_REFERENCE_IMAGE",
+  researchItemId?: string,
+): Promise<string> {
+  const presign = await apiRequest<{ data: { uploadUrl: string; sessionToken: string } }>(
+    `/api/v1/workspaces/${workspaceId}/research-items/reference-image/presign`,
+    { method: "POST", json: { purpose, expectedSize: file.size, contentType: file.type || "application/octet-stream", ...(researchItemId ? { researchItemId } : {}) } },
+  );
+  if (!presign) throw new ApiError(502, "Reference image upload authorization returned no data.");
+  const putResponse = await fetch(presign.data.uploadUrl, {
+    method: "PUT", body: file, credentials: "omit",
+    headers: { "Content-Type": file.type || "application/octet-stream" },
+  });
+  if (!putResponse.ok) throw new ApiError(502, "Failed to upload reference image to storage.");
+  return presign.data.sessionToken;
 }
 
 export async function updateResearchItemTitle(
