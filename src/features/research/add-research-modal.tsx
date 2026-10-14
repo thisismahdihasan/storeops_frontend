@@ -401,10 +401,9 @@ export function AddResearchModal({
                         handleOpenChange(false);
                         onOpenReferenceHistory?.(previewResult.etsyListingId);
                       }}
-                      className="gap-1.5 border-amber-500/40 bg-background/80 text-foreground transition-colors hover:border-amber-500/60 hover:bg-amber-500/15"
+                      className="gap-1.5"
                       size="sm"
                       type="button"
-                      variant="outline"
                     >
                       <span>View Previous Uses ({previewResult.usageCount})</span>
                       <ArrowRight className="size-3.5" />
@@ -541,9 +540,11 @@ export function AddResearchModal({
                           </Button>
                         </div>
                       ) : hasAutoImage ? (
-                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                          <CheckCircle2 className="size-3.5" />
-                          <span>Reference image detected from Etsy</span>
+                        <div className="flex flex-col items-start gap-2 pt-0.5 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/15 bg-emerald-500/5 px-2 py-1 text-xs font-medium text-emerald-700/80 dark:text-emerald-300/75">
+                            <CheckCircle2 className="size-3.5" />
+                            <span>Reference image detected from Etsy</span>
+                          </div>
                           {!isManualOverrideOpen && (
                             <Button
                               disabled={isCreating}
@@ -551,6 +552,7 @@ export function AddResearchModal({
                               size="xs"
                               type="button"
                               variant="outline"
+                              className="border-border/80 text-foreground/90 hover:bg-muted hover:text-foreground sm:mt-2"
                             >
                               Choose Manual Image
                             </Button>
