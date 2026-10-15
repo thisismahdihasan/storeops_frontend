@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/native-select";
 import { CountBadge } from "@/components/ui/count-badge";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
+import { currentRelativeUrl } from "@/lib/navigation/return-to";
 
 import { ReviewList } from "./review-list";
 import { useReviewQueue } from "./use-reviews";
@@ -208,7 +209,7 @@ export function ReviewsView({ workspaceId }: ReviewsViewProps) {
         </section>
       ) : (
         <div className="space-y-6">
-          <ReviewList items={items} workspaceId={workspaceId} />
+          <ReviewList items={items} returnTo={currentRelativeUrl(pathname, searchParams)} workspaceId={workspaceId} />
 
           {/* Pagination Controls */}
           {totalPages > 1 && (

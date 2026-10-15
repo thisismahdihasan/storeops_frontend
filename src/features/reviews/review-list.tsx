@@ -6,11 +6,13 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { withReturnTo } from "@/lib/navigation/return-to";
 
 import type { ReviewQueueItem } from "./reviews.types";
 
 type ReviewListProps = {
   items: ReviewQueueItem[];
+  returnTo: string;
   workspaceId: string;
 };
 
@@ -28,7 +30,7 @@ function formatSubmittedTime(value: string): string {
   }
 }
 
-export function ReviewList({ items, workspaceId }: ReviewListProps) {
+export function ReviewList({ items, returnTo, workspaceId }: ReviewListProps) {
   return (
     <div className="grid gap-4 min-[640px]:grid-cols-2 min-[900px]:grid-cols-3 min-[1200px]:grid-cols-4">
       {items.map(({ designer, researchItem, review }) => {
@@ -42,7 +44,7 @@ export function ReviewList({ items, workspaceId }: ReviewListProps) {
           <Link
             aria-label={`Review Round ${review.roundNumber} for Etsy #${researchItem.etsyListingId}`}
             className="group block cursor-pointer rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2"
-            href={`/w/${workspaceId}/reviews/${review.id}`}
+            href={withReturnTo(`/w/${workspaceId}/reviews/${review.id}`, returnTo)}
             key={review.id}
           >
             <article className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-colors group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:border-primary/60">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   AlertTriangle,
@@ -23,6 +24,7 @@ import { MemberIdentityCell } from "@/components/ui/member-identity-cell";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
 import { etsyExternalButtonClass, etsyExternalInlineClass } from "@/lib/etsy-styles";
+import { currentRelativeUrl, withReturnTo } from "@/lib/navigation/return-to";
 import { calculateSerialNumber } from "@/lib/serial-number";
 import { cn } from "@/lib/utils";
 import { DeleteResearchItemDialog } from "./delete-research-item-dialog";
@@ -77,6 +79,9 @@ export function ResearchTable({
   userRoles,
   workspaceId,
 }: ResearchTableProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const returnTo = currentRelativeUrl(pathname, searchParams);
   const isAdmin = isManagementContext && userRoles.includes("ADMIN");
   const canViewReferenceHistory = userRoles.includes("ADMIN");
   const canCreate = !isManagementContext && userRoles.includes("RESEARCHER");
@@ -233,6 +238,7 @@ export function ResearchTable({
                   onToggleSelection={onToggleSelection}
                   onOpenDetail={onOpenDetail}
                   onOpenReferenceHistory={canViewReferenceHistory ? onOpenReferenceHistory : undefined}
+                  returnTo={returnTo}
                   serialNumber={calculateSerialNumber(index, pagination)}
                   showStatus={showStatus}
                   userCanUpload={canCreate}
@@ -307,6 +313,7 @@ function ResearchTableRow({
   onToggleSelection,
   onOpenDetail,
   onOpenReferenceHistory,
+  returnTo,
   serialNumber,
   showStatus,
   userCanUpload,
@@ -321,6 +328,7 @@ function ResearchTableRow({
   onToggleSelection: (researchItemId: string) => void;
   onOpenDetail: (id: string) => void;
   onOpenReferenceHistory?: (etsyListingId: string) => void;
+  returnTo: string;
   serialNumber: number;
   showStatus: boolean;
   userCanUpload: boolean;
@@ -473,7 +481,7 @@ function ResearchTableRow({
                   <Link
                     aria-label={replyCountLabel}
                     className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary transition-colors hover:bg-primary/20 hover:underline"
-                    href={`/w/${workspaceId}/reviews/${latestReviewId}`}
+                    href={withReturnTo(`/w/${workspaceId}/reviews/${latestReviewId}`, returnTo)}
                     onClick={(e) => e.stopPropagation()}
                     title={replyCountTooltip}
                   >

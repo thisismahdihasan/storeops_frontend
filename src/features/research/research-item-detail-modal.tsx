@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   AlertTriangle,
@@ -23,6 +24,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { currentRelativeUrl, withReturnTo } from "@/lib/navigation/return-to";
 import {
   Dialog,
   DialogContent,
@@ -87,6 +89,9 @@ export function ResearchItemDetailModal({
   userRoles = [],
   workspaceId,
 }: ResearchItemDetailModalProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const returnTo = currentRelativeUrl(pathname, searchParams);
   const [isEditTitleOpen, setIsEditTitleOpen] = useState(false);
   const [isUploadImageOpen, setIsUploadImageOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -186,7 +191,7 @@ export function ResearchItemDetailModal({
                         nativeButton={false}
                         render={
                           <Link
-                            href={`/w/${workspaceId}/reviews/${item.latestReview.id}`}
+                            href={withReturnTo(`/w/${workspaceId}/reviews/${item.latestReview.id}`, returnTo)}
                           />
                         }
                         size="xs"
@@ -399,7 +404,7 @@ export function ResearchItemDetailModal({
                           nativeButton={false}
                           render={
                             <Link
-                              href={`/w/${workspaceId}/reviews/${item.latestReview.id}`}
+                              href={withReturnTo(`/w/${workspaceId}/reviews/${item.latestReview.id}`, returnTo)}
                             />
                           }
                           size="xs"
@@ -444,7 +449,7 @@ export function ResearchItemDetailModal({
                         nativeButton={false}
                         render={
                           <Link
-                            href={`/w/${workspaceId}/reviews/${item.latestReview.id}`}
+                            href={withReturnTo(`/w/${workspaceId}/reviews/${item.latestReview.id}`, returnTo)}
                           />
                         }
                         size="xs"

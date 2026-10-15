@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowUpRight, CheckSquare, ExternalLink, Palette } from "lucide-react";
 
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -11,6 +12,7 @@ import { ResearchItemDetailModal } from "@/features/research/research-item-detai
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
 import { etsyExternalInlineClass } from "@/lib/etsy-styles";
 import { calculateSerialNumber } from "@/lib/serial-number";
+import { currentRelativeUrl, withReturnTo } from "@/lib/navigation/return-to";
 import { cn } from "@/lib/utils";
 import type { AdminDesignItem, AdminDesignListResult } from "./designs.types";
 import type { ResearchStatus } from "@/features/research/research.types";
@@ -79,6 +81,9 @@ export function DesignsTable({
   onRetry,
   workspaceId,
 }: DesignsTableProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const returnTo = currentRelativeUrl(pathname, searchParams);
   const [selectedDetailItemId, setSelectedDetailItemId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -293,7 +298,7 @@ export function DesignsTable({
                         </Button>
                         {isWaitingReview && item.latestReview ? (
                           <Link
-                            href={`/w/${workspaceId}/reviews/${item.latestReview.id}`}
+                            href={withReturnTo(`/w/${workspaceId}/reviews/${item.latestReview.id}`, returnTo)}
                             className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                           >
                             <CheckSquare className="size-3" />
@@ -301,7 +306,7 @@ export function DesignsTable({
                           </Link>
                         ) : hasReview && item.latestReview ? (
                           <Link
-                            href={`/w/${workspaceId}/reviews/${item.latestReview.id}`}
+                            href={withReturnTo(`/w/${workspaceId}/reviews/${item.latestReview.id}`, returnTo)}
                             className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors"
                           >
                             <span>View Review</span>

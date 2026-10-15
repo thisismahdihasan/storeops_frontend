@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ApiError } from "@/lib/api";
+import { withReturnTo } from "@/lib/navigation/return-to";
 
 import { ApprovedPreview } from "./approved-preview";
 import { useDownloadActivityStore } from "./download-activity-store";
@@ -28,6 +29,7 @@ type ListingListProps = {
   isLoading: boolean;
   onPageChange: (page: number) => void;
   onRetry: () => void;
+  returnTo: string;
   status: ListingStatus;
   workspaceId: string;
 };
@@ -38,6 +40,7 @@ export function ListingList({
   isLoading,
   onPageChange,
   onRetry,
+  returnTo,
   status,
   workspaceId,
 }: ListingListProps) {
@@ -79,7 +82,7 @@ export function ListingList({
     <div className="space-y-4" id="listing-queue-results" role="tabpanel">
       <div className="grid gap-4 min-[640px]:grid-cols-2 min-[900px]:grid-cols-3 min-[1200px]:grid-cols-4">
         {data.items.map((item) => (
-          <ListingCard item={item} key={item.assignmentId} workspaceId={workspaceId} />
+          <ListingCard item={item} key={item.assignmentId} returnTo={returnTo} workspaceId={workspaceId} />
         ))}
       </div>
       <Pagination
@@ -90,7 +93,7 @@ export function ListingList({
   );
 }
 
-function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceId: string }) {
+function ListingCard({ item, returnTo, workspaceId }: { item: ListingQueueItem; returnTo: string; workspaceId: string }) {
   const { researchItem } = item;
   const title = researchItem.title?.trim() || null;
   const displayTitle =
@@ -201,7 +204,7 @@ function ListingCard({ item, workspaceId }: { item: ListingQueueItem; workspaceI
           <Button
             className="justify-self-end px-2"
             nativeButton={false}
-            render={<Link href={`/w/${workspaceId}/listing/${researchItem.id}`} />}
+            render={<Link href={withReturnTo(`/w/${workspaceId}/listing/${researchItem.id}`, returnTo)} />}
             size="sm"
             variant="outline"
           >

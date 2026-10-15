@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { getDesignerWorkStatusMeta } from "@/features/designer-work/designer-wor
 import type { ReportIssueFormValues } from "@/features/designer-work/designer-work.types";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
+import { currentRelativeUrl, getValidWorkspaceReturnTo, withReturnTo } from "@/lib/navigation/return-to";
 
 import { canUserReplyToAnnotation } from "@/features/reviews/reviews.constants";
 
@@ -30,6 +32,11 @@ export function DesignWorkspaceView({
   researchItemId,
   workspaceId,
 }: DesignWorkspaceViewProps) {
+  const searchParams = useSearchParams();
+  const requestedReturnTo = getValidWorkspaceReturnTo(
+    searchParams.get("returnTo"),
+    workspaceId,
+  );
   const workspacesQuery = useWorkspaces();
   const workspace = workspacesQuery.data?.data.workspaces.find(
     (item) => item.id === workspaceId,
@@ -60,13 +67,16 @@ export function DesignWorkspaceView({
       <DetailErrorState
         error={detailQuery.error}
         onRetry={() => void detailQuery.refetch()}
-        workspaceId={workspaceId}
+        returnTo={requestedReturnTo ?? `/w/${workspaceId}/my-work`}
       />
     );
   }
   if (!detailQuery.data) return <LoadingState />;
 
   const detail = detailQuery.data.data;
+  const fallbackReturnTo = designerFallback(workspaceId, detail.researchItem.status);
+  const returnTo =
+    requestedReturnTo ?? fallbackReturnTo;
   const statusMeta = getDesignerWorkStatusMeta(detail.researchItem.status);
   const title =
     detail.researchItem.title ||
@@ -194,12 +204,12 @@ export function DesignWorkspaceView({
       <header className="space-y-4 border-b border-border pb-5">
         <Button
           nativeButton={false}
-          render={<Link href={`/w/${workspaceId}/my-work`} />}
+          render={<Link href={returnTo} />}
           size="sm"
           variant="ghost"
         >
           <ArrowLeft className="size-4" />
-          <span>Back to My Work</span>
+          <span>Back</span>
         </Button>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
@@ -217,7 +227,7 @@ export function DesignWorkspaceView({
                 nativeButton={false}
                 render={
                   <Link
-                    href={`/w/${workspaceId}/reviews/${detail.latestReview.id}`}
+                    href={withReturnTo(`/w/${workspaceId}/reviews/${detail.latestReview.id}`, currentRelativeUrl(`/w/${workspaceId}/design/${researchItemId}`, searchParams))}
                   />
                 }
                 size={hasInlineReviewHistory ? "xs" : "sm"}
@@ -339,6 +349,11 @@ function actionErrorMessage(error: unknown): string {
     : "The action could not be completed.";
 }
 
+function designerFallback(workspaceId: string, status: string): string {
+  const query = status === "ASSIGNED" ? "" : `?status=${status}`;
+  return `/w/${workspaceId}/my-work${query}`;
+}
+
 function LoadingState() {
   return (
     <main
@@ -381,11 +396,11 @@ function AccessDeniedState({ workspaceId }: { workspaceId: string }) {
 function DetailErrorState({
   error,
   onRetry,
-  workspaceId,
+  returnTo,
 }: {
   error: unknown;
   onRetry: () => void;
-  workspaceId: string;
+  returnTo: string;
 }) {
   const status = error instanceof ApiError ? error.status : 0;
   const title =
@@ -416,7 +431,7 @@ function DetailErrorState({
           </Button>
           <Button
             nativeButton={false}
-            render={<Link href={`/w/${workspaceId}/my-work`} />}
+            render={<Link href={returnTo} />}
             variant="outline"
           >
             Back to My Work

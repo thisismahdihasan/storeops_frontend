@@ -19,6 +19,7 @@ import { useCallback, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { currentRelativeUrl, withReturnTo } from "@/lib/navigation/return-to";
 import { NativeSelect } from "@/components/native-select";
 import { etsyExternalSubtleClass } from "@/lib/etsy-styles";
 import { cn } from "@/lib/utils";
@@ -312,6 +313,7 @@ export function CorrectionsView({ workspaceId }: CorrectionsViewProps) {
             {data.items.map((work) => (
               <CorrectionCard
                 key={work.assignmentId}
+                returnTo={currentRelativeUrl(pathname, searchParams)}
                 work={work}
                 workspaceId={workspaceId}
               />
@@ -358,9 +360,11 @@ export function CorrectionsView({ workspaceId }: CorrectionsViewProps) {
 }
 
 function CorrectionCard({
+  returnTo,
   work,
   workspaceId,
 }: {
+  returnTo: string;
   work: DesignerWorkItem;
   workspaceId: string;
 }) {
@@ -444,7 +448,7 @@ function CorrectionCard({
           className="w-full justify-center gap-1.5 bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:text-neutral-950 dark:hover:bg-amber-400 border-transparent shadow-xs font-semibold"
           nativeButton={false}
           render={
-            <Link href={`/w/${workspaceId}/design/${researchItem.id}`} />
+            <Link href={withReturnTo(`/w/${workspaceId}/design/${researchItem.id}`, returnTo)} />
           }
           size="sm"
         >

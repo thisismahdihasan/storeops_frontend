@@ -13,7 +13,7 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { etsyExternalInlineClass } from "@/lib/etsy-styles";
 import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api";
+import { getValidWorkspaceReturnTo, withReturnTo } from "@/lib/navigation/return-to";
 
 import { AnnotationPanel } from "./annotation-panel";
 import { ReviewActions } from "./review-actions";
@@ -145,6 +146,7 @@ export function ReviewDetailView({
   workspaceId,
 }: ReviewDetailViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const workspacesQuery = useWorkspaces();
   const activeWorkspace = workspacesQuery.data?.data.workspaces.find(
     (w) => w.id === workspaceId,
@@ -239,6 +241,10 @@ export function ReviewDetailView({
 
   const designerDisplayName =
     currentDesigner?.name || currentDesigner?.email || "Unassigned";
+  const returnTo = getValidWorkspaceReturnTo(searchParams.get("returnTo"), workspaceId);
+  const backHref = isAdmin
+    ? (returnTo ?? `/w/${workspaceId}/reviews`)
+    : (returnTo ?? `/w/${workspaceId}/design/${researchItem.id}`);
 
   function selectReference() {
     setHistorySelection({ kind: "reference" });
@@ -259,7 +265,7 @@ export function ReviewDetailView({
     setHoveredAnnotationId(null);
     if (nextReviewId === selectedReview.id) return;
 
-    router.push(`/w/${workspaceId}/reviews/${nextReviewId}`);
+    router.push(withReturnTo(`/w/${workspaceId}/reviews/${nextReviewId}`, backHref));
   }
 
   return (
@@ -270,18 +276,14 @@ export function ReviewDetailView({
           nativeButton={false}
           render={
             <Link
-              href={
-                isAdmin
-                  ? `/w/${workspaceId}/reviews`
-                  : `/w/${workspaceId}/design/${researchItem.id}`
-              }
+              href={backHref}
             />
           }
           size="sm"
           variant="ghost"
         >
           <ArrowLeft className="size-4" />
-          <span>{isAdmin ? "Back to Reviews" : "Back to Design"}</span>
+          <span>{isAdmin ? "Back" : "Back to Design"}</span>
         </Button>
 
       </div>

@@ -2,13 +2,14 @@
 
 import { AlertCircle, ArrowLeft, Copy } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
+import { getValidWorkspaceReturnTo } from "@/lib/navigation/return-to";
 
 import { FinalAssetDownloadList } from "./final-asset-download-list";
 import { ListingAccessState } from "./listing-access-state";
@@ -36,6 +37,11 @@ export function ListingDetailView({
   workspaceId,
 }: ListingDetailViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedReturnTo = getValidWorkspaceReturnTo(
+    searchParams.get("returnTo"),
+    workspaceId,
+  );
   const workspacesQuery = useWorkspaces();
   const workspace = workspacesQuery.data?.data.workspaces.find(
     (item) => item.id === workspaceId,
@@ -62,7 +68,7 @@ export function ListingDetailView({
       <ListingDetailError
         error={workspacesQuery.error}
         onRetry={() => void workspacesQuery.refetch()}
-        workspaceId={workspaceId}
+        returnTo={requestedReturnTo ?? `/w/${workspaceId}/listing`}
       />
     );
   }
@@ -87,7 +93,7 @@ export function ListingDetailView({
       <ListingDetailError
         error={detailQuery.error}
         onRetry={() => void detailQuery.refetch()}
-        workspaceId={workspaceId}
+        returnTo={requestedReturnTo ?? `/w/${workspaceId}/listing`}
       />
     );
   }
@@ -98,6 +104,9 @@ export function ListingDetailView({
   const storedTitle = detail.researchItem.title;
   const title = storedTitle || `Etsy Listing #${detail.researchItem.etsyListingId}`;
   const statusMeta = getListingStatusMeta(detail.researchItem.status);
+  const returnTo =
+    requestedReturnTo ??
+    listingFallback(workspaceId, detail.researchItem.status);
 
   const handleStart = async () => {
     try {
@@ -140,11 +149,11 @@ export function ListingDetailView({
       <header className="space-y-4 border-b border-border pb-5">
         <Button
           nativeButton={false}
-          render={<Link href={`/w/${workspaceId}/listing`} />}
+          render={<Link href={returnTo} />}
           size="sm"
           variant="ghost"
         >
-          <ArrowLeft /> Back to Listing
+          <ArrowLeft /> Back
         </Button>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
@@ -217,11 +226,17 @@ function actionErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-function ListingDetailError({ error, onRetry, workspaceId }: { error: unknown; onRetry: () => void; workspaceId: string }) {
+function ListingDetailError({ error, onRetry, returnTo }: { error: unknown; onRetry: () => void; returnTo: string }) {
   const status = error instanceof ApiError ? error.status : 0;
   const title = status === 404 ? "Listing not found" : status === 401 ? "Your session has expired" : status === 409 ? "Listing is no longer active" : "Unable to load listing";
   const message = status === 409 ? "This listing may have moved out of the active workflow." : error instanceof Error ? error.message : "Check your connection and try again.";
-  return <main className="mx-auto max-w-lg p-4 sm:p-6"><section className="rounded-xl border border-border bg-card p-6 text-center"><AlertCircle className="mx-auto size-8 text-destructive" /><h1 className="mt-3 text-xl font-semibold">{title}</h1><p className="mt-2 text-sm text-muted-foreground">{message}</p><div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row"><Button onClick={onRetry} type="button" variant="outline">Retry</Button><Button nativeButton={false} render={<Link href={`/w/${workspaceId}/listing`} />} variant="outline">Back to Listing</Button></div></section></main>;
+  return <main className="mx-auto max-w-lg p-4 sm:p-6"><section className="rounded-xl border border-border bg-card p-6 text-center"><AlertCircle className="mx-auto size-8 text-destructive" /><h1 className="mt-3 text-xl font-semibold">{title}</h1><p className="mt-2 text-sm text-muted-foreground">{message}</p><div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row"><Button onClick={onRetry} type="button" variant="outline">Retry</Button><Button nativeButton={false} render={<Link href={returnTo} />} variant="outline">Back to Listing</Button></div></section></main>;
+}
+
+function listingFallback(workspaceId: string, status: string): string {
+  return status === "LISTING_IN_PROGRESS"
+    ? `/w/${workspaceId}/listing?status=LISTING_IN_PROGRESS`
+    : `/w/${workspaceId}/listing`;
 }
 
 export function ListingDetailSkeleton() {
