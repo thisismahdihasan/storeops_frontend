@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { BackLink } from "@/components/ui/back-link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ReportIssueDialog } from "@/features/designer-work/report-issue-dialog";
 import { getDesignerWorkStatusMeta } from "@/features/designer-work/designer-work.types";
@@ -202,15 +203,7 @@ export function DesignWorkspaceView({
     <main className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
       {/* Page Header */}
       <header className="space-y-4 border-b border-border pb-5">
-        <Button
-          nativeButton={false}
-          render={<Link href={returnTo} />}
-          size="sm"
-          variant="ghost"
-        >
-          <ArrowLeft className="size-4" />
-          <span>Back</span>
-        </Button>
+        <BackLink href={returnTo}>Back</BackLink>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
             <h1 className="w-full max-w-3xl break-words font-ui text-lg font-bold tracking-tight text-foreground sm:text-xl">

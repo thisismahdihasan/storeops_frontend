@@ -1,12 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { BackLink } from "@/components/ui/back-link";
 import { ApiError } from "@/lib/api";
 import { formatFileSize } from "@/lib/format-file-size";
 
@@ -274,18 +273,11 @@ export function StorageCleanupView({ workspaceId }: StorageCleanupViewProps) {
       {/* Header with back link */}
       <div className="flex flex-col gap-2 border-b border-border pb-5">
         <div>
-          <Button
-            className="gap-1.5 text-muted-foreground hover:text-foreground"
-            nativeButton={false}
-            render={<Link href={`/w/${workspaceId}/settings`} />}
-            size="xs"
-            variant="ghost"
-          >
-            <ArrowLeft className="size-3.5" />
-            <span>Back to Workspace Settings</span>
-          </Button>
+          <BackLink href={`/w/${workspaceId}/settings`}>
+            Back to Workspace Settings
+          </BackLink>
         </div>
-        <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+        <h1 className="mt-2 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
           Storage Management
         </h1>
         <p className="text-sm text-muted-foreground">

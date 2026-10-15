@@ -3,7 +3,6 @@
 
 import {
   AlertCircle,
-  ArrowLeft,
   Calendar,
   CheckCircle2,
   ExternalLink,
@@ -12,12 +11,12 @@ import {
   ShieldAlert,
   User,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BackLink } from "@/components/ui/back-link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DesignPreviewLightbox } from "@/features/design-workspace/design-preview-lightbox";
 import { AuthenticatedReferenceImage } from "@/features/research/authenticated-reference-image";
@@ -272,19 +271,9 @@ export function ReviewDetailView({
     <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Top Back Navigation Bar */}
       <div className="flex flex-wrap items-center gap-4">
-        <Button
-          nativeButton={false}
-          render={
-            <Link
-              href={backHref}
-            />
-          }
-          size="sm"
-          variant="ghost"
-        >
-          <ArrowLeft className="size-4" />
-          <span>{isAdmin ? "Back" : "Back to Design"}</span>
-        </Button>
+        <BackLink href={backHref}>
+          {isAdmin ? "Back" : "Back to Design"}
+        </BackLink>
 
       </div>
 

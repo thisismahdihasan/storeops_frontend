@@ -1,11 +1,12 @@
 "use client";
 
-import { AlertCircle, ArrowLeft, Copy } from "lucide-react";
+import { AlertCircle, Copy } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { BackLink } from "@/components/ui/back-link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useWorkspaces } from "@/features/workspace/use-workspaces";
 import { ApiError } from "@/lib/api";
@@ -147,14 +148,7 @@ export function ListingDetailView({
   return (
     <main className="mx-auto max-w-screen-2xl space-y-5 p-4 sm:p-6 lg:p-8">
       <header className="space-y-4 border-b border-border pb-5">
-        <Button
-          nativeButton={false}
-          render={<Link href={returnTo} />}
-          size="sm"
-          variant="ghost"
-        >
-          <ArrowLeft /> Back
-        </Button>
+        <BackLink href={returnTo}>Back</BackLink>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="font-mono text-xs text-muted-foreground">

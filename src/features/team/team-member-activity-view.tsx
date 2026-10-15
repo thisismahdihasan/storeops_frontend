@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import {
   AlertTriangle,
-  ArrowLeft,
   CalendarDays,
   ChevronDown,
   Clock3,
@@ -17,6 +15,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BackLink } from "@/components/ui/back-link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { ApiError } from "@/lib/api";
@@ -501,15 +500,7 @@ function TeamMemberActivityContent({
   return (
     <div className="mx-auto max-w-screen-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Back Navigation */}
-      <Button
-        nativeButton={false}
-        render={<Link href={`/w/${workspaceId}/team`} />}
-        size="sm"
-        variant="ghost"
-      >
-        <ArrowLeft className="size-3.5" />
-        Back to Team
-      </Button>
+      <BackLink href={`/w/${workspaceId}/team`}>Back to Team</BackLink>
 
       {/* 1. Member Header */}
       <header className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 shadow-xs sm:p-6 lg:flex-row lg:items-center lg:justify-between">
