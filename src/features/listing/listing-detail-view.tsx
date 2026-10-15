@@ -125,7 +125,7 @@ export function ListingDetailView({
     try {
       await completeMutation.mutateAsync(values);
       toast.success("Listing marked as listed.");
-      router.push(`/w/${workspaceId}/listing`);
+      router.push(returnTo);
     } catch (error) {
       toast.error(actionErrorMessage(error, "Unable to mark this listing as listed."));
       if (error instanceof ApiError && error.status === 409) {
