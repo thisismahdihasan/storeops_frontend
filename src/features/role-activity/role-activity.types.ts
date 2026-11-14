@@ -1,12 +1,32 @@
 import type { PaginationMeta, ResearchStatus } from "@/features/research/research.types";
 
 export type DateRangeQuery = { dateFrom?: string; dateTo?: string };
+export type CopyrightReviewer = "ZAYED" | "IFAD" | "MAHDI";
+export type ListingReview = {
+  assignedReviewer: CopyrightReviewer | null;
+  isChecked: boolean;
+  flaggedBy: CopyrightReviewer | null;
+  checkedAt: string | null;
+  flaggedAt: string | null;
+  updatedAt: string | null;
+  version: number;
+};
+export type ListingReviewProgress = {
+  progress: Record<"all" | CopyrightReviewer, { checked: number; total: number }>;
+  flagged: Record<CopyrightReviewer, number>;
+  flaggedByGroup: Record<"all" | CopyrightReviewer, Record<CopyrightReviewer, number>>;
+};
+export type ReviewMutation =
+  | { action: "SET_CHECKED"; expectedVersion: number; checked: boolean }
+  | { action: "SET_FLAGGED_BY"; expectedVersion: number; flaggedBy: CopyrightReviewer | null };
 
 export type HistoryQuery = DateRangeQuery & {
   limit: number;
   page: number;
   search?: string;
   sort: "newest" | "oldest";
+  assignedReviewer?: CopyrightReviewer;
+  flaggedBy?: CopyrightReviewer;
 };
 
 export type ResearcherActivitySummary = {
@@ -50,7 +70,7 @@ export type ListerHistoryItem = {
   assignedAt: string;
   completedAt: string;
   id: string;
-  researchItem: { etsyListingId: string; id: string; listingResult: { etsyListingUrl: string | null; listedAt: string } | null; normalizedUrl: string; referenceImageUrl: string | null; status: ResearchStatus; title: string | null };
+  researchItem: { etsyListingId: string; id: string; listingResult: { etsyListingUrl: string | null; listedAt: string } | null; listingReview: ListingReview; normalizedUrl: string; referenceImageUrl: string | null; status: ResearchStatus; title: string | null };
   startedAt: string | null;
 };
 

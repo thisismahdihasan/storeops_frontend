@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import type { WorkspaceRole } from "@/features/workspace/workspace.types";
+import type { CopyrightReviewer } from "@/features/role-activity/role-activity.types";
 
 export type NavigationMode = "management" | "work";
 
@@ -22,6 +23,7 @@ export type NavigationItem = {
   icon: React.ComponentType<{ className?: string }>;
   id: string;
   title: string;
+  reviewer?: CopyrightReviewer;
 };
 
 export type NavigationGroup = {
@@ -272,13 +274,23 @@ export function resolveNavigationForRoles(
   return GROUP_ORDER[mode].flatMap((groupName) => {
     const items = allowedDefinitions
       .filter((definition) => definition.group === groupName)
-      .map((definition) => ({
+      .flatMap((definition): NavigationItem[] => {
+        const item: NavigationItem = {
         badgeKey: definition.badgeKey,
         href: `/w/${workspaceId}/${definition.segment}`,
         icon: definition.icon,
         id: definition.id,
         title: definition.title,
-      }));
+        };
+        if (definition.id !== "listing") return [item];
+        return [item, ...(["ZAYED", "IFAD", "MAHDI"] as const).map((reviewer) => ({
+          href: `/w/${workspaceId}/listing?status=completed&reviewer=${reviewer}`,
+          icon: Tag,
+          id: `listing-${reviewer.toLowerCase()}`,
+          title: `${reviewer[0]}${reviewer.slice(1).toLowerCase()}'s Listings`,
+          reviewer,
+        }))];
+      });
 
     return items.length > 0 ? [{ items, title: groupName }] : [];
   });

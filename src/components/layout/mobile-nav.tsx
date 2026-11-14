@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
 
@@ -45,6 +45,7 @@ export function MobileNav({
   workspaces,
 }: MobileNavProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const handleEditProfile = () => {
     onOpenChange(false);
     onEditProfile();
@@ -115,9 +116,11 @@ export function MobileNav({
                 </h3>
                 <div className="flex flex-col gap-1">
                   {group.items.map((item) => {
-                    const isActive =
-                      pathname === item.href ||
-                      pathname.startsWith(`${item.href}/`);
+                    const isActive = item.reviewer
+                      ? pathname === `/w/${activeWorkspaceId}/listing` && searchParams.get("reviewer") === item.reviewer
+                      : item.id === "listing"
+                        ? pathname === item.href && !searchParams.get("reviewer")
+                        : pathname === item.href || pathname.startsWith(`${item.href}/`);
                     const showUnread =
                       item.badgeKey === "unreadNotifications" &&
                       unreadNotificationsCount > 0;
@@ -130,6 +133,7 @@ export function MobileNav({
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
                           "group relative flex h-10 items-center gap-2.5 rounded-[10px] px-3 font-ui text-[12px] leading-[18px] transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                          item.reviewer && "ml-4 h-9 border-l border-border/70 pl-4",
                           isActive
                             ? "bg-primary/12 text-primary font-semibold shadow-xs dark:bg-primary/20 dark:text-foreground"
                             : "text-foreground/80 hover:bg-muted/70 hover:text-foreground dark:hover:bg-white/5 dark:hover:text-foreground font-medium",
@@ -143,7 +147,7 @@ export function MobileNav({
                         )}
                         <item.icon
                           className={cn(
-                            "size-[17px] shrink-0 transition-colors",
+                            item.reviewer ? "size-3.5 shrink-0 transition-colors" : "size-[17px] shrink-0 transition-colors",
                             isActive
                               ? "text-primary dark:text-brand-accent"
                               : "text-muted-foreground group-hover:text-foreground dark:group-hover:text-foreground",
